@@ -23,4 +23,4 @@ Four levels, adapted from [Fowler's microservice testing taxonomy](https://marti
 
 ## Test Database Strategy
 
-- Tests run against an isolated DB instance per run (not the dev DB file), reset between runs, using whichever engine/driver is current per [database.md](./database.md#engine--driver) (SQLite today; the same strategy carries over if/when that migrates to PostgreSQL).
+- Tests run against a fresh, isolated SQLite database instance per run (not the dev DB file), using the driver specified in [database.md](./database.md#engine--driver). Apply the same committed migrations used by the application; never reuse or reset the developer's database file.

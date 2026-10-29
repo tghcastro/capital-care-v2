@@ -4,8 +4,9 @@
 
 - **TypeScript** on **Node.js**
 - Rationale: strong agent-workflow fit (compiler gives immediate, tool-visible feedback; dense training data for idiomatic generation); schema-as-code tooling (Drizzle, Zod) keeps DB/validation/types in sync.
-- **Node version pinning:** the required Node version is locked via `.nvmrc` and `engines` in `package.json` (current LTS), so all environments (local, CI) run the same runtime and avoid version-drift bugs.
-- **TypeScript strictness:** `strict: true` in `tsconfig.json`. Catches null/undefined and implicit-`any` bugs at compile time instead of runtime, which also tightens the agent feedback loop (more real errors surface immediately via the compiler/`get_errors`, so generated code is verified harder before it's ever run).
+- **Node version pinning:** select the current Node.js LTS release when initializing the workspace; pin its exact version in `.nvmrc` and constrain `engines.node` in `package.json` to that major version. Pin the exact pnpm version in the root `package.json` `packageManager` field so local development and CI use the same package manager.
+- **ES modules:** use native Node.js ESM (`"type": "module"` in `package.json`) with TypeScript `module` and `moduleResolution` both set to `"NodeNext"`. Relative TypeScript imports include the emitted `.js` extension (for example, `import { helper } from './helper.js'`) to follow Node's ESM resolution rules.
+- **TypeScript strictness:** set `strict`, `noUncheckedIndexedAccess`, and `exactOptionalPropertyTypes` to `true` in `tsconfig.json`. These checks catch null/undefined, unchecked indexed access, and ambiguity between omitted and explicitly `undefined` optional properties at compile time, giving generated code stronger compiler feedback before runtime.
 
 ## Repository Structure
 
@@ -69,9 +70,10 @@ capital-care/
 ## DB Types vs Domain Types
 
 - **Row/schema types (Drizzle-inferred) never leak past the repository layer.** They may be similar to the application's domain/business types, but they are not the same type — a DB column is a storage detail, a domain type is a business concept.
-- Repositories accept/return **domain types**; the mapping between a Drizzle row and a domain type happens inside the repository (or a dedicated mapper), not at the call site. This includes enum mapping and money mapping.
+- Repositories accept/return **domain types**; the mapping between a Drizzle row and a domain type happens inside the repository (or a dedicated mapper), not at the call site. This includes enum, money, and timestamp mapping.
 - **Money specifically:** the repository maps the stored decimal-string column to a domain `Decimal` type (e.g. `decimal.js`). All arithmetic (sums, balances) happens in the app layer using that `Decimal` type — never native floating-point math. The storage rationale (why `TEXT`, not native `NUMERIC`) is documented in [database.md](./database.md).
-- This keeps a future SQLite → PostgreSQL dialect switch contained to the repository/entity layer — services, controllers, and validation (Zod) never need to change.
+- **Timestamps specifically:** the repository maps SQLite epoch-millisecond integers to domain `Date` values. API responses serialize those dates as ISO 8601 UTC strings, as specified in [database.md](./database.md#date--time).
+- This keeps SQLite storage representations contained to the repository/entity layer — services, controllers, and validation (Zod) work with domain types rather than database-specific types.
 
 ## Environment Configuration
 

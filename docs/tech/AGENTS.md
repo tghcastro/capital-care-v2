@@ -11,7 +11,7 @@ Stack-level technical decisions for Capital Care — the "how," decided once and
 Decisions live in [docs/tech/definitions/](./definitions/), one file per topic:
 
 - [definitions/architecture.md](./definitions/architecture.md) — language/runtime, repo structure, package manager, API layering & composition, DB ↔ domain type boundary, environment config, lint/format tooling.
-- [definitions/database.md](./definitions/database.md) — DB engine/driver, schema conventions (money, enums, soft deletes, timestamps, IDs, dates), constraints, transactions.
+- [definitions/database.md](./definitions/database.md) — DB engine/driver, schema conventions (money, enums, deletion, timestamps, IDs, dates), constraints, transactions.
 - [definitions/api.md](./definitions/api.md) — API framework, route conventions, validation, error handling, documentation, request handling.
 - [definitions/security.md](./definitions/security.md) — authentication, security headers, CORS/rate-limiting status.
 - [definitions/logging.md](./definitions/logging.md) — logging library and request-context convention.
