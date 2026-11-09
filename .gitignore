@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.local
+.npmrc.local
+
+# Build outputs
+dist/
+build/
+*.d.ts
+*.d.ts.map
+*.js
+*.js.map
+tsconfig.tsbuildinfo
+.turbo/
+.eslint-cache/
+
+# Runtime
+*.db
+*.db-shm
+*.db-wal
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+.nyc_output/
+.vitest/
+html/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
