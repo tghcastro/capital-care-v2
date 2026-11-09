@@ -12,6 +12,256 @@ Example transaction:
 
 This is a learning project: the real goal is practicing agentic development workflows, with the finance tracker itself as the vehicle.
 
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js**: 24.x (LTS) — check with `node --version`
+- **pnpm**: 12.11.2+ — install with `npm install -g pnpm`
+
+### Setup
+
+1. **Install dependencies** (one time):
+   ```bash
+   cd /Users/castrth/workspace/capital-care
+   pnpm install
+   ```
+   
+   If you hit a build approval prompt for `better-sqlite3`, approve it when asked.
+
+2. **Build the project**:
+   ```bash
+   npm run build
+   ```
+   
+   This compiles TypeScript in all packages. Output goes to `dist/` directories.
+
+---
+
+## Running the API
+
+### Start the server
+
+```bash
+npm run dev
+```
+
+The API starts on `http://localhost:3000`.
+
+Health check: `curl http://localhost:3000/health`
+
+---
+
+## Testing Manually
+
+### Category Management Endpoints
+
+The category feature is fully implemented. Test it with `curl` or Postman:
+
+#### 1. **Create a category**
+
+```bash
+curl -X POST http://localhost:3000/categories \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user-123" \
+  -d '{
+    "name": "Groceries",
+    "description": "Food and household items"
+  }'
+```
+
+**Expected response** (201 Created):
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "user-123",
+  "name": "Groceries",
+  "description": "Food and household items",
+  "createdAt": "2026-11-06T13:45:30.123Z",
+  "updatedAt": "2026-11-06T13:45:30.123Z"
+}
+```
+
+#### 2. **List all categories**
+
+```bash
+curl http://localhost:3000/categories \
+  -H "X-User-Id: user-123"
+```
+
+**Expected response** (200 OK):
+```json
+{
+  "categories": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "userId": "user-123",
+      "name": "Groceries",
+      "description": "Food and household items",
+      "createdAt": "2026-11-06T13:45:30.123Z",
+      "updatedAt": "2026-11-06T13:45:30.123Z"
+    }
+  ]
+}
+```
+
+#### 3. **Sort categories descending**
+
+```bash
+curl http://localhost:3000/categories?sort=-name \
+  -H "X-User-Id: user-123"
+```
+
+#### 4. **Fetch a single category**
+
+```bash
+curl http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
+  -H "X-User-Id: user-123"
+```
+
+**Expected response** (200 OK): Category object
+
+#### 5. **Update a category**
+
+```bash
+curl -X PATCH http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user-123" \
+  -d '{
+    "description": "Food, household items, and groceries"
+  }'
+```
+
+**Expected response** (200 OK): Updated category
+
+#### 6. **Delete a category**
+
+```bash
+curl -X DELETE http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
+  -H "X-User-Id: user-123"
+```
+
+**Expected response** (204 No Content): Empty body, no JSON
+
+---
+
+### Test Scenarios
+
+#### ✅ Create category without name → 400 ValidationError
+
+```bash
+curl -X POST http://localhost:3000/categories \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user-123" \
+  -d '{"description": "oops"}'
+```
+
+Response: `400` with `{"type":"ValidationError","detail":"name is required"}`
+
+#### ✅ Create duplicate name for same user → 409 ConflictError
+
+```bash
+# Create first
+curl -X POST http://localhost:3000/categories \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user-123" \
+  -d '{"name": "Groceries"}'
+
+# Try duplicate
+curl -X POST http://localhost:3000/categories \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user-123" \
+  -d '{"name": "Groceries"}'
+```
+
+Response: `409` with `{"type":"ConflictError","detail":"..."}`
+
+#### ✅ Different user can create same name
+
+```bash
+curl -X POST http://localhost:3000/categories \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user-456" \
+  -d '{"name": "Groceries"}'
+```
+
+Response: `201` — succeeds (different user)
+
+#### ✅ Missing X-User-Id header → 401 UnauthorizedError
+
+```bash
+curl http://localhost:3000/categories
+```
+
+Response: `401` with `{"type":"UnauthorizedError","detail":"User ID required"}`
+
+#### ✅ Fetch category owned by different user → 404 NotFoundError
+
+```bash
+# Create as user-123
+curl -X POST http://localhost:3000/categories \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user-123" \
+  -d '{"name": "MyCategory"}' 
+# Returns id: "550e8400-e29b-41d4-a716-446655440000"
+
+# Try to fetch as user-456
+curl http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
+  -H "X-User-Id: user-456"
+```
+
+Response: `404` (not 403 — ownership check returns "not found" per design)
+
+---
+
+## Running Tests
+
+### Unit tests (if pnpm cache is healthy)
+
+```bash
+npm test
+```
+
+Tests are located in `modules/ledger/src/category/__test__/` and cover:
+- Create (7 tests)
+- Uniqueness (1 test)
+- List & sort (3 tests)
+- Update (4 tests)
+- Delete (2 tests)
+
+### Build & type check
+
+```bash
+npm run build        # TypeScript compilation
+npm run type-check   # Type checking only (no emit)
+npm run lint         # ESLint (if setup complete)
+```
+
+---
+
+## Project Structure
+
+```
+capital-care/
+  apps/api/                    # Express API app
+    src/app.ts                 # Composition root, mounts routers
+  modules/ledger/              # Category, transaction, account logic
+    src/
+      category/                # Category aggregate (C R U D)
+        category.controller.ts # HTTP handlers
+        category.service.ts    # Business logic
+        category.repository.ts # DB access
+        category.entity.ts     # Drizzle table
+        __test__/              # Unit tests
+      shared/                  # DB client, error types
+  packages/shared/             # Shared types, Zod schemas (future)
+  docs/tech/definitions/       # Architecture decisions (read for context)
+```
+
+---
+
 ## Contributing / AI Agent Context
 
 If you're an AI agent working in this repo, start at [AGENTS.md](AGENTS.md) instead of this file.
