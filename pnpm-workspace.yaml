@@ -1,0 +1,9 @@
+packages:
+  - apps/api
+  - modules/ledger
+  - packages/shared
+allowBuilds:
+  better-sqlite3: true
+  es5-ext: true
+  esbuild: true
+  yes: true
