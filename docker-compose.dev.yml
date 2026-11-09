@@ -1,0 +1,10 @@
+# DEV: the database lives in tmpfs (RAM). It is discarded whenever the
+# container stops or restarts, so every `up` starts from an empty database.
+# uid/gid match the non-root `node` user in the image (UID 1000) so it can
+# create the database file.
+services:
+  api:
+    environment:
+      NODE_ENV: development
+    tmpfs:
+      - /app/data:uid=1000,gid=1000,mode=0755

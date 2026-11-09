@@ -54,6 +54,30 @@ Health check: `curl http://localhost:3000/health`
 
 ---
 
+## Running with Docker
+
+The API runs in a container with two Compose profiles. Both run pending migrations before the server starts.
+
+| Profile | Database | Command |
+|---------|----------|---------|
+| DEV (local tests) | In memory (`tmpfs`). Discarded when the container stops or restarts. | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` |
+| PRD | Named volume `capital-care-data`. Survives restarts. | `docker compose -f docker-compose.yml -f docker-compose.prd.yml up -d --build` |
+
+- The API listens on `http://localhost:3000` (override with `API_PORT`). Health check: `curl http://localhost:3000/health`
+- Stop DEV with `docker compose -f docker-compose.yml -f docker-compose.dev.yml down`. No data is kept.
+- Delete PRD data with `docker compose -f docker-compose.yml -f docker-compose.prd.yml down -v`. This is irreversible.
+- PRD backups are not configured yet (see [database.md](docs/tech/definitions/database.md)).
+
+### Database migrations
+
+```bash
+pnpm build          # compiles TypeScript and copies SQL migrations into dist/
+pnpm db:migrate     # applies pending migrations to DB_PATH (default ./data/capital-care.db)
+pnpm db:generate    # after changing a schema: generates a new SQL migration
+```
+
+---
+
 ## Testing Manually
 
 ### Category Management Endpoints
