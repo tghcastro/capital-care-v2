@@ -17,7 +17,7 @@ export function createCategoryRouter(service: CategoryService): Router {
       if (!parsed.success) {
         return res.status(400).json({
           type: 'ValidationError',
-          detail: parsed.error.errors[0]?.message || 'Invalid input',
+          detail: parsed.error.issues[0]?.message || 'Invalid input',
         });
       }
 
@@ -85,7 +85,7 @@ export function createCategoryRouter(service: CategoryService): Router {
       if (!parsed.success) {
         return res.status(400).json({
           type: 'ValidationError',
-          detail: parsed.error.errors[0]?.message || 'Invalid input',
+          detail: parsed.error.issues[0]?.message || 'Invalid input',
         });
       }
 
