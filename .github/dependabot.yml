@@ -1,0 +1,38 @@
+# Dependabot version updates. Dependabot security updates are a repository
+# setting (Settings > Code security), not part of this file.
+#
+# Known limitation: the Dockerfile takes its base image from ARG NODE_VERSION.
+# The docker ecosystem may not read that version, so Dependabot may not propose
+# Node base image updates. Check that manually when Node is upgraded.
+
+version: 2
+
+updates:
+  # npm: covers the whole pnpm workspace through the root pnpm-lock.yaml.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
