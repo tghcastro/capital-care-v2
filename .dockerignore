@@ -1,0 +1,23 @@
+# Dependencies and build output are created inside the image
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+
+# Local data and secrets
+data/
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example
+
+# Not needed to build the image
+.git
+.github
+.claude
+.specs
+.prd
+docs
+coverage
+logs

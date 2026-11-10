@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import { categoryTable } from './category.entity.js';
@@ -92,7 +92,6 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   countByUserAndName(userId: string, name: string): number {
-    const { count } = require('drizzle-orm');
     const result = this.db
       .select({ count: count() })
       .from(categoryTable)

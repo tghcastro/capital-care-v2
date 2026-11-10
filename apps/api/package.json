@@ -8,7 +8,9 @@
   "scripts": {
     "build": "tsc -b",
     "dev": "node dist/main.js",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "migrate": "node dist/migrate.js",
+    "start": "node dist/main.js"
   },
   "dependencies": {
     "express": "^5.0.0",

@@ -1,0 +1,14 @@
+# PRD: the database persists in the named volume `capital-care-data`.
+# Removing the volume (`docker compose down -v`) deletes all data.
+# Backups are not configured yet (see docs/tech/definitions/database.md).
+services:
+  api:
+    environment:
+      NODE_ENV: production
+    restart: unless-stopped
+    volumes:
+      - capital-care-data:/app/data
+
+volumes:
+  capital-care-data:
+    name: capital-care-data

@@ -3,12 +3,13 @@
  *
  * Exports:
  * - Routers: mounted by apps/api
- * - Facade: for in-process calls from other modules
+ * - Lifecycle helpers: schema migration and database shutdown, called by apps/api
  * - Public types: consumed by API clients and tests
  */
 
 import { getLedgerConfig } from './config.js';
-import { getDatabase } from './shared/persistence/client.js';
+import { getDatabase, closeDatabase } from './shared/persistence/client.js';
+import { migrateLedgerDatabase } from './shared/persistence/migrate.js';
 import { CategoryRepository } from './category/category.repository.js';
 import { CategoryService } from './category/category.service.js';
 import { createCategoryRouter } from './category/category.controller.js';
@@ -27,4 +28,12 @@ export function createLedgerRouters() {
   return {
     categoryRouter,
   };
+}
+
+export function migrateLedger(dbPath: string = getLedgerConfig().dbPath): void {
+  migrateLedgerDatabase(dbPath);
+}
+
+export function closeLedgerDatabase(): void {
+  closeDatabase();
 }
