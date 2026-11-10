@@ -85,7 +85,13 @@ curl http://localhost:3000/health
 
 ### Releasing
 
-A release is a version tag on a commit that is already on `main`:
+A release is a version tag on a commit that is already on `main`. Use the release script, which checks out the latest `main`, tags it and pushes the tag:
+
+```bash
+scripts/release.sh 0.1.0
+```
+
+It refuses to run with uncommitted changes, an invalid `MAJOR.MINOR.PATCH` version, or a tag that already exists. The manual equivalent is:
 
 ```bash
 git switch main && git pull
