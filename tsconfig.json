@@ -17,7 +17,6 @@
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
     "composite": true,
-    "baseUrl": ".",
     "paths": {
       "@capital-care/*": ["./packages/*/src", "./modules/*/src"]
     }
