@@ -1,0 +1,191 @@
+# CI/CD pipeline: test, security scan, build, and publish to GHCR.
+#
+# test -> security -> build -> publish
+# publish runs only for pushes to main and version tags, never for pull requests.
+#
+# Every third-party action is pinned to a full commit SHA; the version is kept
+# in the trailing comment. Dependabot keeps the pins up to date.
+
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+
+# Least privilege by default. Jobs elevate only where they need to.
+permissions:
+  contents: read
+
+# Cancel superseded runs for pull requests only. Runs on main and tags always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE_NAME: ghcr.io/tghcastro/capital-care-v2
+  LOCAL_IMAGE: capital-care-api:ci
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # No version input: pnpm is taken from the packageManager field in package.json.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
+      - run: pnpm build
+      - run: pnpm --filter @capital-care/ledger exec vitest run
+
+  security:
+    name: security
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Blocking gate: fails only on critical advisories in production dependencies.
+      - name: Audit production dependencies (blocking, critical only)
+        run: pnpm audit --prod --audit-level=critical
+      # Report-only: lists every advisory in the log without failing the run.
+      - name: Audit production dependencies (report all)
+        run: pnpm audit --prod
+        continue-on-error: true
+      # Pull requests only: fails if the PR introduces a known-vulnerable dependency.
+      - name: Dependency review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+
+  build:
+    name: build
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: runtime
+          push: false
+          tags: ${{ env.LOCAL_IMAGE }}
+          outputs: type=docker,dest=/tmp/image.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test
+        run: |
+          docker load -i /tmp/image.tar
+          docker run -d --name smoke -p 3000:3000 "$LOCAL_IMAGE"
+          for i in $(seq 1 30); do
+            body=$(curl -fsS http://127.0.0.1:3000/health || true)
+            if [ "$body" = '{"status":"ok"}' ]; then
+              echo "Health check passed"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Health check did not return {\"status\":\"ok\"} within 30 seconds"
+          exit 1
+      - name: Container logs and cleanup
+        if: always()
+        run: |
+          docker logs smoke || true
+          docker rm -f smoke || true
+      # The tar is passed to the publish job. It is kept for one day only.
+      - name: Upload image artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: capital-care-api-image
+          path: /tmp/image.tar
+          retention-days: 1
+
+  publish:
+    name: publish
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      # Release tags must point at a commit that is already on main.
+      - name: Verify tagged commit is on main
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tagged commit $GITHUB_SHA is reachable from origin/main"
+          else
+            echo "::error::Tagged commit $GITHUB_SHA is not reachable from origin/main; refusing to publish"
+            exit 1
+          fi
+      - name: Download image artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: capital-care-api-image
+          path: /tmp
+      - name: Load image
+        run: docker load -i /tmp/image.tar
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image tags and labels
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          # latest=false turns off the default auto latest, so only the rules below add it.
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.source=https://github.com/tghcastro/capital-care-v2
+      # Retag the exact image that was scanned and smoke-tested, then push each tag.
+      - name: Retag and push
+        id: push
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          first=""
+          while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            docker tag "$LOCAL_IMAGE" "$tag"
+            docker push "$tag"
+            first="${first:-$tag}"
+          done <<< "$TAGS"
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$first")
+          echo "digest=${digest##*@}" >> "$GITHUB_OUTPUT"
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
