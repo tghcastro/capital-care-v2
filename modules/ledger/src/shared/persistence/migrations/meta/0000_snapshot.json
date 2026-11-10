@@ -1,8 +1,6 @@
 {
-  "version": "5",
+  "version": "6",
   "dialect": "sqlite",
-  "id": "7a2b527d-8394-4148-9d1f-b310e338d676",
-  "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "user": {
       "name": "user",
@@ -40,7 +38,8 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "category": {
       "name": "category",
@@ -100,13 +99,16 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
   },
   "enums": {},
   "_meta": {
-    "schemas": {},
     "tables": {},
     "columns": {}
-  }
+  },
+  "id": "7a2b527d-8394-4148-9d1f-b310e338d676",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "views": {}
 }

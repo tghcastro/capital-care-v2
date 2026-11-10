@@ -19,7 +19,7 @@ This is a learning project: the real goal is practicing agentic development work
 ### Prerequisites
 
 - **Node.js**: 24.x (LTS) — check with `node --version`
-- **pnpm**: 12.11.2+ — install with `npm install -g pnpm`
+- **pnpm**: 12.18.0+ — install with `npm install -g pnpm`
 
 ### Setup
 

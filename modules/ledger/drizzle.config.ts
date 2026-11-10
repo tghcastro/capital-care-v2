@@ -11,7 +11,7 @@ import type { Config } from 'drizzle-kit';
 export default {
   schema: './src/shared/persistence/schema.ts',
   out: './src/shared/persistence/migrations',
-  driver: 'better-sqlite',
+  dialect: 'sqlite',
   dbCredentials: {
     url: process.env.DB_PATH || './data/capital-care.db',
   },

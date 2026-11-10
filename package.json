@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "A lightweight personal finance tracker",
   "type": "module",
-  "packageManager": "pnpm@12.11.2",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": "^24"
   },
@@ -24,7 +24,7 @@
     "eslint": "^8.56.0",
     "prettier": "^3.1.1",
     "typescript": "^5.3.3",
-    "vitest": "^1.0.4"
+    "vitest": "^5.1.0"
   },
   "workspaces": [
     "apps/api",

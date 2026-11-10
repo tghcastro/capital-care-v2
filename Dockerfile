@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
 
 # Node version must match .nvmrc
-ARG NODE_VERSION=24.7.0
+ARG NODE_VERSION=24.22.2
 
 # Full (non-slim) image: includes python3, make and g++, which better-sqlite3
 # needs when it compiles from source. Used for build stages only; the runtime
 # stage below is slim.
 FROM node:${NODE_VERSION}-bookworm AS base
 # Pin pnpm to the version in package.json `packageManager`
-RUN npm install -g pnpm@12.11.2 && pnpm --version
+RUN npm install -g pnpm@12.18.0 && pnpm --version
 WORKDIR /app
 
 # Install dependencies (cached until a manifest or the lockfile changes)
