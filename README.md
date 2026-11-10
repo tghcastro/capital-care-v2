@@ -68,6 +68,33 @@ The API runs in a container with two Compose profiles. Both run pending migratio
 - Delete PRD data with `docker compose -f docker-compose.yml -f docker-compose.prd.yml down -v`. This is irreversible.
 - PRD backups are not configured yet (see [database.md](docs/tech/definitions/database.md)).
 
+### Published images
+
+Every push to `main` and every release tag is published to GitHub Container Registry. Pull and run a published image without building it locally:
+
+```bash
+docker pull ghcr.io/tghcastro/capital-care-v2:latest   # most recent build of main
+docker pull ghcr.io/tghcastro/capital-care-v2:0.1.0    # a release (see below)
+
+docker run -p 3000:3000 ghcr.io/tghcastro/capital-care-v2:latest
+curl http://localhost:3000/health
+```
+
+- The database lives in `/app/data` inside the container. Mount a volume there to keep data after the container is removed, for example `-v capital-care-data:/app/data`.
+- Pipeline details, tags and the release rules are in [ci-cd.md](docs/tech/definitions/ci-cd.md).
+
+### Releasing
+
+A release is a version tag on a commit that is already on `main`:
+
+```bash
+git switch main && git pull
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The pipeline publishes `0.1.0`, `0.1` and `sha-<short-sha>`. It does not move `latest`. A tag whose commit is not on `main` fails before anything is published.
+
 ### Database migrations
 
 ```bash
