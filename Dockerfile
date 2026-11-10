@@ -39,6 +39,11 @@ ENV NODE_ENV=production \
 WORKDIR /app
 COPY --from=deploy /out ./
 RUN mkdir -p /app/data && chown node:node /app/data
+# The runtime only needs the node binary. Remove the npm and corepack bundled
+# with the base image: they are unused here and carry their own vulnerable
+# dependencies (e.g. undici), which image scanners report.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 USER node
 EXPOSE 3000
 
