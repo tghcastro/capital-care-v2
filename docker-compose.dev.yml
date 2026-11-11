@@ -10,6 +10,7 @@ services:
       - "${API_PORT:-3000}:3000"
     environment:
       NODE_ENV: development
+      ACCOUNT_LIMIT: "5"
     tmpfs:
       - /app/data:uid=1000,gid=1000,mode=0755
 
@@ -32,6 +33,7 @@ services:
         required: false
     environment:
       NODE_ENV: development
+      ACCOUNT_LIMIT: "5"
       PORT: "3000"
       DB_PATH: /app/data/capital-care.db
     tmpfs:

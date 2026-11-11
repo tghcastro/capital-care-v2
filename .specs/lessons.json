@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 6,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::allow combining marks in name character rules letters of any language need them",
+      "text": "Allow combining marks in name character rules; letters of any language need them.",
+      "signal": "ac_gap",
+      "scope": "validation",
+      "status": "candidate",
+      "features": [
+        "account-management"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 1, C10 (validation)"
+      ],
+      "created": "2026-11-11T14:19:07Z",
+      "last_seen": "2026-11-11T14:19:07Z"
+    },
+    {
+      "id": "L-002",
+      "key": "spec_precision_gap::state the exact accepted format of an env var setting whitespace leading zeros sign",
+      "text": "State the exact accepted format of an env var setting: whitespace, leading zeros, sign.",
+      "signal": "spec_precision_gap",
+      "scope": "config",
+      "status": "candidate",
+      "features": [
+        "account-management"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 2, C23/C24 (config)"
+      ],
+      "created": "2026-11-11T14:19:07Z",
+      "last_seen": "2026-11-11T14:19:07Z"
+    },
+    {
+      "id": "L-003",
+      "key": "weak_test::prove rename and uniqueness exclusion rules against the real database not only the in memory mock",
+      "text": "Prove rename and uniqueness-exclusion rules against the real database, not only the in-memory mock.",
+      "signal": "weak_test",
+      "scope": "repo-layer",
+      "status": "candidate",
+      "features": [
+        "account-management"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 3, C6 (repo-layer)"
+      ],
+      "created": "2026-11-11T14:19:07Z",
+      "last_seen": "2026-11-11T14:19:07Z"
+    },
+    {
+      "id": "L-004",
+      "key": "weak_test::test unicode normalization and code point length with decomposed and astral plane names",
+      "text": "Test Unicode normalization and code-point length with decomposed and astral-plane names.",
+      "signal": "weak_test",
+      "scope": "validation",
+      "status": "candidate",
+      "features": [
+        "account-management"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 4, C9/C13 (validation)"
+      ],
+      "created": "2026-11-11T14:19:07Z",
+      "last_seen": "2026-11-11T14:19:07Z"
+    },
+    {
+      "id": "L-005",
+      "key": "ac_gap::test a blank auth header as well as an absent one",
+      "text": "Test a blank auth header as well as an absent one.",
+      "signal": "ac_gap",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "account-management"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 5, C31 (routes)"
+      ],
+      "created": "2026-11-11T14:19:07Z",
+      "last_seen": "2026-11-11T14:19:07Z"
+    }
+  ]
+}

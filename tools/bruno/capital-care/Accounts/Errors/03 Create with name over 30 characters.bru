@@ -1,0 +1,23 @@
+meta {
+  name: 03 Create with name over 30 characters
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accounts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "1234567890123456789012345678901"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: eq name must not exceed 30 characters
+}

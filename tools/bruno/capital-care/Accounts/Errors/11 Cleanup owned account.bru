@@ -1,0 +1,15 @@
+meta {
+  name: 11 Cleanup owned account
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/accounts/{{ownedId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

@@ -1,0 +1,23 @@
+meta {
+  name: 03 Rename account
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/accounts/{{accountId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Wallet {{$timestamp}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{accountId}}
+  res.body.name: startsWith Wallet
+}

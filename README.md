@@ -126,6 +126,7 @@ The API requests live in a [Bruno](https://www.usebruno.com) collection (open-so
   - `PRD`: `baseUrl` `http://localhost:8000`
   - `userId` is the user sent in the `X-User-Id` header (every request). `otherUserId` is a second user, used to check that one user cannot read another user's data.
 - **Run from the CLI** (optional): `npm i -g @usebruno/cli`, then `cd tools/bruno/capital-care && bru run --env DEV -r`. Start the API first (see [Running the API](#running-the-api) or [Running with Docker](#running-with-docker)).
+- **Accounts folder:** `Accounts/` mirrors `Categories/`. Its last error request fills `otherUserId`'s accounts up to the account limit (`ACCOUNT_LIMIT`: 5 in DEV, 99 in PRD) and checks that the next create is refused, then deletes everything it created.
 - **Add requests:** create a `.bru` file in the matching folder (or use *New Request* in Bruno), then commit it with the code. Keep names unique per run (for example with `{{$timestamp}}`), and delete any data the request creates, because PRD data persists.
 
 ### Category Management Endpoints

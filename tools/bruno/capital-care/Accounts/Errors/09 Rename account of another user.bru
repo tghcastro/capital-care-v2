@@ -1,0 +1,26 @@
+meta {
+  name: 09 Rename account of another user
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/accounts/{{ownedId}}
+  body: json
+  auth: none
+}
+
+headers {
+  X-User-Id: {{otherUserId}}
+}
+
+body:json {
+  {
+    "name": "Hijacked {{$timestamp}}"
+  }
+}
+
+assert {
+  res.status: eq 404
+  res.body.type: eq NotFoundError
+}

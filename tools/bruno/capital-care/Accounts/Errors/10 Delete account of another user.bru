@@ -1,0 +1,20 @@
+meta {
+  name: 10 Delete account of another user
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/accounts/{{ownedId}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-User-Id: {{otherUserId}}
+}
+
+assert {
+  res.status: eq 404
+  res.body.type: eq NotFoundError
+}
