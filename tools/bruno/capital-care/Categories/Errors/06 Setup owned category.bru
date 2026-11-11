@@ -1,0 +1,25 @@
+meta {
+  name: 06 Setup owned category
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Owned-{{$timestamp}}"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("ownedId", res.body.id);
+}

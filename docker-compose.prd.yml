@@ -1,8 +1,11 @@
 # PRD: the database persists in the named volume `capital-care-data`.
 # Removing the volume (`docker compose down -v`) deletes all data.
 # Backups are not configured yet (see docs/tech/definitions/database.md).
+# PRD host port: API_PORT (default 8000).
 services:
   api:
+    ports:
+      - "${API_PORT:-8000}:3000"
     environment:
       NODE_ENV: production
     restart: unless-stopped

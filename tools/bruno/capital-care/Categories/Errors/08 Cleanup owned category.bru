@@ -1,0 +1,15 @@
+meta {
+  name: 08 Cleanup owned category
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{ownedId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

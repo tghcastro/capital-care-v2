@@ -1,0 +1,22 @@
+meta {
+  name: 03 Create duplicate name
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "{{duplicateName}}"
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.type: eq ConflictError
+}

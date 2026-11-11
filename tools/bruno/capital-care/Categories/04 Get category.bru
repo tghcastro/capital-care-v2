@@ -1,0 +1,17 @@
+meta {
+  name: 04 Get category
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/categories/{{categoryId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{categoryId}}
+  res.body.userId: eq {{userId}}
+}

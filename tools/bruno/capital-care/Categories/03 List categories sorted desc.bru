@@ -1,0 +1,23 @@
+meta {
+  name: 03 List categories sorted desc
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/categories?sort=-name
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.categories: isArray
+}
+
+tests {
+  test("is sorted by name descending", function() {
+    const names = res.body.categories.map(function(c) { return c.name; });
+    expect(names).to.deep.equal([...names].sort().reverse());
+  });
+}

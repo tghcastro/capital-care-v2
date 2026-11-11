@@ -58,13 +58,15 @@ Health check: `curl http://localhost:3000/health`
 
 The API runs in a container with two Compose profiles. Both run pending migrations before the server starts.
 
-| Profile | Database | Command |
-|---------|----------|---------|
-| DEV (local tests) | In memory (`tmpfs`). Discarded when the container stops or restarts. | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` |
-| PRD | Named volume `capital-care-data`. Survives restarts. | `docker compose -f docker-compose.yml -f docker-compose.prd.yml up -d --build` |
+| Profile | Host port | Database | Command |
+|---------|-----------|----------|---------|
+| DEV (local tests) | `3000` | In memory (`tmpfs`). Discarded when the container stops or restarts. | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` |
+| PRD | `8000` | Named volume `capital-care-data`. Survives restarts. | `docker compose -f docker-compose.yml -f docker-compose.prd.yml up -d --build` |
 
-- The API listens on `http://localhost:3000` (override with `API_PORT`). Health check: `curl http://localhost:3000/health`
-- DEV with the latest published image (pulled from GHCR, no local build, database in `tmpfs`) on `http://localhost:3001` (override with `API_LATEST_PORT`): `docker compose -f docker-compose.yml -f docker-compose.dev.yml up api-latest`
+- The container always listens on port 3000 internally. The host port is set per profile and can be overridden with `API_PORT`.
+- DEV: `http://localhost:3000`. Health check: `curl http://localhost:3000/health`
+- PRD: `http://localhost:8000`. Health check: `curl http://localhost:8000/health`
+- DEV with the latest published image (pulled from GHCR, no local build, database in `tmpfs`) also uses host port 3000: `docker compose -f docker-compose.yml -f docker-compose.dev.yml up api-latest`. It cannot run at the same time as `api`; stop one before starting the other.
 - Stop DEV with `docker compose -f docker-compose.yml -f docker-compose.dev.yml down`. No data is kept.
 - Delete PRD data with `docker compose -f docker-compose.yml -f docker-compose.prd.yml down -v`. This is irreversible.
 - PRD backups are not configured yet (see [database.md](docs/tech/definitions/database.md)).
@@ -114,9 +116,21 @@ pnpm db:generate    # after changing a schema: generates a new SQL migration
 
 ## Testing Manually
 
+### API Collection (Bruno)
+
+The API requests live in a [Bruno](https://www.usebruno.com) collection (open-source API client, plain-text `.bru` files) at [tools/bruno/capital-care](tools/bruno/capital-care).
+
+- **Open it:** in Bruno, choose *Open Collection* and select `tools/bruno/capital-care`.
+- **Pick an environment** (top-right in Bruno):
+  - `DEV`: `baseUrl` `http://localhost:3000`
+  - `PRD`: `baseUrl` `http://localhost:8000`
+  - `userId` is the user sent in the `X-User-Id` header (every request). `otherUserId` is a second user, used to check that one user cannot read another user's data.
+- **Run from the CLI** (optional): `npm i -g @usebruno/cli`, then `cd tools/bruno/capital-care && bru run --env DEV -r`. Start the API first (see [Running the API](#running-the-api) or [Running with Docker](#running-with-docker)).
+- **Add requests:** create a `.bru` file in the matching folder (or use *New Request* in Bruno), then commit it with the code. Keep names unique per run (for example with `{{$timestamp}}`), and delete any data the request creates, because PRD data persists.
+
 ### Category Management Endpoints
 
-The category feature is fully implemented. Test it with `curl` or Postman:
+The category feature is fully implemented. Test it with the Bruno collection in [tools/bruno/capital-care](tools/bruno/capital-care) (see [API Collection (Bruno)](#api-collection-bruno)), or with `curl` or Postman:
 
 #### 1. **Create a category**
 
@@ -315,6 +329,7 @@ capital-care/
         __test__/              # Unit tests
       shared/                  # DB client, error types
   packages/shared/             # Shared types, Zod schemas (future)
+  tools/bruno/capital-care/    # Bruno API collection (DEV/PRD environments)
   docs/tech/definitions/       # Architecture decisions (read for context)
 ```
 
