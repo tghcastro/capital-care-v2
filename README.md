@@ -64,6 +64,7 @@ The API runs in a container with two Compose profiles. Both run pending migratio
 | PRD | Named volume `capital-care-data`. Survives restarts. | `docker compose -f docker-compose.yml -f docker-compose.prd.yml up -d --build` |
 
 - The API listens on `http://localhost:3000` (override with `API_PORT`). Health check: `curl http://localhost:3000/health`
+- DEV with the latest published image (pulled from GHCR, no local build, database in `tmpfs`) on `http://localhost:3001` (override with `API_LATEST_PORT`): `docker compose -f docker-compose.yml -f docker-compose.dev.yml up api-latest`
 - Stop DEV with `docker compose -f docker-compose.yml -f docker-compose.dev.yml down`. No data is kept.
 - Delete PRD data with `docker compose -f docker-compose.yml -f docker-compose.prd.yml down -v`. This is irreversible.
 - PRD backups are not configured yet (see [database.md](docs/tech/definitions/database.md)).
