@@ -33,6 +33,7 @@ In: transaction behaviour as seen by a programmatic caller, covering forecast an
 Out:
 - Web UI - the next round.
 - Importing history from the old tool - history is not needed, and the owner starts fresh from the cutover month.
+- Instalment total display (value x occurrences) - a presentation concern for the Web UI.
 - Reports, budgets and charts - not needed for parity with the old tool.
 
 Unchanged: Categories and Accounts and how they are managed.
@@ -43,7 +44,7 @@ Unchanged: Categories and Accounts and how they are managed.
 |---|---|---|
 | Create a one-off transaction | It is recorded with date, description, Category, Account, amount and Type (Receipt = money in, Debit = money out). It starts as a forecast until consolidated. | The entry in its month |
 | Create an open-ended recurring transaction (Monthly or Annually) | It repeats with no end, for example condo fees, gym or insurance. Each occurrence appears in its own month. | An occurrence in every future month it applies to |
-| Create an instalment transaction | The owner enters the current occurrence number (for example 97), the total number of occurrences (for example 504) and the value per instalment (for example 100,00). Entering one partway through the sequence is allowed. Occurrences stop after the last one. | Each occurrence in its month and the total (value x occurrences, for example 50.400,00) |
+| Create an instalment transaction | The owner enters the current occurrence number (for example 97), the total number of occurrences (for example 504) and the value per instalment (for example 100,00). Entering one partway through the sequence is allowed. Occurrences stop after the last one. | Each occurrence in its month, with its number and the total number of occurrences |
 | Instalment occurrences | They are never consolidated automatically. The owner consolidates each one. | Unconsolidated occurrences stay as forecasts until the owner acts |
 | Consolidate an entry | The owner marks an entry as paid or received. This is always a manual action. | The entry shown as CONSOLIDATED |
 | Paid amount differs from forecast | The owner can enter the real amount when consolidating. It affects only that month. | The real amount in that month and the forecast unchanged in other months |
@@ -51,10 +52,9 @@ Unchanged: Categories and Accounts and how they are managed.
 | Edit a consolidated occurrence | The change applies to that occurrence only. | Other occurrences unchanged |
 | Stop an open-ended recurring entry | Future occurrences are removed. Past occurrences remain exactly as they were. | Nothing from the stop point onward. History intact. |
 | Forecast whose date has passed | It is never hidden. It stays visible as a forecast until the owner consolidates or deletes it. | The full month, day 1 to the last day, with consolidated and unconsolidated entries together |
+| Category or Account deleted while transactions use it | The delete goes ahead as the Category and Account PRDs specify. The transactions stay. This also holds for transactions in the descendants of a deleted Category. | Those transactions listed with "No category" or "No account" |
 | View a month | The owner can see any past or future month. | All entries of that month, whether forecast or consolidated |
 
 ## Open questions
 
-1. Instalment total - default taken: shown as value x total occurrences, as the old tool does. Whether a remaining total is also wanted is not decided and does not block anything.
-2. Cutover month - default taken: chosen by the owner when the tool is ready. The date is not fixed.
-3. Behaviour when a Category or Account used by transactions is removed - not decided. It is specified in the Category and Account PRDs rather than here, and it blocks nothing until the feature spec.
+1. Cutover month - default taken: chosen by the owner when the tool is ready. The date is not fixed.
