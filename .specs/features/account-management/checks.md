@@ -152,7 +152,7 @@ Proof: run unit | ✓ C33 the account table and its unique index exist
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** Verifier, sent at code HEAD `33a205f`; not returned yet
+- **Dispatched:** Verifier, sent at code HEAD `33a205f`; returned, 5 findings, closed in `7607372`
 - **Boundary:** C1-C33 built, tests green at `6c2f4a1`
 - **Abandoned:** none
 - **Notes:** `pnpm lint` fails before any change because ESLint 10 does not read `.eslintrc.json`, so `Build:` runs type-check and build only. CI runs only `modules/ledger` tests, so C25 and C32 in `apps/api/test` run here but not in the current CI job.
