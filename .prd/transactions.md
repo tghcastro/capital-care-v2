@@ -43,10 +43,9 @@ Unchanged: Categories and Accounts and how they are managed.
 | State | What should happen | Person sees |
 |---|---|---|
 | Create a one-off transaction | It is recorded with date, description, Category, Account, amount and Type (Receipt = money in, Debit = money out). It starts as a forecast until consolidated. | The entry in its month |
-| Create an open-ended recurring transaction (Monthly or Annually) | It repeats with no end, for example condo fees, gym or insurance. Each occurrence appears in its own month. | An occurrence in every future month it applies to |
+| Create an open-ended recurring transaction (Daily, Weekly, Monthly or Annually) | It repeats with no end, for example condo fees, gym or insurance. Each occurrence appears in its own month. | An occurrence in every future month it applies to |
 | Create an instalment transaction | The owner enters the current occurrence number (for example 97), the total number of occurrences (for example 504) and the value per instalment (for example 100,00). Entering one partway through the sequence is allowed. Occurrences stop after the last one. | Each occurrence in its month, with its number and the total number of occurrences |
-| Instalment occurrences | They are never consolidated automatically. The owner consolidates each one. | Unconsolidated occurrences stay as forecasts until the owner acts |
-| Consolidate an entry | The owner marks an entry as paid or received. This is always a manual action. | The entry shown as CONSOLIDATED |
+| Consolidate an entry | The owner marks an entry as paid or received. Nothing is ever consolidated automatically, for any kind of entry. The owner checks each entry against the real account balance first. | The entry shown as CONSOLIDATED |
 | Paid amount differs from forecast | The owner can enter the real amount when consolidating. It affects only that month. | The real amount in that month and the forecast unchanged in other months |
 | Edit a forecast occurrence of a recurring entry | The change also applies to all future occurrences. | The new value in the following months |
 | Edit a consolidated occurrence | The change applies to that occurrence only. | Other occurrences unchanged |
