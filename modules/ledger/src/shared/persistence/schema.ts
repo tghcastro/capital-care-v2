@@ -8,6 +8,6 @@
  */
 
 export * from '../../user/user.entity.js';
+export * from '../../account/account.entity.js';
 export * from '../../category/category.entity.js';
-// TODO: export * from '../../account/account.entity.js';
 // TODO: export * from '../../transaction/transaction.entity.js';

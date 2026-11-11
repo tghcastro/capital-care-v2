@@ -92,6 +92,7 @@ Proof: run unit | ✓ C24 invalid account limit fails with the variable name
 
 **C25** - The ledger module and the API app both refuse to start with an invalid `ACCOUNT_LIMIT` (AC S4.6)
 Proof: run unit | ✓ C25 the app fails to start with an invalid account limit
+Proof: run unit | ✓ C25 createLedgerRouters fails to start with an invalid account limit
 
 **C26** - The development setup sets the limit to 5 and the production setup does not set it: `.env.example` and `docker-compose.dev.yml` carry `ACCOUNT_LIMIT` 5, `docker-compose.prd.yml` and `docker-compose.yml` do not mention it (AC S4.7)
 Proof: `grep -q '^ACCOUNT_LIMIT=5$' .env.example && [ "$(grep -c 'ACCOUNT_LIMIT: "5"' docker-compose.dev.yml)" -ge 1 ] && ! grep -q ACCOUNT_LIMIT docker-compose.prd.yml docker-compose.yml`

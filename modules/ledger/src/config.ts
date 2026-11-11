@@ -6,12 +6,28 @@
 
 export interface LedgerConfig {
   dbPath: string;
+  /** The most accounts one user may have. A system setting, never user input. */
+  accountLimit: number;
+}
+
+const DEFAULT_ACCOUNT_LIMIT = 99;
+
+function parseAccountLimit(raw: string | undefined): number {
+  if (raw === undefined) return DEFAULT_ACCOUNT_LIMIT;
+
+  const limit = Number(raw);
+  if (!/^[1-9][0-9]*$/.test(raw) || !Number.isSafeInteger(limit)) {
+    throw new Error(`ACCOUNT_LIMIT must be a whole number of at least 1, got "${raw}"`);
+  }
+  return limit;
 }
 
 export function getLedgerConfig(): LedgerConfig {
   const dbPath = process.env.DB_PATH || './data/capital-care.db';
+  const accountLimit = parseAccountLimit(process.env.ACCOUNT_LIMIT);
 
   return {
     dbPath,
+    accountLimit,
   };
 }
