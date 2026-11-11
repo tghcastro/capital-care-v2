@@ -15,8 +15,10 @@ const DEFAULT_ACCOUNT_LIMIT = 99;
 function parseAccountLimit(raw: string | undefined): number {
   if (raw === undefined) return DEFAULT_ACCOUNT_LIMIT;
 
-  const limit = Number(raw);
-  if (!/^[1-9][0-9]*$/.test(raw) || !Number.isSafeInteger(limit)) {
+  // Surrounding whitespace is ignored; leading zeros are fine ("05" is 5).
+  const trimmed = raw.trim();
+  const limit = Number(trimmed);
+  if (!/^[0-9]+$/.test(trimmed) || !Number.isSafeInteger(limit) || limit < 1) {
     throw new Error(`ACCOUNT_LIMIT must be a whole number of at least 1, got "${raw}"`);
   }
   return limit;

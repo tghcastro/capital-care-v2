@@ -29,6 +29,7 @@ Proof: run unit | ✓ C5 PATCH /accounts/:id renames and keeps id userId created
 
 **C6** - Renaming an account to its own name returns success: `Cash` → `Cash`, and `cash` → `Cash` on the same account saves `Cash` (AC S1.5)
 Proof: run unit | ✓ C6 rename to its own name or only its casing succeeds
+Proof: run unit | ✓ C6 PATCH to its own name or only its casing succeeds over HTTP
 
 **C7** - PATCH with no `name` or an empty `name` returns `400` and leaves the account unchanged: `{}` → `400`, `{ "name": "" }` → `400` (AC S1.6)
 Proof: run unit | ✓ C7 PATCH without a usable name returns 400 and changes nothing
@@ -41,10 +42,10 @@ Proof: run unit | ✓ C8 name rule rejects a missing empty or blank name
 **C9** - The length bound is 30: 30 characters accepted, 31 rejected with a message naming the maximum (AC S2.2)
 Proof: run unit | ✓ C9 name rule accepts 30 characters and rejects 31
 
-**C10** - Only letters of any language, digits and spaces are accepted: `Bank-A`, `Card #2`, `Money 💰`, `a_b`, `a.b`, a tab inside the name are rejected; `Conta Poupança`, `Cartão 2`, `Σ Bank` are accepted (AC S2.3)
+**C10** - Only letters of any language, digits and spaces are accepted: `Bank-A`, `Card #2`, `Money 💰`, `a_b`, `a.b`, a tab inside the name are rejected; `Conta Poupança`, `Cartão 2`, `Σ Bank`, and names in scripts that need combining marks (`नमस्ते`, `สวัสดี`, `שָׁלוֹם`) are accepted (AC S2.3)
 Proof: run unit | ✓ C10 name rule accepts letters digits and spaces only
 
-**C11** - Leading and trailing spaces are trimmed before validating and saving: `"  Cash  "` is saved as `"Cash"`; a name of 30 characters plus surrounding spaces is accepted; 31 characters plus surrounding spaces is rejected (AC S2.4)
+**C11** - Leading and trailing spaces are trimmed before validating and saving: `"  Cash  "` is saved as `"Cash"`; a name of 30 characters plus surrounding spaces is accepted; 31 characters plus surrounding spaces is rejected; a name typed with a combining accent is saved in composed form, and length counts characters after that (30 decomposed `é`, 30 astral-plane letters accepted; 31 rejected) (AC S2.4)
 Proof: run unit | ✓ C11 name is trimmed before the rules apply
 
 **C12** - POST and PATCH with an invalid name return `400` with a `detail` naming the broken rule, and nothing is saved (AC S2.1-S2.3)
@@ -52,7 +53,7 @@ Proof: run unit | ✓ C12 invalid names return 400 with the rule and save nothin
 
 ### S3 - Names are unique per user, ignoring case
 
-**C13** - Creating an account whose name matches one of the user's own ignoring case is rejected with a name-taken conflict: `Cash` then `cash`, `Poupança` then `POUPANÇA`; `Cash` then `Cash 2` is accepted (AC S3.1)
+**C13** - Creating an account whose name matches one of the user's own ignoring case is rejected with a name-taken conflict: `Cash` then `cash`, `Poupança` then `POUPANÇA`; `Cash` then `Cash 2` is accepted; `Poupança` typed with a combining cedilla collides with the composed one (AC S3.1)
 Proof: run unit | ✓ C13 create rejects a name taken ignoring case
 
 **C14** - Renaming to a name another of the user's accounts has, ignoring case, is rejected and both accounts stay unchanged (AC S3.2)
@@ -84,10 +85,10 @@ Proof: run unit | ✓ C21 the limit counts each user separately
 **C22** - With limit 5 and a user holding 7 accounts: the list returns all 7, create is rejected, create is still rejected at exactly 5, and create succeeds at 4 (AC S4.4)
 Proof: run unit | ✓ C22 a lowered limit keeps existing accounts and blocks new ones
 
-**C23** - `ACCOUNT_LIMIT` unset gives 99; `"5"` gives 5; `"1"` gives 1; `"99"` gives 99 (AC S4.5)
+**C23** - `ACCOUNT_LIMIT` unset gives 99; `"5"` gives 5; `"1"` gives 1; `"99"` gives 99; surrounding spaces are ignored (`" 5"`, `"5 "` give 5) and leading zeros are fine (`"05"` gives 5) (AC S4.5)
 Proof: run unit | ✓ C23 account limit defaults to 99 and reads valid values
 
-**C24** - A set but invalid `ACCOUNT_LIMIT` makes configuration loading throw an error naming `ACCOUNT_LIMIT`: `"0"`, `"-3"`, `"2.5"`, `"abc"`, `""`, `"5abc"`, `"1e1"` (AC S4.6)
+**C24** - A set but invalid `ACCOUNT_LIMIT` makes configuration loading throw an error naming `ACCOUNT_LIMIT`: `"0"`, `"-3"`, `"2.5"`, `"abc"`, `""`, `"   "`, `"5abc"`, `"1e1"`, `"+5"`, `"0x5"`, `"00"` (AC S4.6)
 Proof: run unit | ✓ C24 invalid account limit fails with the variable name
 
 **C25** - The ledger module and the API app both refuse to start with an invalid `ACCOUNT_LIMIT` (AC S4.6)
@@ -111,7 +112,7 @@ Proof: run unit | ✓ C29 PATCH and DELETE of a missing account return 404
 **C30** - PATCH and DELETE of another user's account return `404`, never `403`, and the account is unchanged (AC S5.3)
 Proof: run unit | ✓ C30 another user account returns 404 for PATCH and DELETE
 
-**C31** - A request without `X-User-Id` returns `401` on POST, GET, PATCH and DELETE (AC S5.4)
+**C31** - A request without `X-User-Id`, or with an empty or blank one, returns `401` on POST, GET, PATCH and DELETE (AC S5.4)
 Proof: run unit | ✓ C31 a request without X-User-Id returns 401
 
 **C32** - The API app serves `/accounts`: a POST with a user header to the app returns `201` (Shape hop 4)

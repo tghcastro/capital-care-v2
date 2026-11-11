@@ -53,7 +53,7 @@ export function createAccountRouter(service: AccountService): Router {
 
 function currentUserId(req: Request, res: Response): string | null {
   const header = req.headers['x-user-id'];
-  if (typeof header !== 'string' || header.length === 0) {
+  if (typeof header !== 'string' || header.trim().length === 0) {
     res.status(401).json({ type: 'UnauthorizedError', detail: 'User ID required' });
     return null;
   }

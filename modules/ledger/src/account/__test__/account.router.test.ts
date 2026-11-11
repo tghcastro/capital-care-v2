@@ -116,6 +116,23 @@ describe('Account routes', () => {
     expect(await names()).toEqual(['Wallet']);
   });
 
+  it('C6 PATCH to its own name or only its casing succeeds over HTTP', async () => {
+    const created = (await create('Cash')).body;
+
+    const same = await call('PATCH', `/accounts/${created.id}`, { body: { name: 'Cash' } });
+    expect(same.status).toBe(200);
+    expect(same.body.name).toBe('Cash');
+
+    const lower = await call('PATCH', `/accounts/${created.id}`, { body: { name: 'cash' } });
+    expect(lower.status).toBe(200);
+    expect(lower.body.name).toBe('cash');
+    expect(await names()).toEqual(['cash']);
+
+    const padded = await call('PATCH', `/accounts/${created.id}`, { body: { name: '  CASH  ' } });
+    expect(padded.status).toBe(200);
+    expect(padded.body.name).toBe('CASH');
+  });
+
   it('C7 PATCH without a usable name returns 400 and changes nothing', async () => {
     const created = (await create('Cash')).body;
 
@@ -258,6 +275,11 @@ describe('Account routes', () => {
     ];
 
     expect(replies.map((r) => r.status)).toEqual([401, 401, 401, 401]);
+
+    for (const user of ['', '   ']) {
+      expect((await call('GET', '/accounts', { user })).status).toBe(401);
+      expect((await call('POST', '/accounts', { user, body: { name: 'Bank A' } })).status).toBe(401);
+    }
     expect(await names()).toEqual(['Cash']);
   });
 });

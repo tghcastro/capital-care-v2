@@ -47,6 +47,11 @@ describe('Account uniqueness', () => {
     service.createAccount({ userId: 'u1', name: 'Poupança' });
     expect(() => service.createAccount({ userId: 'u1', name: 'POUPANÇA' })).toThrow(ConflictError);
 
+    // The same name typed decomposed (c + combining cedilla) is the same name.
+    expect(() => service.createAccount({ userId: 'u1', name: 'Poupanc\u0327a' })).toThrow(
+      ConflictError,
+    );
+
     expect(service.createAccount({ userId: 'u1', name: 'Cash 2' }).name).toBe('Cash 2');
     expect(service.listAccounts('u1')).toHaveLength(3);
   });

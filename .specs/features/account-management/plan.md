@@ -176,6 +176,9 @@ A name is 1 to 30 characters: letters of any language, digits and spaces.
 | Names are trimmed | leading and trailing spaces removed before validation and saving | a name that looks the same must not be a different one | n |
 | Case-insensitive alphabetical order | `"bank"` sorts with `"Bank"`, not after `"Zed"` | the user sees names, not byte order | n |
 | Alphabetical order for accented letters | letters sort by their base letter, ignoring case and accents: `"Ágata"` sorts between `"Abc"` and `"Bank"` | the user chose Unicode letters, so "alphabetical" must work for them | n |
+| `ACCOUNT_LIMIT` format | surrounding whitespace is ignored and leading zeros are fine; anything else that is not a whole number of at least 1 stops startup | a hand-edited `.env` often has stray spaces, and `05` is unambiguously 5; the Verifier found the plan silent on this | n |
+| Letters need combining marks | names may contain combining marks as part of a letter | otherwise Devanagari, Thai and Hebrew with vowel marks would be rejected, contradicting "letters of any language" | n |
+| Blank `X-User-Id` | an empty or whitespace-only header is `401`, like an absent one | a blank id would otherwise be accepted as a user | n |
 | Limit check is not racy | the count and the insert run in one synchronous step in a single process, so two requests cannot both pass the check | the repository driver is synchronous and the service has no `await` between them | n |
 | Error body shape | `{ type, detail }` as the Category routes return, not full RFC 7807 | consistency with the code that exists today | n |
 

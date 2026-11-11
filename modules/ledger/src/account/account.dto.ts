@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 export const ACCOUNT_NAME_MAX_LENGTH = 30;
 
-const ACCOUNT_NAME_CHARACTERS = /^[\p{L}\p{Nd} ]+$/u;
+// \p{M}: combining marks, which many scripts need to spell a letter (Devanagari, Thai, Hebrew).
+const ACCOUNT_NAME_CHARACTERS = /^[\p{L}\p{M}\p{Nd} ]+$/u;
 
 /**
  * An account name: trimmed, 1 to 30 characters, letters of any language, digits and spaces.
