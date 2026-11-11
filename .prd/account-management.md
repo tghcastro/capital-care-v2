@@ -36,6 +36,7 @@ Unchanged: Categories. This feature does not alter them.
 | Name empty, missing, over 30 chars, or with characters other than letters, digits, spaces | Rejected, nothing saved | A clear message naming the rule broken |
 | Name already used (any case) | Rejected, nothing saved | A message that the name is taken |
 | Create when the number of accounts already equals the system limit (5 in development, 99 in production) | Rejected, nothing saved (hard stop) | A message that the maximum number of accounts is reached, stating the limit |
+| System limit lowered below the number of existing accounts | Existing accounts are kept; creating new ones is rejected until the count falls under the limit | The existing accounts, and the limit message when trying to create |
 | Rename | Saved if the new name passes all name rules; renaming to its own name is accepted | The updated name |
 | Update or delete an account that does not exist | Nothing changes | A not-found message |
 | Delete an account | Removed permanently | It is gone from the list |
@@ -44,5 +45,4 @@ Unchanged: Categories. This feature does not alter them.
 
 ## Open questions
 
-1. If the system limit is later lowered below the number of accounts that already exist - default taken: existing accounts are kept, and creating new ones is rejected until the count falls under the limit.
-2. Whether the web site should confirm before deleting an account - not decided here; the API deletes immediately, and this is discussed when the web interface phase starts.
+1. Whether the web site should confirm before deleting an account - not decided here; the API deletes immediately, and this is discussed when the web interface phase starts.
