@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { createCategorySchema, updateCategorySchema } from './category.dto.js';
 import type { CategoryService } from './category.service.js';
+import type { Category } from './category.types.js';
 import { ValidationError, ConflictError, NotFoundError } from '../shared/errors.js';
 
 export function createCategoryRouter(service: CategoryService): Router {
@@ -129,7 +130,7 @@ export function createCategoryRouter(service: CategoryService): Router {
   return router;
 }
 
-function serializeCategory(category: any) {
+function serializeCategory(category: Category) {
   return {
     id: category.id,
     userId: category.userId,

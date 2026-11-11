@@ -4,13 +4,17 @@ import type { Category } from '../category.types.js';
 
 export class MockCategoryRepository implements ICategoryRepository {
   private categories: Map<string, Category> = new Map();
-  private callTracker = {
-    create: [] as any[],
-    getById: [] as any[],
-    listByUser: [] as any[],
-    update: [] as any[],
-    delete: [] as any[],
-  };
+  private callTracker = MockCategoryRepository.emptyCalls();
+
+  private static emptyCalls() {
+    return {
+      create: [] as { userId: string; name: string; description: string | null }[],
+      getById: [] as string[],
+      listByUser: [] as { userId: string; sort: 'name' | '-name' }[],
+      update: [] as { id: string; data: { name?: string; description?: string | null } }[],
+      delete: [] as string[],
+    };
+  }
 
   create(data: {
     userId: string;
@@ -92,9 +96,7 @@ export class MockCategoryRepository implements ICategoryRepository {
 
   reset() {
     this.categories.clear();
-    Object.keys(this.callTracker).forEach((key) => {
-      (this.callTracker as any)[key] = [];
-    });
+    this.callTracker = MockCategoryRepository.emptyCalls();
   }
 
   addCategory(category: Category) {

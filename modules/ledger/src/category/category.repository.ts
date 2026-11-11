@@ -52,18 +52,12 @@ export class CategoryRepository implements ICategoryRepository {
   }
 
   listByUser(userId: string, sort: 'name' | '-name' = 'name'): Category[] {
-    let query = this.db
+    const rows = this.db
       .select()
       .from(categoryTable)
-      .where(eq(categoryTable.userId, userId)) as any;
-
-    if (sort === 'name') {
-      query = query.orderBy(categoryTable.name);
-    } else if (sort === '-name') {
-      query = query.orderBy(desc(categoryTable.name));
-    }
-
-    const rows = query.all() as any[];
+      .where(eq(categoryTable.userId, userId))
+      .orderBy(sort === '-name' ? desc(categoryTable.name) : categoryTable.name)
+      .all();
     return rows.map((row) => this.mapToDomain(row));
   }
 
@@ -75,7 +69,7 @@ export class CategoryRepository implements ICategoryRepository {
     },
   ): Category | null {
     const now = Date.now();
-    const updateData: any = { updatedAt: now };
+    const updateData: Partial<typeof categoryTable.$inferInsert> = { updatedAt: now };
 
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
@@ -96,8 +90,8 @@ export class CategoryRepository implements ICategoryRepository {
       .select({ count: count() })
       .from(categoryTable)
       .where(and(eq(categoryTable.userId, userId), eq(categoryTable.name, name)))
-      .get() as any;
-    return (result?.count ?? 0) as number;
+      .get();
+    return result?.count ?? 0;
   }
 
   hasTransactions(_categoryId: string): boolean {
@@ -105,7 +99,7 @@ export class CategoryRepository implements ICategoryRepository {
     return false;
   }
 
-  private mapToDomain(row: any): Category {
+  private mapToDomain(row: typeof categoryTable.$inferSelect): Category {
     return {
       id: row.id,
       userId: row.userId,

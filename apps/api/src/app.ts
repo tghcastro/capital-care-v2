@@ -27,7 +27,7 @@ export function createApp(): express.Express {
   // Error handling middleware (last in the chain)
   app.use(
     (
-      err: any,
+      err: Error & { statusCode?: number },
       _req: express.Request,
       res: express.Response,
       _next: express.NextFunction,
