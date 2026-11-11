@@ -1,4 +1,4 @@
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, desc } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import { categoryTable } from './category.entity.js';
@@ -60,7 +60,7 @@ export class CategoryRepository implements ICategoryRepository {
     if (sort === 'name') {
       query = query.orderBy(categoryTable.name);
     } else if (sort === '-name') {
-      query = query.orderBy((t: any) => ({ desc: t.name }));
+      query = query.orderBy(desc(categoryTable.name));
     }
 
     const rows = query.all() as any[];
