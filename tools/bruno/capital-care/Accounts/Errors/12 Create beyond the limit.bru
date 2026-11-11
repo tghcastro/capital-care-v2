@@ -1,0 +1,70 @@
+meta {
+  name: 12 Create beyond the limit
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/accounts
+  body: json
+  auth: none
+}
+
+headers {
+  X-User-Id: {{otherUserId}}
+}
+
+body:json {
+  {
+    "name": "Over the limit"
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.type: eq ConflictError
+  res.body.detail: contains accounts has been reached
+}
+
+script:pre-request {
+  // Fills otherUserId's accounts up to the system limit (5 in DEV, 99 in PRD), so the request
+  // above hits it. Everything created here is deleted again afterwards.
+  const axios = require("axios");
+  const baseUrl = bru.getEnvVar("baseUrl");
+  const headers = { "X-User-Id": bru.getEnvVar("otherUserId") };
+  const created = [];
+
+  for (let i = 0; i < 500; i++) {
+    try {
+      const reply = await axios.post(
+        baseUrl + "/accounts",
+        { name: "Fill " + Date.now() + " " + i },
+        { headers: headers }
+      );
+      created.push(reply.data.id);
+    } catch (err) {
+      // 409 means the limit is reached; anything else is a real problem.
+      if (err.response && err.response.status === 409) break;
+      throw err;
+    }
+  }
+
+  bru.setVar("fillIds", JSON.stringify(created));
+}
+
+script:post-response {
+  const axios = require("axios");
+  const baseUrl = bru.getEnvVar("baseUrl");
+  const headers = { "X-User-Id": bru.getEnvVar("otherUserId") };
+  const ids = JSON.parse(bru.getVar("fillIds") || "[]");
+
+  if (res.status === 201) ids.push(res.body.id);
+
+  for (const id of ids) {
+    try {
+      await axios.delete(baseUrl + "/accounts/" + id, { headers: headers });
+    } catch (err) {
+      // Already gone: nothing left to clean up.
+    }
+  }
+}

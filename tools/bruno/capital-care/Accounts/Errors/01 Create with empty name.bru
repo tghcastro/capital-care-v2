@@ -1,0 +1,23 @@
+meta {
+  name: 01 Create with empty name
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accounts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": ""
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: eq name is required
+}

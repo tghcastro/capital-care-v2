@@ -1,0 +1,31 @@
+meta {
+  name: 02 List accounts
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accounts
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.accounts: isArray
+}
+
+tests {
+  test("includes the account created in step 01", function() {
+    const ids = res.body.accounts.map(function(a) { return a.id; });
+    expect(ids).to.include(bru.getVar("accountId"));
+  });
+
+  test("is sorted alphabetically, ignoring case", function() {
+    const names = res.body.accounts.map(function(a) { return a.name; });
+    const sorted = [...names].sort(function(a, b) {
+      return a.localeCompare(b, undefined, { sensitivity: "base" });
+    });
+    expect(names).to.deep.equal(sorted);
+  });
+}

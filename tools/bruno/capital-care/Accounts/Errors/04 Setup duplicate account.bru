@@ -1,0 +1,26 @@
+meta {
+  name: 04 Setup duplicate account
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accounts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Duplicate {{$timestamp}}"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("duplicateId", res.body.id);
+  bru.setVar("duplicateNameUpper", res.body.name.toUpperCase());
+}
