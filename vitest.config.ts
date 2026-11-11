@@ -1,6 +1,13 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    // Tests of apps/api import the ledger module from source, so they never need a prior build.
+    alias: {
+      '@capital-care/ledger': fileURLToPath(new URL('./modules/ledger/src/index.ts', import.meta.url)),
+    },
+  },
   test: {
     environment: 'node',
     globals: true,

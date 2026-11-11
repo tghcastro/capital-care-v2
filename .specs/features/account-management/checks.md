@@ -1,7 +1,7 @@
 # Account Management checks
 
 Build: `pnpm type-check; pnpm build`
-Run unit: `pnpm build && pnpm exec vitest run modules/ledger/src/account modules/ledger/src/__test__ apps/api/test --reporter=verbose 2>&1`
+Run unit: `pnpm exec vitest run modules/ledger/src/account modules/ledger/src/__test__ apps/api/test --reporter=verbose 2>&1`
 Plan: `.specs/features/account-management/plan.md`
 
 33 checks in 5 slices · 3 one-way doors · 0 open, of which 0 block
