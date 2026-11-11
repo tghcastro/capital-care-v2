@@ -77,8 +77,8 @@ describe('Account limit', () => {
     createMany(service, 'u1', 5);
     expect(() => service.createAccount({ userId: 'u1', name: 'Extra' })).toThrow(ConflictError);
 
-    const first = service.listAccounts('u1')[0]!;
-    service.deleteAccount(first.id, 'u1');
+    const [first] = service.listAccounts('u1');
+    service.deleteAccount(first?.id ?? '', 'u1');
 
     expect(service.createAccount({ userId: 'u1', name: 'Extra' }).name).toBe('Extra');
   });
@@ -100,12 +100,12 @@ describe('Account limit', () => {
     expect(() => lowered.createAccount({ userId: 'u1', name: 'Extra' })).toThrow(ConflictError);
 
     const accounts = lowered.listAccounts('u1');
-    lowered.deleteAccount(accounts[0]!.id, 'u1');
-    lowered.deleteAccount(accounts[1]!.id, 'u1');
+    lowered.deleteAccount(accounts[0]?.id ?? '', 'u1');
+    lowered.deleteAccount(accounts[1]?.id ?? '', 'u1');
     expect(lowered.listAccounts('u1')).toHaveLength(5);
     expect(() => lowered.createAccount({ userId: 'u1', name: 'Extra' })).toThrow(ConflictError);
 
-    lowered.deleteAccount(accounts[2]!.id, 'u1');
+    lowered.deleteAccount(accounts[2]?.id ?? '', 'u1');
     expect(lowered.createAccount({ userId: 'u1', name: 'Extra' }).name).toBe('Extra');
   });
 });

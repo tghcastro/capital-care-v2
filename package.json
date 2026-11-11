@@ -19,11 +19,12 @@
     "db:generate": "pnpm --filter @capital-care/ledger db:generate"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.1.0",
-    "@typescript-eslint/parser": "^8.1.0",
+    "@eslint/js": "^10.0.1",
     "eslint": "^10.14.0",
+    "globals": "^17.14.0",
     "prettier": "^3.1.1",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
   },
   "workspaces": [

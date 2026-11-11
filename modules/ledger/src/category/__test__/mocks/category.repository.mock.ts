@@ -81,7 +81,7 @@ export class MockCategoryRepository implements ICategoryRepository {
     ).length;
   }
 
-  hasTransactions(categoryId: string): boolean {
+  hasTransactions(_categoryId: string): boolean {
     return false;
   }
 

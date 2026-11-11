@@ -39,20 +39,16 @@ export function createCategoryRouter(service: CategoryService): Router {
   });
 
   router.get('/', (req: Request, res: Response) => {
-    try {
-      const userIdHeader = req.headers['x-user-id'];
-      if (typeof userIdHeader !== 'string') {
-        return res.status(401).json({ type: 'UnauthorizedError', detail: 'User ID required' });
-      }
-      const userId: string = userIdHeader;
-
-      const sort = (req.query.sort as string) || 'name';
-      const categories = service.listCategories(userId, sort);
-
-      return res.status(200).json({ categories: categories.map(serializeCategory) });
-    } catch (err) {
-      throw err;
+    const userIdHeader = req.headers['x-user-id'];
+    if (typeof userIdHeader !== 'string') {
+      return res.status(401).json({ type: 'UnauthorizedError', detail: 'User ID required' });
     }
+    const userId: string = userIdHeader;
+
+    const sort = (req.query.sort as string) || 'name';
+    const categories = service.listCategories(userId, sort);
+
+    return res.status(200).json({ categories: categories.map(serializeCategory) });
   });
 
   router.get('/:id', (req: Request, res: Response) => {

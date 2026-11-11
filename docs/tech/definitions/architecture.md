@@ -82,4 +82,4 @@ capital-care/
 
 ## Tooling
 
-- **Linting & Formatting:** ESLint + Prettier.
+- **Linting & Formatting:** ESLint (flat config in `eslint.config.js`, `typescript-eslint` recommended + strict, TypeScript files only, no type-aware rules) + Prettier. `pnpm lint` runs in CI.

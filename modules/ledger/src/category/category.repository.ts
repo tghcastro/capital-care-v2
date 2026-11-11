@@ -100,7 +100,7 @@ export class CategoryRepository implements ICategoryRepository {
     return (result?.count ?? 0) as number;
   }
 
-  hasTransactions(categoryId: string): boolean {
+  hasTransactions(_categoryId: string): boolean {
     // Placeholder: future implementation when transactions reference categories
     return false;
   }
