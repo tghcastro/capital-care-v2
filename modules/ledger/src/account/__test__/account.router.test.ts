@@ -43,9 +43,21 @@ afterEach(async () => {
   sqlite.close();
 });
 
+// Union of the JSON shapes the account routes return (account, list, or problem details).
+interface ReplyBody {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  accounts: { name: string }[];
+  type: string;
+  detail: string;
+}
+
 interface Reply {
   status: number;
-  body: any;
+  body: ReplyBody;
 }
 
 async function call(
@@ -65,12 +77,15 @@ async function call(
   });
   const text = await response.text();
   const isJson = (response.headers.get('content-type') ?? '').includes('application/json');
-  return { status: response.status, body: text && isJson ? JSON.parse(text) : text || null };
+  return {
+    status: response.status,
+    body: (text && isJson ? JSON.parse(text) : text || null) as ReplyBody,
+  };
 }
 
 const create = (name: string, user?: string) => call('POST', '/accounts', { body: { name }, ...(user ? { user } : {}) });
 const names = async (user?: string) =>
-  (await call('GET', '/accounts', user ? { user } : {})).body.accounts.map((a: any) => a.name);
+  (await call('GET', '/accounts', user ? { user } : {})).body.accounts.map((a) => a.name);
 
 describe('Account routes', () => {
   it('C1 POST /accounts returns 201 with the account fields', async () => {
