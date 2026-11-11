@@ -2,8 +2,12 @@
 # container stops or restarts, so every `up` starts from an empty database.
 # uid/gid match the non-root `node` user in the image (UID 1000) so it can
 # create the database file.
+# DEV host port: API_PORT (default 3000). The `api` and `api-latest` services
+# both publish this port, so they cannot run at the same time.
 services:
   api:
+    ports:
+      - "${API_PORT:-3000}:3000"
     environment:
       NODE_ENV: development
     tmpfs:
@@ -13,7 +17,8 @@ services:
   # building locally. Same DEV behavior as `api` (tmpfs database). Not started
   # by a plain `up`; start it explicitly:
   #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up api-latest
-  # Listens on API_LATEST_PORT (default 3001) so it can run next to `api`.
+  # Publishes the same host port as `api` (API_PORT, default 3000), so `api`
+  # and `api-latest` cannot run at the same time. Stop one before starting the other.
   api-latest:
     image: ghcr.io/tghcastro/capital-care-v2:latest
     pull_policy: always
@@ -21,7 +26,7 @@ services:
       - published
     init: true
     ports:
-      - "${API_LATEST_PORT:-3001}:3000"
+      - "${API_PORT:-3000}:3000"
     env_file:
       - path: .env
         required: false

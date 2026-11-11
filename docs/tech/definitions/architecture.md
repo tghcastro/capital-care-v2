@@ -78,6 +78,7 @@ capital-care/
 ## Environment Configuration
 
 - All configuration (DB file path/connection string, future JWT secret, etc.) comes from a `.env` file — never hardcoded. Commit a `.env.example` template; the actual `.env` stays gitignored.
+- **Environment ports:** DEV host port `3000`, PRD host port `8000`. The container always listens on `3000` internally. The host port is set via `API_PORT` in the Compose overrides (`docker-compose.dev.yml`, `docker-compose.prd.yml`).
 
 ## Tooling
 

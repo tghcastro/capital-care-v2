@@ -1,7 +1,9 @@
 # Base Compose definition for the Capital Care API.
-# Environment-specific behavior lives in the overrides:
-#   DEV: docker-compose.dev.yml  (database exists only while the container runs)
-#   PRD: docker-compose.prd.yml  (database persists in a named volume)
+# Environment-specific behavior, including the host port, lives in the overrides:
+#   DEV: docker-compose.dev.yml  (host port 3000; database exists only while the container runs)
+#   PRD: docker-compose.prd.yml  (host port 8000; database persists in a named volume)
+# The container always listens on 3000 internally. Host ports are set in the overrides
+# (not here) so that Compose does not merge duplicate port mappings.
 #
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -14,8 +16,6 @@ services:
       target: runtime
     image: capital-care-api:local
     init: true
-    ports:
-      - "${API_PORT:-3000}:3000"
     env_file:
       - path: .env
         required: false
