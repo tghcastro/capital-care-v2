@@ -14,7 +14,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "type-check": "tsc --noEmit",
-    "test": "./run_tests.sh",
+    "test": "vitest run",
     "db:migrate": "node apps/api/dist/migrate.js",
     "db:generate": "pnpm --filter @capital-care/ledger db:generate"
   },
