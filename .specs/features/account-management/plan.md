@@ -1,6 +1,6 @@
 # Account Management
 
-**Approved**: pending - waiting for the user's review
+**Approved**: 2026-11-11 - user: "Plan is approved"
 
 ## Problem
 
@@ -175,6 +175,7 @@ A name is 1 to 30 characters: letters of any language, digits and spaces.
 | PATCH needs a `name` | `{}` or an empty name is `400`, not a no-op | the only editable field is the name, so there is nothing else to update | n |
 | Names are trimmed | leading and trailing spaces removed before validation and saving | a name that looks the same must not be a different one | n |
 | Case-insensitive alphabetical order | `"bank"` sorts with `"Bank"`, not after `"Zed"` | the user sees names, not byte order | n |
+| Alphabetical order for accented letters | letters sort by their base letter, ignoring case and accents: `"Ágata"` sorts between `"Abc"` and `"Bank"` | the user chose Unicode letters, so "alphabetical" must work for them | n |
 | Limit check is not racy | the count and the insert run in one synchronous step in a single process, so two requests cannot both pass the check | the repository driver is synchronous and the service has no `await` between them | n |
 | Error body shape | `{ type, detail }` as the Category routes return, not full RFC 7807 | consistency with the code that exists today | n |
 
