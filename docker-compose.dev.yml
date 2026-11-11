@@ -8,3 +8,27 @@ services:
       NODE_ENV: development
     tmpfs:
       - /app/data:uid=1000,gid=1000,mode=0755
+
+  # DEV: runs the latest published image (main build from GHCR) instead of
+  # building locally. Same DEV behavior as `api` (tmpfs database). Not started
+  # by a plain `up`; start it explicitly:
+  #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up api-latest
+  # Listens on API_LATEST_PORT (default 3001) so it can run next to `api`.
+  api-latest:
+    image: ghcr.io/tghcastro/capital-care-v2:latest
+    pull_policy: always
+    profiles:
+      - published
+    init: true
+    ports:
+      - "${API_LATEST_PORT:-3001}:3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      DB_PATH: /app/data/capital-care.db
+    tmpfs:
+      - /app/data:uid=1000,gid=1000,mode=0755
+    restart: "no"
