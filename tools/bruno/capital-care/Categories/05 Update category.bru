@@ -1,0 +1,23 @@
+meta {
+  name: 05 Update category
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/categories/{{categoryId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "Food, household items, and groceries"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{categoryId}}
+  res.body.description: eq Food, household items, and groceries
+}

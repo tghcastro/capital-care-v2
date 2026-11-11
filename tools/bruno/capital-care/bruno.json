@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Capital Care",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

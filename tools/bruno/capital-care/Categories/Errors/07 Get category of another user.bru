@@ -1,0 +1,20 @@
+meta {
+  name: 07 Get category of another user
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/categories/{{ownedId}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-User-Id: {{otherUserId}}
+}
+
+assert {
+  res.status: eq 404
+  res.body.type: eq NotFoundError
+}

@@ -1,0 +1,24 @@
+meta {
+  name: 01 Create without name
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "",
+    "description": "oops"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: eq name is required
+}

@@ -1,0 +1,26 @@
+meta {
+  name: 02 Setup duplicate category
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Duplicate-{{$timestamp}}"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("duplicateId", res.body.id);
+  bru.setVar("duplicateName", res.body.name);
+}
