@@ -52,6 +52,6 @@ Proof: run unit | ✓ modules/ledger/src/category/__test__/category.repository.s
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** Verifier at `c25903e` (fix commit) - sent, not yet returned
+- **Dispatched:** Verifier at `c25903e` (fix commit) - returned PASS, no findings
 - **Boundary:** C1-C4 closed at `c25903e`
 - **Abandoned:** none
