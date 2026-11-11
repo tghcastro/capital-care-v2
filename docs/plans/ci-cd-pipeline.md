@@ -54,7 +54,7 @@ Triggers: `pull_request` (to `main`), `push` to `main`, `push` of tags matching 
 - `pnpm type-check`
 - `pnpm build`
 - `pnpm --filter @capital-care/ledger exec vitest run`
-- Do **not** call `./run_tests.sh`: it contains a hard-coded path from a developer's Mac and cannot work in CI.
+- CI calls vitest directly; the root `pnpm test` script runs `vitest run` over the whole workspace.
 
 **Job `security`** (`needs: test`)
 - Same setup and install as `test`.
