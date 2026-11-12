@@ -291,7 +291,7 @@ Feature: Stopping and deleting transactions
   Scenario: Stopping instalments
     Given I have recorded "New car" starting 2026-11-15 as instalment 97 of 504
     When I stop "New car" from 2027-03-15
-    Then February 2027 shows "New car" as instalment 101 of 504
+    Then February 2027 shows "New car" as instalment 100 of 504
     And March 2027 shows nothing
 
   Scenario: A mistake in the past can still be removed
