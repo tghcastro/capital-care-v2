@@ -1,7 +1,7 @@
 # Transactions verification
 
 **Verdict**: PASS
-**Proofs**: `proofs.md` at b3837e6
+**Proofs**: `proofs.md` at 2c2c05d
 **Verifier**: independent sub-agent (author != verifier)
 
 Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.test.ts`, `D` = `transaction.dto.test.ts`, `H` = `transaction.schedule.test.ts`, `R` = `transaction.router.test.ts`, `P` = `transaction.repository.test.ts`, `A` = `apps/api/test/transactions.component.test.ts`.
