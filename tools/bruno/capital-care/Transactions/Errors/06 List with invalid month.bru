@@ -1,0 +1,17 @@
+meta {
+  name: 06 List with invalid month
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/transactions?month=2026-13
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: contains month
+}

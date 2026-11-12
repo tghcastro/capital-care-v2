@@ -1,0 +1,28 @@
+meta {
+  name: 02 Create with invalid amount
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-11-05",
+    "description": "Condo fees {{$timestamp}}",
+    "categoryId": "any-category",
+    "accountId": "any-account",
+    "amount": "0",
+    "type": "debit"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: contains amount
+}

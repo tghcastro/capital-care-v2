@@ -1,0 +1,29 @@
+meta {
+  name: 09 Settle November occurrence
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/transactions/{{txMonthlyId}}/occurrences/2026-11-05/settlement
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "amount": "462.50"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq settled
+  res.body.date: eq 2026-11-05
+}
+
+tests {
+  test("amount is 462.5, written as a canonical string", function() {
+    expect(res.body.amount).to.equal("462.5");
+  });
+}

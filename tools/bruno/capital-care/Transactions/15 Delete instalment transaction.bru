@@ -1,0 +1,15 @@
+meta {
+  name: 15 Delete instalment transaction
+  type: http
+  seq: 15
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{txInstalmentId}}/occurrences/2026-11-15
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

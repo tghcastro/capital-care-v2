@@ -1,0 +1,37 @@
+meta {
+  name: 06 List November 2026
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/transactions?month=2026-11
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.occurrences: isArray
+}
+
+tests {
+  test("includes the three transactions, all as forecast", function() {
+    const mine = res.body.occurrences.filter(function(o) {
+      return [bru.getVar("txMonthlyId"), bru.getVar("txOneOffId"), bru.getVar("txInstalmentId")].includes(o.transactionId);
+    });
+    expect(mine.map(function(o) { return o.date; }).sort()).to.deep.equal(["2026-11-05", "2026-11-10", "2026-11-15"]);
+    mine.forEach(function(o) { expect(o.status).to.equal("forecast"); });
+  });
+
+  test("shows the instalment as 17 of 48", function() {
+    const loan = res.body.occurrences.find(function(o) { return o.transactionId === bru.getVar("txInstalmentId"); });
+    expect(loan.instalment).to.deep.equal({ number: 17, total: 48 });
+    expect(loan.recurrence).to.equal(null);
+  });
+
+  test("is ordered by date", function() {
+    const dates = res.body.occurrences.map(function(o) { return o.date; });
+    expect(dates).to.deep.equal([...dates].sort());
+  });
+}

@@ -1,0 +1,15 @@
+meta {
+  name: 18 Cleanup transaction
+  type: http
+  seq: 18
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{ownedTransactionId}}/occurrences/2026-11-05
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

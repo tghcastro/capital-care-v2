@@ -1,0 +1,15 @@
+meta {
+  name: 14 Delete one-off transaction
+  type: http
+  seq: 14
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{txOneOffId}}/occurrences/2026-11-10
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

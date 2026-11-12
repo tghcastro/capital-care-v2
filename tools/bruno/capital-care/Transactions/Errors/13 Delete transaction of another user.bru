@@ -1,0 +1,20 @@
+meta {
+  name: 13 Delete transaction of another user
+  type: http
+  seq: 13
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{ownedTransactionId}}/occurrences/2026-11-05
+  body: none
+  auth: none
+}
+
+headers {
+  X-User-Id: {{otherUserId}}
+}
+
+assert {
+  res.status: eq 404
+  res.body.type: eq NotFoundError
+}

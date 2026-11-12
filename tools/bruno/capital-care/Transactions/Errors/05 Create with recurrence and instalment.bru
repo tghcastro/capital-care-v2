@@ -1,0 +1,32 @@
+meta {
+  name: 05 Create with recurrence and instalment
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-11-05",
+    "description": "Condo fees {{$timestamp}}",
+    "categoryId": "any-category",
+    "accountId": "any-account",
+    "amount": "450.00",
+    "type": "debit",
+    "recurrence": "monthly",
+    "instalment": {
+      "number": 1,
+      "total": 10
+    }
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+}

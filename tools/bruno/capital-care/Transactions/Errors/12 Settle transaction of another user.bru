@@ -1,0 +1,24 @@
+meta {
+  name: 12 Settle transaction of another user
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/transactions/{{ownedTransactionId}}/occurrences/2026-11-05/settlement
+  body: json
+  auth: none
+}
+
+headers {
+  X-User-Id: {{otherUserId}}
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 404
+  res.body.type: eq NotFoundError
+}

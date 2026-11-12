@@ -1,0 +1,28 @@
+meta {
+  name: 03 Create with invalid date
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-02-30",
+    "description": "Condo fees {{$timestamp}}",
+    "categoryId": "any-category",
+    "accountId": "any-account",
+    "amount": "450.00",
+    "type": "debit"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: contains date
+}
