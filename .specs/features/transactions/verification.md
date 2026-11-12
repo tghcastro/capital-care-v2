@@ -1,7 +1,7 @@
 # Transactions verification
 
 **Verdict**: FAIL
-**Proofs**: `proofs.md` at d30f761
+**Proofs**: `proofs.md` at b3837e6
 **Verifier**: independent sub-agent (author != verifier)
 
 Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.test.ts`, `D` = `transaction.dto.test.ts`, `H` = `transaction.schedule.test.ts`, `R` = `transaction.router.test.ts`, `P` = `transaction.repository.test.ts`, `A` = `apps/api/test/transactions.component.test.ts`.
@@ -12,17 +12,17 @@ Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.t
 | --- | --- | --- |
 | C1 | `R` `C1 POST /transactions returns 201 with the transaction fields and a canonical amount` | yes (the response for a recurrence or an instalment is not asserted here; see findings) |
 | C2 | `S` `C2 a new transaction is a forecast even with a past date` | yes |
-| C3 | `D` `C3 type rule accepts receipt and debit only` | no - schema only: the `400` status and "nothing saved" are never asserted over POST; `"Debit"` and `"expense"` run on `transactionTypeSchema`, not on the create schema the route uses |
-| C4 | `D` `C4 amount rule accepts positive decimals within the bounds only`; `R` `C4 PATCH and settlement reject an invalid amount with 400 and change nothing` | no - POST `400` for a bad amount never asserted at a route (schema only); `"12.1234"` and the 12-digit value are accepted in `D` only, never through PATCH or settlement |
-| C5 | `D` `C5 description is trimmed and limited to 1 to 100 characters` | no - the claim says POST and PATCH; PATCH's `descriptionSchema.optional()` and its `400` are never run, and no route test sees the `400` |
+| C3 | `D` `C3 type rule accepts receipt and debit only`; `R` `C3 POST with a bad type returns 400 and saves nothing` | yes |
+| C4 | `D` `C4 amount rule accepts positive decimals within the bounds only`; `R` `C4 PATCH and settlement reject an invalid amount with 400 and change nothing`; `R` `C4 POST with a bad amount returns 400 and saves nothing` | yes |
+| C5 | `D` `C5 description is trimmed and limited to 1 to 100 characters`; `R` `C5 POST and PATCH with a bad description return 400 and save nothing` | yes |
 | C6 | `D` `C6 date rule accepts real YYYY-MM-DD dates only` | yes |
 | C7 | `S` `C7 category and account must exist and belong to the caller`; `R` `C7 POST and PATCH answer 400 naming the field for a bad reference` | yes |
 | C8 | `D` `C8 recurrence and instalment are exclusive and recurrence is one of four values` | yes (schema level; `400` over HTTP not asserted, acceptable for a pure rule) |
 | C9 | `R` `C9 fields outside the contract are ignored` | yes |
 | C10 | `S` `C10 a month lists its first to last day and nothing outside` | yes (mock repository, one-offs only; the real SQL range filter is exercised only by other checks) |
-| C11 | `S` `C11 an empty month returns an empty list` | no - asserts `[]` from the service; the `200 { "occurrences": [] }` envelope for an empty month is never asserted at HTTP |
+| C11 | `S` `C11 an empty month returns an empty list`; `R` `C11 GET of an empty month returns 200 with an occurrences envelope` | yes |
 | C12 | `S` `C12 past forecasts are listed together with settled entries` | yes |
-| C13 | `S` `C13 month occurrences are ordered by date then description ignoring case` | no - the `transactionId` tie-break is never exercised (two occurrences with equal date and description); the test passes with that key removed |
+| C13 | `S` `C13 month occurrences are ordered by date then description ignoring case`; `R` `C13 equal date and description are ordered by transaction id` | no - the tie-break test uses random UUIDs created in sequence, so with the third sort key removed (stable insertion order) it still passes about 1 run in 6; use fixed ids created in descending order |
 | C14 | `D` `C14 month rule accepts YYYY-MM only`; `R` `C14 GET with a bad month returns 400` | yes |
 | C15 | `S` `C15 an occurrence carries all fields with the values in force on its date` | yes |
 | C16 | `H` `C16 a one-off has a single occurrence on its date` | yes |
@@ -31,14 +31,14 @@ Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.t
 | C19 | `H` `C19 monthly occurrences fall on the start day with no end` | yes |
 | C20 | `H` `C20 monthly occurrences clamp to the last day and return to the start day` | yes |
 | C21 | `H` `C21 annual occurrences fall once a year and clamp 29 February` | yes |
-| C22 | `H` `C22 an instalment part way through numbers its occurrences and stops at the total` | no - the claim says each occurrence carries `recurrence: null` and `instalment: {number,total}`; this test passes a spec with `recurrence: 'monthly'` and asserts dates and numbers only. `recurrence: null` on an instalment is asserted only in C39 (one occurrence) |
+| C22 | `H` `C22 an instalment part way through numbers its occurrences and stops at the total`; `R` `C22 instalment occurrences carry recurrence null and the POST response carries the plan` | yes |
 | C23 | `H` `C23 an instalment from number 1 ends at the total` | yes |
 | C24 | `D` `C24 instalment rule accepts whole numbers with number within total and total up to 999` | yes |
 | C25 | `S` `C25 occurrences in different months share the transaction id` | yes |
-| C26 | `S` `C26 settling a forecast occurrence marks it settled and keeps its amount` | no - asserts the service return; the HTTP `200` of PUT is never asserted (C55 reads only the body) |
+| C26 | `S` `C26 settling a forecast occurrence marks it settled and keeps its amount`; `R` `C26 PUT settlement returns 200 with the settled occurrence` | yes |
 | C27 | `S` `C27 a real paid amount applies to that occurrence only` | yes |
-| C28 | `S` `C28 settling twice returns 409 and changes nothing` | no - asserts `ConflictError` at the service; the `409` status and the `ConflictError` mapping in the router are asserted nowhere |
-| C29 | `S` `C29 undoing a settlement restores the forecast and a forecast cannot be undone` | no - same: `ConflictError` only, no `409` over HTTP, no `200` for the undo; the "drops edits made on the settled occurrence" assumption is never tested |
+| C28 | `S` `C28 settling twice returns 409 and changes nothing`; `R` `C28 settling twice returns 409 over HTTP and changes nothing` | yes |
+| C29 | `S` `C29 undoing a settlement restores the forecast and a forecast cannot be undone`; `R` `C29 undo returns 200 with the forecast and undoing a forecast returns 409 over HTTP` | yes |
 | C30 | `S` `C30 nothing is settled automatically` | yes |
 | C31 | `R` `C31 a date that is not an occurrence returns 404 for settle edit and delete` | yes |
 | C32 | `S` `C32 a forecast edit applies from that occurrence onward` | yes |
@@ -49,9 +49,9 @@ Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.t
 | C37 | `S` `C37 editing a one-off changes the entry` | yes |
 | C38 | `R` `C38 an empty edit returns 400 and schedule fields are ignored` | yes |
 | C39 | `S` `C39 an edit keeps instalment numbering` | yes |
-| C40 | `S` `C40 stopping removes the occurrence and all later ones and keeps earlier ones` | no - runs on the in-memory mock, so the real `stopDate` filter and the real repository `stopFrom` are never read back through a listing; the `204` is never asserted anywhere |
+| C40 | `S` `C40 stopping removes the occurrence and all later ones and keeps earlier ones`; `R` `C40 DELETE returns 204 and the stopped dates leave the real listing` | yes |
 | C41 | `S` `C41 stopping from the first occurrence removes the transaction` | yes (mock; cascade is C52) |
-| C42 | `S` `C42 a removed occurrence is gone` | no - asserts `NotFoundError` at the service; `404` over HTTP for a stopped date not asserted (C31 uses never-valid dates) |
+| C42 | `S` `C42 a removed occurrence is gone`; `R` `C42 a stopped date returns 404 over HTTP` | yes |
 | C43 | `S` `C43 stopping an instalment removes it from the chosen occurrence` | yes |
 | C44 | `S` `C44 a past occurrence can be deleted` | yes |
 | C45 | `A` `C45 deleting a used category keeps the transactions with a null category` | yes |
@@ -60,12 +60,17 @@ Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.t
 | C48 | `A` `C48 editing a description keeps a null category` | yes |
 | C49 | `R` `C49 every route returns 401 without a user id` | yes |
 | C50 | `R` `C50 another user's or unknown transaction returns 404 and changes nothing` | yes |
-| C51 | `S` `C51 the month lists only the caller transactions` | no - runs on the mock repository, whose `userId` filter is a copy of the rule; the real SQL `eq(userId)` in `listBundlesInRange` is never run with two users' data (C50 creates data for Bob only) |
+| C51 | `S` `C51 the month lists only the caller transactions`; `R` `C51 two users with data each list only their own over real SQL` | yes |
 | C52 | `P` `C52 the migrations create the three tables with their keys and cascade` | yes |
 | C53 | `P` `C53 calendar dates are stored as YYYY-MM-DD text` | yes |
 | C54 | `P` `C54 deleting a category or account nulls the references in the database` | yes |
 | C55 | `A` `C55 the app serves the transaction contract under /transactions` | yes (asserts keys, string amount, mount path; no status for PUT) |
 | C56 | `P` `C56 a multi-row write rolls back as a whole` | yes |
+| C57 | `S` `C57 undoing a settlement drops the edits made on the settled occurrence` | yes |
+| C58 | `H` `C58 weekly series cross month boundaries and instalments clamp from a late start day`; `S` `C58 edit and settle work on a date the schedule clamped` | yes |
+| C59 | `S` `C59 stopping at the first of a month removes the month and a later settlement` | yes (mock repository, but the real stop path is held by C40 over SQLite and my probe of a stop at the 1st over SQLite held) |
+| C60 | `H` `C60 dates in the years 0000 to 0099 follow the same calendar rules` | yes |
+| C61 | `D` `C61 amount digit limit counts the integer part without leading zeros` | yes |
 
 ## Findings
 

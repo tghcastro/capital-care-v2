@@ -333,19 +333,6 @@ describe('transaction routes (HTTP)', () => {
     expect(response.body).toEqual({ occurrences: [] });
   });
 
-  it('C13 equal date and description are ordered by transaction id', async () => {
-    const ids = [
-      await createFor(ALICE, monthly({ recurrence: undefined })),
-      await createFor(ALICE, monthly({ recurrence: undefined })),
-      await createFor(ALICE, monthly({ recurrence: undefined })),
-    ];
-
-    const response = await call('GET', '/transactions?month=2026-11', ALICE);
-    const listed = (response.body?.occurrences as { transactionId: string }[]).map((o) => o.transactionId);
-
-    expect(listed).toEqual([...ids].sort((a, b) => a.localeCompare(b)));
-  });
-
   it('C22 instalment occurrences carry recurrence null and the POST response carries the plan', async () => {
     const instalment = await call(
       'POST',

@@ -118,6 +118,34 @@ describe('TransactionService', () => {
     expect(service.listMonth(ALICE, '2026-11').map((o) => o.description)).toEqual(['Zed', 'condo', 'Gym']);
   });
 
+  it('C13 equal date and description are ordered by transaction id', () => {
+    const { service, repository } = setup();
+    // Seed ids in descending order, so insertion order and id order disagree.
+    for (const id of ['id-c', 'id-a', 'id-b']) {
+      repository.definitions.set(id, {
+        id,
+        userId: ALICE,
+        startDate: '2026-11-05',
+        recurrence: null,
+        instalment: null,
+        stopDate: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      repository.revisions.push({
+        transactionId: id,
+        effectiveFrom: '2026-11-05',
+        description: 'Gym',
+        categoryId: 'cat-1',
+        accountId: 'acc-1',
+        type: 'debit',
+        amount: '20',
+      });
+    }
+
+    expect(service.listMonth(ALICE, '2026-11').map((o) => o.transactionId)).toEqual(['id-a', 'id-b', 'id-c']);
+  });
+
   it('C15 an occurrence carries all fields with the values in force on its date', () => {
     const { service } = setup();
     const created = create(service, { recurrence: 'monthly' });
