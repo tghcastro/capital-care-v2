@@ -427,4 +427,32 @@ describe('transaction routes (HTTP)', () => {
     expect(await names(BOB)).toEqual(['Rent']);
     expect(await names('carol')).toEqual([]);
   });
+
+  it('C62 a one-off and an instalment occurrence can be settled and undone over HTTP', async () => {
+    const oneOff = await createFor(ALICE, monthly({ date: '2026-11-10', recurrence: undefined, amount: '229' }));
+    const loan = await createFor(
+      ALICE,
+      monthly({ date: '2026-11-15', recurrence: undefined, amount: '650', instalment: { number: 17, total: 48 } }),
+    );
+
+    const settledOneOff = await call('PUT', `/transactions/${oneOff}/occurrences/2026-11-10/settlement`, ALICE, {
+      amount: '225.50',
+    });
+    const settledLoan = await call('PUT', `/transactions/${loan}/occurrences/2026-11-15/settlement`, ALICE, {});
+
+    expect(settledOneOff.status).toBe(200);
+    expect(settledOneOff.body).toMatchObject({ status: 'settled', amount: '225.5', recurrence: null, instalment: null });
+    expect(settledLoan.body).toMatchObject({ status: 'settled', amount: '650', instalment: { number: 17, total: 48 } });
+    expect(await amountsIn('2026-11')).toEqual([
+      ['2026-11-10', '225.5', 'settled'],
+      ['2026-11-15', '650', 'settled'],
+    ]);
+
+    const undone = await call('DELETE', `/transactions/${oneOff}/occurrences/2026-11-10/settlement`, ALICE);
+    expect(undone.body).toMatchObject({ status: 'forecast', amount: '229' });
+    expect(await amountsIn('2026-11')).toEqual([
+      ['2026-11-10', '229', 'forecast'],
+      ['2026-11-15', '650', 'settled'],
+    ]);
+  });
 });

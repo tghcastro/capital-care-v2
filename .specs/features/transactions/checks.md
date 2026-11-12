@@ -4,7 +4,7 @@ Build: `pnpm type-check; pnpm lint; pnpm build`
 Run unit: `pnpm exec vitest run modules/ledger/src/transaction apps/api/test --reporter=verbose 2>&1`
 Plan: `.specs/features/transactions/plan.md`
 
-61 checks in 8 slices · 4 one-way doors · 0 open, of which 0 block
+62 checks in 8 slices · 4 one-way doors · 0 open, of which 0 block
 
 Test files, all new, under `modules/ledger/src/transaction/__test__/`: `transaction.dto.test.ts` (unit, pure schemas), `transaction.schedule.test.ts` (unit, pure schedule), `transaction.service.test.ts` (unit, in-memory repository mock in `mocks/`), `transaction.repository.test.ts` (integration, real in-memory SQLite with the committed migrations), `transaction.router.test.ts` (integration, router mounted on Express and called over HTTP); and `apps/api/test/transactions.component.test.ts` (component, whole app with real category and account services). Every test title starts with its check id. The scenarios in `acceptance-tests.md` are the source of the examples; they are not run as a suite.
 
@@ -230,6 +230,9 @@ Proof: run unit | ✓ C60 dates in the years 0000 to 0099 follow the same calend
 **C61** - The amount's 12-digit limit counts the integer part without leading zeros: `"000000000005"` and `"0000000000005"` save as `"5"`, `"1234567890123"` is rejected, an all-zero value is rejected (AC S1.4)
 Proof: run unit | ✓ C61 amount digit limit counts the integer part without leading zeros
 
+**C62** - A one-off and an instalment occurrence can be settled and undone like a recurring one: PUT on a one-off dated `2026-11-10` with `"225.50"` returns `200`, `status: "settled"`, `amount: "225.5"`, `recurrence: null`; PUT on instalment 17 of 48 returns `settled` with `instalment: { 17, 48 }`; the month lists both settled; undoing the one-off returns it to forecast at `"229"` (AC S4.1, S4.4)
+Proof: run unit | ✓ C62 a one-off and an instalment occurrence can be settled and undone over HTTP
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |
@@ -257,7 +260,7 @@ Proof: run unit | ✓ C61 amount digit limit counts the integer part without lea
 | edit examples, AC S5.1-S5.4 (4) | forward only C32 · settled kept C33 · earlier edit wins C35 · first occurrence C36 | - |
 | stop examples, AC S6.1-S6.4 (4) | later removed C40 · first occurrence C41 · one-off C41 · instalment C43 | - |
 | routes needing a user id (6) | POST C49 · GET C49 · PATCH C49 · DELETE occurrence C49 · PUT settlement C49 · DELETE settlement C49 | - |
-| added-after-verification examples (5) | undo drops edits C57 · clamped weekly and instalment C58 · stop at the 1st C59 · years 0000-0099 C60 · leading zeros C61 | - |
+| added-after-verification examples (6) | undo drops edits C57 · clamped weekly and instalment C58 · stop at the 1st C59 · years 0000-0099 C60 · leading zeros C61 · settle a one-off and an instalment C62 | - |
 | one-way doors (4) | stored shape C52, C56 · calendar dates C53 · references nulled C45, C46, C54 · contract C55 | - |
 | startup config: router mounting (2 assemblies) | `createLedgerRouters` in the ledger module C55 · `createApp` in apps/api C55 | - |
 

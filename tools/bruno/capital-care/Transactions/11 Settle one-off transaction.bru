@@ -1,0 +1,32 @@
+meta {
+  name: 11 Settle one-off transaction
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{baseUrl}}/transactions/{{txOneOffId}}/occurrences/2026-11-10/settlement
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "amount": "225.50"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.transactionId: eq {{txOneOffId}}
+  res.body.date: eq 2026-11-10
+  res.body.status: eq settled
+  res.body.recurrence: isNull
+  res.body.instalment: isNull
+}
+
+tests {
+  test("amount is 225.5, written as a canonical string", function() {
+    expect(res.body.amount).to.equal("225.5");
+  });
+}

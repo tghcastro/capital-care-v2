@@ -228,6 +228,17 @@ Feature: Settling (checking) a transaction
     When I undo the settlement of 2026-12-05
     Then December 2026 shows it with 450,00 as Forecast
 
+  Scenario: A one-off transaction can be settled too
+    Given I have a one-off transaction "New office chair" of 229,00 on 2026-11-10
+    When I settle "New office chair" on 2026-11-10 with the amount 225,50
+    Then November 2026 shows "New office chair" with 225,50 as Settled
+
+  Scenario: An instalment can be settled one occurrence at a time
+    Given I have recorded "Car loan" starting 2026-11-15 as instalment 17 of 48
+    When I settle "Car loan" on 2026-11-15
+    Then November 2026 shows "Car loan" as instalment 17 of 48, Settled
+    And December 2026 shows "Car loan" as instalment 18 of 48, still Forecast
+
   Scenario: I can check an entry before its day arrives
     Given today is 2026-11-01
     When I settle "Condo fees" on 2026-11-05
