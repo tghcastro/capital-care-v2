@@ -366,4 +366,43 @@ describe('TransactionService', () => {
     expect(service.listMonth(ALICE, '2026-11').map((o) => o.description)).toEqual(['Gym']);
     expect(service.listMonth(BOB, '2026-11').map((o) => o.description)).toEqual(['Rent']);
   });
+
+  it('C57 undoing a settlement drops the edits made on the settled occurrence', () => {
+    const { service } = setup();
+    const { id } = create(service, { recurrence: 'monthly' });
+    service.settle(ALICE, id, '2026-12-05', {});
+    service.editOccurrence(ALICE, id, '2026-12-05', { amount: '99', description: 'Edited while settled' });
+
+    const undone = service.unsettle(ALICE, id, '2026-12-05');
+
+    expect(undone).toMatchObject({ status: 'forecast', amount: '20', description: 'Condo fees' });
+    expect(view(service, '2027-01')).toEqual([['2027-01-05', '20', 'forecast']]);
+  });
+
+  it('C58 edit and settle work on a date the schedule clamped', () => {
+    const { service } = setup();
+    const { id } = create(service, { date: '2026-01-31', recurrence: 'monthly' });
+
+    service.settle(ALICE, id, '2026-02-28', { amount: '21' });
+    service.editOccurrence(ALICE, id, '2026-04-30', { amount: '30' });
+
+    expect(view(service, '2026-02')).toEqual([['2026-02-28', '21', 'settled']]);
+    expect(view(service, '2026-03')).toEqual([['2026-03-31', '20', 'forecast']]);
+    expect(view(service, '2026-04')).toEqual([['2026-04-30', '30', 'forecast']]);
+    expect(view(service, '2026-05')).toEqual([['2026-05-31', '30', 'forecast']]);
+    expect(() => service.settle(ALICE, id, '2026-02-27', {})).toThrow(NotFoundError);
+  });
+
+  it('C59 stopping at the first of a month removes the month and a later settlement', () => {
+    const { service } = setup();
+    const { id } = create(service, { date: '2026-11-01', recurrence: 'daily' });
+    service.settle(ALICE, id, '2026-12-10', {});
+
+    service.stopFrom(ALICE, id, '2026-12-01');
+
+    expect(service.listMonth(ALICE, '2026-11')).toHaveLength(30);
+    expect(service.listMonth(ALICE, '2026-12')).toEqual([]);
+    expect(() => service.settle(ALICE, id, '2026-12-10', {})).toThrow(NotFoundError);
+    expect(() => service.unsettle(ALICE, id, '2026-12-10')).toThrow(NotFoundError);
+  });
 });

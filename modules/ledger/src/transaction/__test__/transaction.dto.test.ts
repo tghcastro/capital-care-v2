@@ -88,4 +88,13 @@ describe('transaction schemas', () => {
     expect(ok(1.5, 10)).toBe(false);
     expect(ok(1, 0)).toBe(false);
   });
+
+  it('C61 amount digit limit counts the integer part without leading zeros', () => {
+    expect(amountSchema.parse('000000000005')).toBe('5');
+    expect(amountSchema.parse('0000000000005')).toBe('5');
+    expect(amountSchema.parse('0000000000005.5')).toBe('5.5');
+    expect(amountSchema.safeParse('1234567890123').success).toBe(false);
+    expect(amountSchema.safeParse('00000000000000').success).toBe(false);
+    expect(amountSchema.parse('123456789012')).toBe('123456789012');
+  });
 });

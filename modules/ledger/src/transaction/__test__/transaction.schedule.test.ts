@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { instalmentNumber, isOccurrenceDate, occurrencesInMonth, type ScheduleSpec } from '../transaction.schedule.js';
+import {
+  instalmentNumber,
+  isOccurrenceDate,
+  isValidDate,
+  occurrencesInMonth,
+  type ScheduleSpec,
+} from '../transaction.schedule.js';
 
 const oneOff = (startDate: string): ScheduleSpec => ({ startDate, recurrence: null, instalment: null });
 const every = (recurrence: ScheduleSpec['recurrence'], startDate: string): ScheduleSpec => ({
@@ -94,5 +100,42 @@ describe('transaction schedule', () => {
     expect(occurrencesInMonth(spec, '2027-08')).toEqual(['2027-08-15']);
     expect(instalmentNumber(spec, '2027-08-15')).toBe(10);
     expect(occurrencesInMonth(spec, '2027-09')).toEqual([]);
+  });
+
+  it('C58 weekly series cross month boundaries and instalments clamp from a late start day', () => {
+    const weekly = every('weekly', '2026-01-29');
+    expect(occurrencesInMonth(weekly, '2026-01')).toEqual(['2026-01-29']);
+    expect(occurrencesInMonth(weekly, '2026-02')).toEqual(['2026-02-05', '2026-02-12', '2026-02-19', '2026-02-26']);
+    expect(occurrencesInMonth(weekly, '2026-03')).toEqual([
+      '2026-03-05',
+      '2026-03-12',
+      '2026-03-19',
+      '2026-03-26',
+    ]);
+    expect(occurrencesInMonth(weekly, '2027-01')).toEqual(['2027-01-07', '2027-01-14', '2027-01-21', '2027-01-28']);
+
+    const clamped = instalments('2026-11-30', 1, 6);
+    expect(occurrencesInMonth(clamped, '2026-12')).toEqual(['2026-12-30']);
+    expect(occurrencesInMonth(clamped, '2027-02')).toEqual(['2027-02-28']);
+    expect(instalmentNumber(clamped, '2027-02-28')).toBe(4);
+    expect(occurrencesInMonth(clamped, '2027-04')).toEqual(['2027-04-30']);
+    expect(occurrencesInMonth(clamped, '2027-05')).toEqual([]);
+  });
+
+  it('C60 dates in the years 0000 to 0099 follow the same calendar rules', () => {
+    expect(isValidDate('0000-02-29')).toBe(true);
+    expect(isValidDate('0001-02-29')).toBe(false);
+    expect(isValidDate('0100-02-29')).toBe(false);
+    expect(isValidDate('0400-02-29')).toBe(true);
+
+    expect(occurrencesInMonth(every('weekly', '0099-12-25'), '0100-01')).toEqual([
+      '0100-01-01',
+      '0100-01-08',
+      '0100-01-15',
+      '0100-01-22',
+      '0100-01-29',
+    ]);
+    expect(occurrencesInMonth(every('monthly', '0000-01-31'), '0000-02')).toEqual(['0000-02-29']);
+    expect(occurrencesInMonth(every('daily', '0050-02-27'), '0050-02')).toEqual(['0050-02-27', '0050-02-28']);
   });
 });

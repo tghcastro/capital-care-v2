@@ -137,7 +137,7 @@ The caller can record one transaction and read back what was stored.
 3. IF `type` is anything other than `"receipt"` or `"debit"`, or is missing, THEN POST SHALL return `400` ValidationError and save nothing
    - `"Debit"` → `400`; `"expense"` → `400`; absent → `400`
 4. IF `amount` is not a string holding a positive decimal with at most 12 integer digits and at most 4 decimals THEN POST, PATCH and settlement SHALL return `400` ValidationError and change nothing
-   - `"0"` → `400`; `"-5"` → `400`; `"1,5"` → `400`; `"abc"` → `400`; the JSON number `229` → `400`; `"12.12345"` → `400`; `"12.1234"` → accepted; `"1234567890123"` (13 digits) → `400`; `"123456789012"` → accepted
+   - `"0"` → `400`; `"-5"` → `400`; `"1,5"` → `400`; `"abc"` → `400`; the JSON number `229` → `400`; `"12.12345"` → `400`; `"12.1234"` → accepted; `"1234567890123"` (13 digits) → `400`; `"123456789012"` → accepted; `"000000000005"` → accepted as `"5"` (leading zeros are not counted)
 5. IF `description` is empty, only spaces, or longer than 100 characters after trimming THEN POST and PATCH SHALL return `400` ValidationError; WHEN it has leading or trailing spaces THEN the system SHALL trim them before saving
    - `""` → `400`; `"   "` → `400`; 100 characters → accepted; 101 → `400`; `"  Gym  "` → saved as `"Gym"`
 6. IF `date` is not a real calendar date written `YYYY-MM-DD` THEN POST SHALL return `400` ValidationError
@@ -289,6 +289,7 @@ Removing the future never touches what already happened.
 | A bad reference in the body | `400` naming the field, same for unknown and another user's | existing error shape; never reveals another user's data | n |
 | Error body shape | `{ type, detail }` as the Account routes return | consistency with the code that exists today | n |
 | Month view size | not paginated | a month is bounded | n |
+| Leading zeros in an amount | not counted towards the 12 integer digits, and removed from the stored value | the verifier found the limit ambiguous between the written and the stored value; the stored value is what the limit protects | n |
 | Enum spelling | `"receipt"`, `"debit"`, `"daily"`, `"weekly"`, `"monthly"`, `"annually"` | the PRD's own words, lowercase for JSON | n |
 
 **Open questions:** none - all resolved or logged above.

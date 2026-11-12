@@ -280,4 +280,164 @@ describe('transaction routes (HTTP)', () => {
     expect(await amountsIn('2026-11', BOB)).toEqual([['2026-11-05', '20', 'settled']]);
     expect(await amountsIn('2026-12', BOB)).toEqual([['2026-12-05', '20', 'forecast']]);
   });
+
+  const nothingSaved = async () => {
+    for (const month of ['2026-11', '2026-12']) expect(await amountsIn(month)).toEqual([]);
+  };
+
+  it('C3 POST with a bad type returns 400 and saves nothing', async () => {
+    for (const type of ['Debit', 'expense', undefined]) {
+      expect((await call('POST', '/transactions', ALICE, monthly({ type }))).status).toBe(400);
+    }
+    await nothingSaved();
+  });
+
+  it('C4 POST with a bad amount returns 400 and saves nothing', async () => {
+    for (const amount of ['0', '-5', '1,5', 'abc', 229, '12.12345', '1234567890123', undefined]) {
+      expect((await call('POST', '/transactions', ALICE, monthly({ amount }))).status).toBe(400);
+    }
+    await nothingSaved();
+  });
+
+  it('C5 POST and PATCH with a bad description return 400 and save nothing', async () => {
+    for (const description of ['', '   ', 'x'.repeat(101), undefined]) {
+      expect((await call('POST', '/transactions', ALICE, monthly({ description }))).status).toBe(400);
+    }
+    await nothingSaved();
+
+    const id = await createFor(ALICE, monthly());
+    for (const description of ['', '   ', 'x'.repeat(101)]) {
+      expect(
+        (await call('PATCH', `/transactions/${id}/occurrences/2026-11-05`, ALICE, { description })).status,
+      ).toBe(400);
+    }
+    const trimmed = await call('PATCH', `/transactions/${id}/occurrences/2026-11-05`, ALICE, {
+      description: '  Gym  ',
+    });
+    expect(trimmed.body?.description).toBe('Gym');
+    expect(await amountsIn('2026-11')).toEqual([['2026-11-05', '20', 'forecast']]);
+  });
+
+  it('C6 POST with a bad date returns 400 and saves nothing', async () => {
+    for (const date of ['2026-02-30', '2026-1-5', '05/11/2026', '', undefined]) {
+      expect((await call('POST', '/transactions', ALICE, monthly({ date }))).status).toBe(400);
+    }
+    await nothingSaved();
+    expect((await call('POST', '/transactions', ALICE, monthly({ date: '2028-02-29' }))).status).toBe(201);
+  });
+
+  it('C11 GET of an empty month returns 200 with an occurrences envelope', async () => {
+    const response = await call('GET', '/transactions?month=2026-11', ALICE);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ occurrences: [] });
+  });
+
+  it('C13 equal date and description are ordered by transaction id', async () => {
+    const ids = [
+      await createFor(ALICE, monthly({ recurrence: undefined })),
+      await createFor(ALICE, monthly({ recurrence: undefined })),
+      await createFor(ALICE, monthly({ recurrence: undefined })),
+    ];
+
+    const response = await call('GET', '/transactions?month=2026-11', ALICE);
+    const listed = (response.body?.occurrences as { transactionId: string }[]).map((o) => o.transactionId);
+
+    expect(listed).toEqual([...ids].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('C22 instalment occurrences carry recurrence null and the POST response carries the plan', async () => {
+    const instalment = await call(
+      'POST',
+      '/transactions',
+      ALICE,
+      monthly({ date: '2026-11-15', recurrence: undefined, instalment: { number: 97, total: 504 } }),
+    );
+    expect(instalment.status).toBe(201);
+    expect(instalment.body).toMatchObject({ recurrence: null, instalment: { number: 97, total: 504 } });
+
+    const recurring = await call('POST', '/transactions', ALICE, monthly({ recurrence: 'weekly' }));
+    expect(recurring.body).toMatchObject({ recurrence: 'weekly', instalment: null });
+
+    const occurrences = (await call('GET', '/transactions?month=2026-12', ALICE)).body
+      ?.occurrences as Record<string, unknown>[];
+    const loan = occurrences.find((o) => o.transactionId === instalment.body?.id);
+    expect(loan).toMatchObject({ date: '2026-12-15', recurrence: null, instalment: { number: 98, total: 504 } });
+  });
+
+  it('C26 PUT settlement returns 200 with the settled occurrence', async () => {
+    const id = await createFor(ALICE, monthly());
+
+    const response = await call('PUT', `/transactions/${id}/occurrences/2026-11-05/settlement`, ALICE, {});
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ transactionId: id, date: '2026-11-05', status: 'settled', amount: '20' });
+    expect(await amountsIn('2026-11')).toEqual([['2026-11-05', '20', 'settled']]);
+    expect(await amountsIn('2026-12')).toEqual([['2026-12-05', '20', 'forecast']]);
+  });
+
+  it('C28 settling twice returns 409 over HTTP and changes nothing', async () => {
+    const id = await createFor(ALICE, monthly());
+    const url = `/transactions/${id}/occurrences/2026-11-05/settlement`;
+    await call('PUT', url, ALICE, { amount: '22' });
+
+    const again = await call('PUT', url, ALICE, { amount: '30' });
+
+    expect(again.status).toBe(409);
+    expect(await amountsIn('2026-11')).toEqual([['2026-11-05', '22', 'settled']]);
+  });
+
+  it('C29 undo returns 200 with the forecast and undoing a forecast returns 409 over HTTP', async () => {
+    const id = await createFor(ALICE, monthly());
+    const url = `/transactions/${id}/occurrences/2026-11-05/settlement`;
+    await call('PUT', url, ALICE, { amount: '22' });
+
+    const undone = await call('DELETE', url, ALICE);
+
+    expect(undone.status).toBe(200);
+    expect(undone.body).toMatchObject({ status: 'forecast', amount: '20', date: '2026-11-05' });
+    expect(await amountsIn('2026-11')).toEqual([['2026-11-05', '20', 'forecast']]);
+    expect((await call('DELETE', url, ALICE)).status).toBe(409);
+  });
+
+  it('C40 DELETE returns 204 and the stopped dates leave the real listing', async () => {
+    const id = await createFor(ALICE, monthly());
+    await call('PUT', `/transactions/${id}/occurrences/2026-11-05/settlement`, ALICE, {});
+    await call('PUT', `/transactions/${id}/occurrences/2027-02-05/settlement`, ALICE, {});
+
+    const stopped = await call('DELETE', `/transactions/${id}/occurrences/2027-01-05`, ALICE);
+
+    expect(stopped.status).toBe(204);
+    expect(await amountsIn('2026-11')).toEqual([['2026-11-05', '20', 'settled']]);
+    expect(await amountsIn('2026-12')).toEqual([['2026-12-05', '20', 'forecast']]);
+    expect(await amountsIn('2027-01')).toEqual([]);
+    expect(await amountsIn('2027-02')).toEqual([]);
+    expect(await amountsIn('2031-01')).toEqual([]);
+  });
+
+  it('C42 a stopped date returns 404 over HTTP', async () => {
+    const id = await createFor(ALICE, monthly());
+    await call('DELETE', `/transactions/${id}/occurrences/2027-01-05`, ALICE);
+    const url = `/transactions/${id}/occurrences/2027-01-05`;
+
+    expect((await call('PATCH', url, ALICE, { amount: '1' })).status).toBe(404);
+    expect((await call('PUT', `${url}/settlement`, ALICE, {})).status).toBe(404);
+    expect((await call('DELETE', url, ALICE)).status).toBe(404);
+    expect((await call('DELETE', `/transactions/${id}/occurrences/2027-03-05`, ALICE)).status).toBe(404);
+  });
+
+  it('C51 two users with data each list only their own over real SQL', async () => {
+    await createFor(ALICE, monthly({ description: 'Gym', recurrence: undefined }));
+    await createFor(ALICE, monthly({ description: 'Condo fees' }));
+    await createFor(BOB, monthly({ description: 'Rent', categoryId: bob.categoryId, accountId: bob.accountId }));
+
+    const names = async (userId: string) =>
+      ((await call('GET', '/transactions?month=2026-11', userId)).body?.occurrences as { description: string }[]).map(
+        (o) => o.description,
+      );
+
+    expect(await names(ALICE)).toEqual(['Condo fees', 'Gym']);
+    expect(await names(BOB)).toEqual(['Rent']);
+    expect(await names('carol')).toEqual([]);
+  });
 });

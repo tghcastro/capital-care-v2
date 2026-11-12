@@ -15,13 +15,21 @@ export const dateSchema = z
   .string('date is required')
   .refine(isValidDate, { message: 'date must be a real date written YYYY-MM-DD' });
 
-/** A positive decimal string, at most 12 integer digits and 4 decimals; the result is canonical. */
+const AMOUNT_MAX_INTEGER_DIGITS = 12;
+
+/**
+ * A positive decimal string, at most 12 integer digits and 4 decimals; the result is canonical.
+ * Leading zeros are ignored when counting digits: "000000000005" is 5.
+ */
 export const amountSchema = z
   .string('amount must be a string')
-  .regex(/^\d{1,12}(\.\d{1,4})?$/, {
+  .regex(/^\d+(\.\d{1,4})?$/, {
     message: 'amount must be a decimal with at most 12 integer digits and 4 decimals',
     // Stop here: the checks below read the value as a number, which this pattern guarantees.
     abort: true,
+  })
+  .refine((value) => new Decimal(value).trunc().toFixed().length <= AMOUNT_MAX_INTEGER_DIGITS, {
+    message: 'amount must be a decimal with at most 12 integer digits and 4 decimals',
   })
   .refine((value) => new Decimal(value).gt(0), { message: 'amount must be greater than zero' })
   .transform((value) => new Decimal(value).toFixed());

@@ -4,7 +4,7 @@ Build: `pnpm type-check; pnpm lint; pnpm build`
 Run unit: `pnpm exec vitest run modules/ledger/src/transaction apps/api/test --reporter=verbose 2>&1`
 Plan: `.specs/features/transactions/plan.md`
 
-56 checks in 8 slices · 4 one-way doors · 0 open, of which 0 block
+61 checks in 8 slices · 4 one-way doors · 0 open, of which 0 block
 
 Test files, all new, under `modules/ledger/src/transaction/__test__/`: `transaction.dto.test.ts` (unit, pure schemas), `transaction.schedule.test.ts` (unit, pure schedule), `transaction.service.test.ts` (unit, in-memory repository mock in `mocks/`), `transaction.repository.test.ts` (integration, real in-memory SQLite with the committed migrations), `transaction.router.test.ts` (integration, router mounted on Express and called over HTTP); and `apps/api/test/transactions.component.test.ts` (component, whole app with real category and account services). Every test title starts with its check id. The scenarios in `acceptance-tests.md` are the source of the examples; they are not run as a suite.
 
@@ -20,16 +20,20 @@ Proof: run unit | ✓ C2 a new transaction is a forecast even with a past date
 
 **C3** - `type` accepts only `"receipt"` and `"debit"`: `"Debit"`, `"expense"` and an absent type are rejected and nothing is saved (AC S1.3)
 Proof: run unit | ✓ C3 type rule accepts receipt and debit only
+Proof: run unit | ✓ C3 POST with a bad type returns 400 and saves nothing
 
 **C4** - The amount rule accepts a string holding a positive decimal with at most 12 integer digits and at most 4 decimals: `"0"`, `"-5"`, `"1,5"`, `"abc"`, the number `229`, `"12.12345"` and `"1234567890123"` are rejected; `"12.1234"` and `"123456789012"` are accepted; the same rule makes PATCH and settlement return `400` and change nothing (AC S1.4)
 Proof: run unit | ✓ C4 amount rule accepts positive decimals within the bounds only
 Proof: run unit | ✓ C4 PATCH and settlement reject an invalid amount with 400 and change nothing
+Proof: run unit | ✓ C4 POST with a bad amount returns 400 and saves nothing
 
 **C5** - A description is trimmed and must hold 1 to 100 characters: `""`, `"   "` and 101 characters are rejected; 100 accepted; `"  Gym  "` saves as `"Gym"` (AC S1.5)
 Proof: run unit | ✓ C5 description is trimmed and limited to 1 to 100 characters
+Proof: run unit | ✓ C5 POST and PATCH with a bad description return 400 and save nothing
 
 **C6** - `date` must be a real calendar date written `YYYY-MM-DD`: `"2026-02-30"`, `"2026-1-5"`, `"05/11/2026"` are rejected; `"2028-02-29"` is accepted (AC S1.6)
 Proof: run unit | ✓ C6 date rule accepts real YYYY-MM-DD dates only
+Proof: run unit | ✓ C6 POST with a bad date returns 400 and saves nothing
 
 **C7** - `categoryId` and `accountId` are required on create and must be the caller's own existing category and account: a missing id, an unknown id and another user's id each return `400` naming the field and save nothing; `categoryId: null` on PATCH returns `400` (AC S1.7)
 Proof: run unit | ✓ C7 category and account must exist and belong to the caller
@@ -48,12 +52,14 @@ Proof: run unit | ✓ C10 a month lists its first to last day and nothing outsid
 
 **C11** - A month with no occurrences returns `200` with `{ "occurrences": [] }` (AC S2.2)
 Proof: run unit | ✓ C11 an empty month returns an empty list
+Proof: run unit | ✓ C11 GET of an empty month returns 200 with an occurrences envelope
 
 **C12** - A forecast whose date has passed is listed with settled entries in the same month, none hidden (AC S2.3)
 Proof: run unit | ✓ C12 past forecasts are listed together with settled entries
 
 **C13** - Occurrences are ordered by date, then description ignoring case, then `transactionId`: `11-05 Gym`, `11-05 condo`, `11-02 Zed` → `Zed`, `condo`, `Gym` (AC S2.4)
 Proof: run unit | ✓ C13 month occurrences are ordered by date then description ignoring case
+Proof: run unit | ✓ C13 equal date and description are ordered by transaction id
 
 **C14** - `month` must be `YYYY-MM` with a month `01` to `12`: absent, `"2026-13"`, `"2026-1"`, `"2026-11-05"` return `400` (AC S2.5)
 Proof: run unit | ✓ C14 month rule accepts YYYY-MM only
@@ -84,6 +90,7 @@ Proof: run unit | ✓ C21 annual occurrences fall once a year and clamp 29 Febru
 
 **C22** - Instalment `{ 97, 504 }` from `2026-11-15`: `2026-11` → 97, `2026-12` → 98, `2060-10` → 504, `2060-11` none, `2026-10` none; each carries `recurrence: null` and `instalment: { number, total }` (AC S3.7)
 Proof: run unit | ✓ C22 an instalment part way through numbers its occurrences and stops at the total
+Proof: run unit | ✓ C22 instalment occurrences carry recurrence null and the POST response carries the plan
 
 **C23** - Instalment `{ 1, 10 }` from `2026-11-15`: number 10 on `2027-08-15`, `2027-09` none (AC S3.8)
 Proof: run unit | ✓ C23 an instalment from number 1 ends at the total
@@ -98,15 +105,18 @@ Proof: run unit | ✓ C25 occurrences in different months share the transaction 
 
 **C26** - PUT `.../settlement` with `{}` on a forecast occurrence returns `200` with `status: "settled"` and the same amount, and later listings show it settled (AC S4.1)
 Proof: run unit | ✓ C26 settling a forecast occurrence marks it settled and keeps its amount
+Proof: run unit | ✓ C26 PUT settlement returns 200 with the settled occurrence
 
 **C27** - PUT with `amount: "22"` on `2026-12-05` of a monthly `"20"` → Nov `20` forecast, Dec `22` settled, Jan `20` forecast (AC S4.2)
 Proof: run unit | ✓ C27 a real paid amount applies to that occurrence only
 
 **C28** - PUT on an already settled occurrence returns `409` and changes nothing (AC S4.3)
 Proof: run unit | ✓ C28 settling twice returns 409 and changes nothing
+Proof: run unit | ✓ C28 settling twice returns 409 over HTTP and changes nothing
 
 **C29** - DELETE `.../settlement` on a settled occurrence returns `200` with `status: "forecast"` and the schedule's values, dropping the real amount; on a forecast it returns `409` (AC S4.4)
 Proof: run unit | ✓ C29 undoing a settlement restores the forecast and a forecast cannot be undone
+Proof: run unit | ✓ C29 undo returns 200 with the forecast and undoing a forecast returns 409 over HTTP
 
 **C30** - No occurrence is settled unless requested, whatever its age: an instalment dated `2026-01-15` and a one-off from last year both list as `forecast` (AC S4.5)
 Proof: run unit | ✓ C30 nothing is settled automatically
@@ -144,12 +154,14 @@ Proof: run unit | ✓ C39 an edit keeps instalment numbering
 
 **C40** - DELETE of an occurrence returns `204`, removes it and every later one, and leaves every earlier one as it was: monthly from `2026-11-05`, Nov settled, DELETE `2027-01-05` → Nov (settled) and Dec stay, Jan on gone (AC S6.1)
 Proof: run unit | ✓ C40 stopping removes the occurrence and all later ones and keeps earlier ones
+Proof: run unit | ✓ C40 DELETE returns 204 and the stopped dates leave the real listing
 
 **C41** - DELETE on the first occurrence, or on a one-off, removes the whole transaction (AC S6.2)
 Proof: run unit | ✓ C41 stopping from the first occurrence removes the transaction
 
 **C42** - After a stop, a request for a removed occurrence returns `404` and the listing no longer shows it (AC S6.3)
 Proof: run unit | ✓ C42 a removed occurrence is gone
+Proof: run unit | ✓ C42 a stopped date returns 404 over HTTP
 
 **C43** - Deleting an instalment from an occurrence follows the same rules: `{ 17, 48 }` from `2026-11-15`, stop `2027-03-15` → `2027-02` shows 20 of 48, `2027-03` none (AC S6.4)
 Proof: run unit | ✓ C43 stopping an instalment removes it from the chosen occurrence
@@ -181,6 +193,7 @@ Proof: run unit | ✓ C50 another user's or unknown transaction returns 404 and 
 
 **C51** - With two users each owning transactions, GET lists only the caller's (AC S8.3)
 Proof: run unit | ✓ C51 the month lists only the caller transactions
+Proof: run unit | ✓ C51 two users with data each list only their own over real SQL
 
 ### Doors
 
@@ -198,6 +211,24 @@ Proof: run unit | ✓ C55 the app serves the transaction contract under /transac
 
 **C56** - A write that spans several rows (create, edit, stop) is atomic: when its second statement fails the first is rolled back and the data is unchanged (database.md, Transaction Atomicity)
 Proof: run unit | ✓ C56 a multi-row write rolls back as a whole
+
+### Added after verification
+
+**C57** - Undoing a settlement drops the edits made on the settled occurrence: settle `2026-12-05`, edit it to `"99"` and a new description, undo → forecast with `"20"` and the original description (plan Assumptions)
+Proof: run unit | ✓ C57 undoing a settlement drops the edits made on the settled occurrence
+
+**C58** - Weekly series cross month boundaries (start `2026-01-29` → `2026-02` has `05`, `12`, `19`, `26`), an instalment starting on the 30th clamps (`{1,6}` from `2026-11-30` → `2027-02-28` is number 4, `2027-05` none), and edit and settle work on a clamped date (monthly from `2026-01-31`: settle `2026-02-28`, edit `2026-04-30`, `2026-02-27` is `404`) (AC S3.3, S3.5, S3.7, S4.1, S5.1)
+Proof: run unit | ✓ C58 weekly series cross month boundaries and instalments clamp from a late start day
+Proof: run unit | ✓ C58 edit and settle work on a date the schedule clamped
+
+**C59** - Stopping at the first of a month removes that month and a settlement dated after the stop: daily from `2026-11-01`, settled `2026-12-10`, stop `2026-12-01` → Nov has 30 occurrences, Dec none, settle and undo on `2026-12-10` return `404` (AC S6.1)
+Proof: run unit | ✓ C59 stopping at the first of a month removes the month and a later settlement
+
+**C60** - Dates in the years 0000 to 0099 follow the same calendar rules: `0000-02-29` is real, `0001-02-29` and `0100-02-29` are not, a weekly series from `0099-12-25` lists `0100-01-01` to `0100-01-29`, monthly from `0000-01-31` falls on `0000-02-29` (AC S1.6, S3.3, S3.5)
+Proof: run unit | ✓ C60 dates in the years 0000 to 0099 follow the same calendar rules
+
+**C61** - The amount's 12-digit limit counts the integer part without leading zeros: `"000000000005"` and `"0000000000005"` save as `"5"`, `"1234567890123"` is rejected, an all-zero value is rejected (AC S1.4)
+Proof: run unit | ✓ C61 amount digit limit counts the integer part without leading zeros
 
 ## Coverage
 
@@ -226,6 +257,7 @@ Proof: run unit | ✓ C56 a multi-row write rolls back as a whole
 | edit examples, AC S5.1-S5.4 (4) | forward only C32 · settled kept C33 · earlier edit wins C35 · first occurrence C36 | - |
 | stop examples, AC S6.1-S6.4 (4) | later removed C40 · first occurrence C41 · one-off C41 · instalment C43 | - |
 | routes needing a user id (6) | POST C49 · GET C49 · PATCH C49 · DELETE occurrence C49 · PUT settlement C49 · DELETE settlement C49 | - |
+| added-after-verification examples (5) | undo drops edits C57 · clamped weekly and instalment C58 · stop at the 1st C59 · years 0000-0099 C60 · leading zeros C61 | - |
 | one-way doors (4) | stored shape C52, C56 · calendar dates C53 · references nulled C45, C46, C54 · contract C55 | - |
 | startup config: router mounting (2 assemblies) | `createLedgerRouters` in the ledger module C55 · `createApp` in apps/api C55 | - |
 

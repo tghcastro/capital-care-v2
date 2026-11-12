@@ -27,16 +27,26 @@ function parse(date: string): Ymd | null {
   return { y, m, d };
 }
 
+function isLeapYear(y: number): boolean {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+}
+
+// Plain calendar arithmetic: Date.UTC maps the years 0 to 99 to 1900-1999, so it is not used here.
 function daysInMonth(y: number, m: number): number {
-  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return [31, isLeapYear(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] ?? 0;
 }
 
 function format(y: number, m: number, d: number): string {
   return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
+/** Days since 0000-03-01 (proleptic Gregorian); only differences between two dates are used. */
 function dayNumber({ y, m, d }: Ymd): number {
-  return Date.UTC(y, m - 1, d) / 86_400_000;
+  const year = m <= 2 ? y - 1 : y;
+  const era = Math.floor(year / 400);
+  const yearOfEra = year - era * 400;
+  const dayOfYear = Math.floor((153 * ((m + 9) % 12) + 2) / 5) + d - 1;
+  return era * 146_097 + yearOfEra * 365 + Math.floor(yearOfEra / 4) - Math.floor(yearOfEra / 100) + dayOfYear;
 }
 
 function monthIndex(y: number, m: number): number {
