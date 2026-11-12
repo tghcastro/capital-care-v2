@@ -71,6 +71,7 @@ Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.t
 | C59 | `S` `C59 stopping at the first of a month removes the month and a later settlement` | yes (mock repository, but the real stop path is held by C40 over SQLite and my probe of a stop at the 1st over SQLite held) |
 | C60 | `H` `C60 dates in the years 0000 to 0099 follow the same calendar rules` | yes |
 | C61 | `D` `C61 amount digit limit counts the integer part without leading zeros` | yes |
+| C62 | `R` `C62 a one-off and an instalment occurrence can be settled and undone over HTTP` | yes |
 
 ## Findings
 
