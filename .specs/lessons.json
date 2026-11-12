@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 6,
+  "next_id": 11,
   "lessons": [
     {
       "id": "L-001",
@@ -94,6 +94,96 @@
       ],
       "created": "2026-11-11T14:19:07Z",
       "last_seen": "2026-11-11T14:19:07Z"
+    },
+    {
+      "id": "L-006",
+      "key": "weak_test::assert each http status and response envelope a check claims through the route not only on the schema or the service",
+      "text": "Assert each HTTP status and response envelope a check claims through the route, not only on the schema or the service",
+      "signal": "weak_test",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "transactions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/transactions/verification.md C3 C4 C5 C6 C11 C26 C28 C29 (routes)"
+      ],
+      "created": "2026-11-12T12:31:33Z",
+      "last_seen": "2026-11-12T12:31:33Z"
+    },
+    {
+      "id": "L-007",
+      "key": "weak_test::prove a sort tie break with ids seeded in an order that disagrees with the expected order not with random ids",
+      "text": "Prove a sort tie-break with ids seeded in an order that disagrees with the expected order, not with random ids",
+      "signal": "weak_test",
+      "scope": "repo-layer",
+      "status": "candidate",
+      "features": [
+        "transactions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/transactions/verification.md C13 (repo-layer)"
+      ],
+      "created": "2026-11-12T12:31:33Z",
+      "last_seen": "2026-11-12T12:31:33Z"
+    },
+    {
+      "id": "L-008",
+      "key": "weak_test::prove user scoping and stop rules against a real database with two users data not only on an in memory mock that copies the rule",
+      "text": "Prove user-scoping and stop rules against a real database with two users' data, not only on an in-memory mock that copies the rule",
+      "signal": "weak_test",
+      "scope": "repo-layer",
+      "status": "candidate",
+      "features": [
+        "transactions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/transactions/verification.md C40 C51 (repo-layer)"
+      ],
+      "created": "2026-11-12T12:31:33Z",
+      "last_seen": "2026-11-12T12:31:33Z"
+    },
+    {
+      "id": "L-009",
+      "key": "ac_gap::do not use date utc for calendar arithmetic it maps the years 0 to 99 to 1900 1999",
+      "text": "Do not use Date.UTC for calendar arithmetic: it maps the years 0 to 99 to 1900-1999",
+      "signal": "ac_gap",
+      "scope": "dates",
+      "status": "candidate",
+      "features": [
+        "transactions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/transactions/verification.md finding Dates in years 0000-0099 (dates)"
+      ],
+      "created": "2026-11-12T12:31:33Z",
+      "last_seen": "2026-11-12T12:31:33Z"
+    },
+    {
+      "id": "L-010",
+      "key": "spec_precision_gap::state whether a digit count limit applies to the written value or the stored value",
+      "text": "State whether a digit-count limit applies to the written value or the stored value",
+      "signal": "spec_precision_gap",
+      "scope": "validation",
+      "status": "candidate",
+      "features": [
+        "transactions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/transactions/verification.md finding Amount with leading zeros (validation)"
+      ],
+      "created": "2026-11-12T12:31:33Z",
+      "last_seen": "2026-11-12T12:31:33Z"
     }
   ]
 }
