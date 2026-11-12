@@ -8,7 +8,7 @@ Defined in [.github/workflows/ci-cd.yml](../../../.github/workflows/ci-cd.yml). 
 test ──► security ──► build ──► publish
 ```
 
-- **test:** install with the frozen lockfile, then type-check, build, and run the ledger tests (`@capital-care/ledger`).
+- **test:** install with the frozen lockfile, then type-check, build, and run all tests (`pnpm test`: the ledger module and the API app).
 - **security:** a production dependency audit that fails only on `critical` advisories. A second audit lists all advisories in the log and does not fail the run. On pull requests, dependency review also runs.
 - **build:** build the `runtime` stage of the [Dockerfile](../../../Dockerfile). Load the image, start it, and check that `GET /health` returns `{"status":"ok"}` within 30 seconds. The image is passed to the next job as an artifact (one-day retention, pushes only).
 - **publish:** runs only on pushes to `main` and version tags, never on pull requests. It pushes the same image that was built and smoke-tested, not a rebuild.

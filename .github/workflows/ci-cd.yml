@@ -44,7 +44,7 @@ jobs:
       - run: pnpm type-check
       - run: pnpm lint
       - run: pnpm build
-      - run: pnpm --filter @capital-care/ledger exec vitest run
+      - run: pnpm test
 
   security:
     name: security
