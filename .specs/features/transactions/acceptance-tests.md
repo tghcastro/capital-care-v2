@@ -65,8 +65,8 @@ Feature: Seeing a month
     Given today is 2026-11-20
     And I have these transactions:
       | Date       | Description      | Amount  | Status       |
-      | 2026-11-01 | Salary - Acme    | 3000,00 | Consolidated |
-      | 2026-11-05 | Condo fees       | 450,00  | Consolidated |
+      | 2026-11-01 | Salary - Acme    | 3000,00 | Settled |
+      | 2026-11-05 | Condo fees       | 450,00  | Settled |
       | 2026-11-10 | New office chair | 229,00  | Forecast     |
       | 2026-11-28 | Gym              | 50,00   | Forecast     |
     When I look at November 2026
@@ -201,15 +201,15 @@ Feature: Purchases paid in instalments
 ## Confirming that something was paid
 
 ```gherkin
-Feature: Consolidating (checking) a transaction
+Feature: Settling (checking) a transaction
 
   Background:
     Given I have a monthly transaction "Condo fees" of 450,00 starting 2026-11-05
 
   Scenario: I check an entry after comparing it with my account
     Given today is 2026-11-06
-    When I consolidate "Condo fees" on 2026-11-05
-    Then November 2026 shows "Condo fees" on 2026-11-05 as Consolidated
+    When I settle "Condo fees" on 2026-11-05
+    Then November 2026 shows "Condo fees" on 2026-11-05 as Settled
     And December 2026 shows "Condo fees" on 2026-12-05 as Forecast
 
   Scenario: Nothing is checked unless I check it
@@ -218,20 +218,20 @@ Feature: Consolidating (checking) a transaction
     Then "Condo fees" on 2026-11-05 is still Forecast
 
   Scenario: What I really paid is different from the forecast
-    When I consolidate "Condo fees" on 2026-12-05 with the amount 462,50
+    When I settle "Condo fees" on 2026-12-05 with the amount 462,50
     Then November 2026 shows it with 450,00 as Forecast
-    And December 2026 shows it with 462,50 as Consolidated
+    And December 2026 shows it with 462,50 as Settled
     And January 2027 shows it with 450,00 as Forecast
 
   Scenario: I checked the wrong entry
-    Given I consolidated "Condo fees" on 2026-12-05 with the amount 462,50
-    When I undo the consolidation of 2026-12-05
+    Given I settled "Condo fees" on 2026-12-05 with the amount 462,50
+    When I undo the settlement of 2026-12-05
     Then December 2026 shows it with 450,00 as Forecast
 
   Scenario: I can check an entry before its day arrives
     Given today is 2026-11-01
-    When I consolidate "Condo fees" on 2026-11-05
-    Then November 2026 shows it as Consolidated
+    When I settle "Condo fees" on 2026-11-05
+    Then November 2026 shows it as Settled
 ```
 
 ## Changing a transaction
@@ -249,15 +249,15 @@ Feature: Changing a transaction
     And January 2027 shows 480,00
 
   Scenario: A change does not touch what I already paid
-    Given I consolidated "Condo fees" on 2027-01-05 with 450,00
+    Given I settled "Condo fees" on 2027-01-05 with 450,00
     When I change "Condo fees" on 2026-12-05 to 480,00
-    Then January 2027 still shows 450,00 as Consolidated
+    Then January 2027 still shows 450,00 as Settled
     And February 2027 shows 480,00 as Forecast
 
   Scenario: Changing something I already paid changes only that one
-    Given I consolidated "Condo fees" on 2026-11-05 with 450,00
+    Given I settled "Condo fees" on 2026-11-05 with 450,00
     When I change "Condo fees" on 2026-11-05 to 455,00
-    Then November 2026 shows 455,00 as Consolidated
+    Then November 2026 shows 455,00 as Settled
     And December 2026 shows 450,00 as Forecast
 
   Scenario: A later change replaces an earlier plan for the future
@@ -284,9 +284,9 @@ Feature: Stopping and deleting transactions
 
   Scenario: Stopping a subscription keeps the past
     Given I have a monthly transaction "Gym" of 50,00 starting 2026-11-05
-    And I consolidated "Gym" on 2026-11-05
+    And I settled "Gym" on 2026-11-05
     When I stop "Gym" from 2027-01-05
-    Then November 2026 shows "Gym" as Consolidated
+    Then November 2026 shows "Gym" as Settled
     And December 2026 shows "Gym" as Forecast
     And January 2027 shows nothing
     And every month after shows nothing
@@ -330,10 +330,10 @@ Feature: Removing a category or an account that transactions use
 
   Scenario: Transactions stay when their account is deleted
     Given I have a monthly transaction "Gym" of 50,00 on the account "Credit Card" starting 2026-11-05
-    And I consolidated "Gym" on 2026-11-05
+    And I settled "Gym" on 2026-11-05
     When I delete the account "Credit Card"
     Then every month still shows "Gym", with no account
-    And November 2026 still shows it as Consolidated
+    And November 2026 still shows it as Settled
 ```
 
 ## A month in my life
@@ -362,8 +362,8 @@ Feature: November 2026 from start to finish
 
     Given today is 2026-11-16
     And I compared my accounts and found all five paid, the insurance at 1235,00
-    When I consolidate all five entries, entering 1235,00 for the insurance
-    Then November 2026 shows all five as Consolidated
+    When I settle all five entries, entering 1235,00 for the insurance
+    Then November 2026 shows all five as Settled
     And the insurance shows 1235,00
 
     When I look at December 2026

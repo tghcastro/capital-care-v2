@@ -8,16 +8,16 @@ Capital Care can describe categories and accounts but cannot record money. The o
 
 The behaviour is also described as examples in [acceptance-tests.md](acceptance-tests.md), written in Gherkin and free of technical detail, to read the system's behaviour at a glance.
 
-When this ships, a caller of the API can record one-off, recurring (daily, weekly, monthly, annual) and instalment transactions, see any month of past and future entries, mark entries as paid (consolidated) by hand, correct, stop and delete them, and rely on a deleted category or account leaving the entries in place.
+When this ships, a caller of the API can record one-off, recurring (daily, weekly, monthly, annual) and instalment transactions, see any month of past and future entries, mark entries as paid (settled) by hand, correct, stop and delete them, and rely on a deleted category or account leaving the entries in place.
 
 ## Shape
 
-This reuses the `category` and `account` layering (controller -> service -> repository), the `X-User-Id` header, the shared error classes and the `AccountService` / `CategoryService` lookups; the rules that change an outcome (field validation, the occurrence schedule, edit and stop semantics, consolidation, the month view) run in `TransactionService`, a pure schedule module and the Zod schemas, which the unit tests reach with an in-memory repository mock ([testing.md](../../../docs/tech/definitions/testing.md)).
+This reuses the `category` and `account` layering (controller -> service -> repository), the `X-User-Id` header, the shared error classes and the `AccountService` / `CategoryService` lookups; the rules that change an outcome (field validation, the occurrence schedule, edit and stop semantics, settlement, the month view) run in `TransactionService`, a pure schedule module and the Zod schemas, which the unit tests reach with an in-memory repository mock ([testing.md](../../../docs/tech/definitions/testing.md)).
 
 A transaction is stored once as a definition (start date, frequency, instalment counters) with dated value revisions; its occurrences are computed from the schedule on read, and only paid ones are stored (settlements).
 
-1. `POST /transactions`, `GET /transactions?month=`, `PATCH` / `DELETE /transactions/:id/occurrences/:date`, `PUT` / `DELETE /transactions/:id/occurrences/:date/consolidation` with `X-User-Id` -> `TransactionRouter` (new, door 4) - reads the user id (401 if absent), validates input with the Zod schemas, calls the service
-2. `TransactionService` (new) - checks the account and category belong to the user through `AccountService.getAccount` and `CategoryService.getCategory` (exist), decides which dates are occurrences, applies the edit / stop / consolidate rules, throws `ValidationError` / `ConflictError` / `NotFoundError`
+1. `POST /transactions`, `GET /transactions?month=`, `PATCH` / `DELETE /transactions/:id/occurrences/:date`, `PUT` / `DELETE /transactions/:id/occurrences/:date/settlement` with `X-User-Id` -> `TransactionRouter` (new, door 4) - reads the user id (401 if absent), validates input with the Zod schemas, calls the service
+2. `TransactionService` (new) - checks the account and category belong to the user through `AccountService.getAccount` and `CategoryService.getCategory` (exist), decides which dates are occurrences, applies the edit / stop / settle rules, throws `ValidationError` / `ConflictError` / `NotFoundError`
 3. `transaction.schedule` (new) - pure functions: the occurrence dates of a transaction in a month, whether a date is an occurrence, the instalment number of a date; month-end clamping anchored on the start date
 4. `TransactionRepository` (new) - persists and reads `transaction`, `transaction_revision` and `transaction_settlement` rows (door 1), maps rows to domain types, wraps multi-row writes in one SQLite transaction (door 1)
 5. out: `Transaction` JSON, `{ occurrences: [...] }`, `Occurrence` JSON or `204`; `createLedgerRouters()` in `index.ts` (exists) returns `transactionRouter`, `apps/api/src/app.ts` (exists) mounts it at `/transactions`, and `schema.ts` (exists) exports the new entities to Drizzle Kit
@@ -44,7 +44,7 @@ sequenceDiagram
     P-->>S: domain types
     S->>K: 3. occurrence dates in the month
     K-->>S: dates
-    S-->>R: 2. occurrences, each forecast or consolidated
+    S-->>R: 2. occurrences, each forecast or settled
     R-->>C: 5. 200 { occurrences }
 ```
 
@@ -91,10 +91,10 @@ New: `Transaction`, `TransactionRevision`, `TransactionSettlement`, and their re
 ```mermaid
 stateDiagram-v2
     [*] --> Forecast : occurrence falls on the schedule
-    Forecast --> Consolidated : owner consolidates (PUT)
-    Consolidated --> Forecast : owner undoes (DELETE)
+    Forecast --> Settled : owner settles (PUT)
+    Settled --> Forecast : owner undoes (DELETE)
     Forecast --> [*] : stopped from this occurrence or earlier
-    Consolidated --> [*] : stopped from this occurrence or earlier
+    Settled --> [*] : stopped from this occurrence or earlier
 ```
 
 ## Surface
@@ -105,10 +105,10 @@ stateDiagram-v2
 | `GET /transactions?month=YYYY-MM` | query `month` | `{ occurrences: Occurrence[] }` | `200`; `400`; `401` | current user only |
 | `PATCH /transactions/:id/occurrences/:date` | any of `{ description, categoryId, accountId, amount, type }` | `Occurrence` | `200`; `400`; `404`; `401` | current user only; another user's transaction gets `404` |
 | `DELETE /transactions/:id/occurrences/:date` | none | empty | `204`; `404`; `401` | current user only; another user's gets `404` |
-| `PUT /transactions/:id/occurrences/:date/consolidation` | `{ amount? }` | `Occurrence` | `200`; `400`; `404`; `409` already consolidated; `401` | current user only; another user's gets `404` |
-| `DELETE /transactions/:id/occurrences/:date/consolidation` | none | `Occurrence` | `200`; `404`; `409` not consolidated; `401` | current user only; another user's gets `404` |
+| `PUT /transactions/:id/occurrences/:date/settlement` | `{ amount? }` | `Occurrence` | `200`; `400`; `404`; `409` already settled; `401` | current user only; another user's gets `404` |
+| `DELETE /transactions/:id/occurrences/:date/settlement` | none | `Occurrence` | `200`; `404`; `409` not settled; `401` | current user only; another user's gets `404` |
 
-`Transaction` is `{ id, userId, date, description, categoryId, accountId, type, amount, recurrence, instalment, createdAt, updatedAt }`, with the values of its first occurrence. `Occurrence` is `{ transactionId, date, description, categoryId, accountId, type, amount, recurrence, instalment, status }`. `type` is `"receipt"` or `"debit"`. `recurrence` is `null`, `"daily"`, `"weekly"`, `"monthly"` or `"annually"`. `instalment` is `null` or `{ number, total }`; on an occurrence `number` is that occurrence's own number. `status` is `"forecast"` or `"consolidated"`. `amount` is a canonical decimal string, and on a consolidated occurrence it is the amount actually paid. `categoryId` and `accountId` are `null` after the category or account was deleted. Error bodies are `{ type, detail }`, the shape the Account routes return today. Unknown request fields are ignored ([api.md](../../../docs/tech/definitions/api.md#validation)).
+`Transaction` is `{ id, userId, date, description, categoryId, accountId, type, amount, recurrence, instalment, createdAt, updatedAt }`, with the values of its first occurrence. `Occurrence` is `{ transactionId, date, description, categoryId, accountId, type, amount, recurrence, instalment, status }`. `type` is `"receipt"` or `"debit"`. `recurrence` is `null`, `"daily"`, `"weekly"`, `"monthly"` or `"annually"`. `instalment` is `null` or `{ number, total }`; on an occurrence `number` is that occurrence's own number. `status` is `"forecast"` or `"settled"`. `amount` is a canonical decimal string, and on a settled occurrence it is the amount actually paid. `categoryId` and `accountId` are `null` after the category or account was deleted. Error bodies are `{ type, detail }`, the shape the Account routes return today. Unknown request fields are ignored ([api.md](../../../docs/tech/definitions/api.md#validation)).
 
 ## Landing
 
@@ -136,7 +136,7 @@ The caller can record one transaction and read back what was stored.
    - date `2026-01-05` (in the past) → `GET ?month=2026-01` shows `status: "forecast"`
 3. IF `type` is anything other than `"receipt"` or `"debit"`, or is missing, THEN POST SHALL return `400` ValidationError and save nothing
    - `"Debit"` → `400`; `"expense"` → `400`; absent → `400`
-4. IF `amount` is not a string holding a positive decimal with at most 12 integer digits and at most 4 decimals THEN POST, PATCH and consolidation SHALL return `400` ValidationError and change nothing
+4. IF `amount` is not a string holding a positive decimal with at most 12 integer digits and at most 4 decimals THEN POST, PATCH and settlement SHALL return `400` ValidationError and change nothing
    - `"0"` → `400`; `"-5"` → `400`; `"1,5"` → `400`; `"abc"` → `400`; the JSON number `229` → `400`; `"12.12345"` → `400`; `"12.1234"` → accepted; `"1234567890123"` (13 digits) → `400`; `"123456789012"` → accepted
 5. IF `description` is empty, only spaces, or longer than 100 characters after trimming THEN POST and PATCH SHALL return `400` ValidationError; WHEN it has leading or trailing spaces THEN the system SHALL trim them before saving
    - `""` → `400`; `"   "` → `400`; 100 characters → accepted; 101 → `400`; `"  Gym  "` → saved as `"Gym"`
@@ -155,8 +155,8 @@ The caller can see a month, past or future, with every entry that falls in it.
 
 1. WHEN a user GETs `/transactions?month=2026-11` THEN the system SHALL return `200` with `{ occurrences }` holding every occurrence dated from `2026-11-01` to `2026-11-30`, and only the calling user's
 2. WHEN the month has no occurrences THEN the system SHALL return `200` with `{ "occurrences": [] }`
-3. WHEN a month holds forecast and consolidated occurrences, and forecasts whose date has already passed, THEN the system SHALL return all of them together, none hidden
-   - on any day of November, an unconsolidated `2026-11-03` occurrence is listed as `forecast`
+3. WHEN a month holds forecast and settled occurrences, and forecasts whose date has already passed, THEN the system SHALL return all of them together, none hidden
+   - on any day of November, an unsettled `2026-11-03` occurrence is listed as `forecast`
 4. WHEN a month is listed THEN occurrences SHALL be ordered by date, then by description ignoring case, then by `transactionId`
    - `11-05 "Gym"`, `11-05 "condo"`, `11-02 "Zed"` → `Zed`, `condo`, `Gym`
 5. IF `month` is missing or not `YYYY-MM` with a month from `01` to `12` THEN the system SHALL return `400` ValidationError
@@ -187,20 +187,20 @@ An entry appears in exactly the months its schedule says, and in no month before
    - `{ 0, 10 }` → `400`; `{ 11, 10 }` → `400`; `{ 1, 999 }` → accepted; `{ 1, 1000 }` → `400`; `{ 1.5, 10 }` → `400`
 10. WHEN occurrences of one transaction are listed in different months THEN they SHALL carry the same `transactionId`
 
-### S4: Consolidate and undo (P1)
+### S4: Settle and undo (P1)
 
 Only the owner marks an entry paid, one occurrence at a time, and can take it back.
 
 **Acceptance Criteria**
 
-1. WHEN a user PUTs `/transactions/:id/occurrences/:date/consolidation` with `{}` on a forecast occurrence THEN the system SHALL return `200` with that occurrence as `status: "consolidated"` and its amount unchanged, and later listings SHALL show it consolidated
+1. WHEN a user PUTs `/transactions/:id/occurrences/:date/settlement` with `{}` on a forecast occurrence THEN the system SHALL return `200` with that occurrence as `status: "settled"` and its amount unchanged, and later listings SHALL show it settled
 2. WHEN the body carries `amount` THEN the system SHALL record that amount for this occurrence only; every other occurrence SHALL keep its own amount
-   - monthly `"20"`, consolidate `2026-12-05` with `"22"` → Nov `20` forecast, Dec `22` consolidated, Jan `20` forecast
-3. IF the occurrence is already consolidated THEN PUT SHALL return `409` ConflictError and change nothing
-4. WHEN a user DELETEs `/transactions/:id/occurrences/:date/consolidation` on a consolidated occurrence THEN the system SHALL return `200` with it back as `status: "forecast"` carrying the forecast values of that date, dropping any real amount; IF it is a forecast THEN DELETE SHALL return `409`
-5. WHILE no consolidation was requested, the system SHALL keep every occurrence a forecast, for every kind of transaction, however old
+   - monthly `"20"`, settle `2026-12-05` with `"22"` → Nov `20` forecast, Dec `22` settled, Jan `20` forecast
+3. IF the occurrence is already settled THEN PUT SHALL return `409` ConflictError and change nothing
+4. WHEN a user DELETEs `/transactions/:id/occurrences/:date/settlement` on a settled occurrence THEN the system SHALL return `200` with it back as `status: "forecast"` carrying the forecast values of that date, dropping any real amount; IF it is a forecast THEN DELETE SHALL return `409`
+5. WHILE no settlement was requested, the system SHALL keep every occurrence a forecast, for every kind of transaction, however old
    - an instalment occurrence dated `2026-01-15` listed in November is `forecast`; a one-off dated last year is `forecast`
-6. IF `:date` is not an occurrence of the transaction THEN consolidation, edit and delete SHALL return `404` NotFoundError
+6. IF `:date` is not an occurrence of the transaction THEN settlement, edit and delete SHALL return `404` NotFoundError
    - monthly on the 5th, `2026-11-06` → `404`; a date before the start → `404`; an instalment's date after number 504 → `404`; a malformed date → `404`
 
 ### S5: Edit (P1)
@@ -211,9 +211,9 @@ A correction reaches the occurrences it should and no others.
 
 1. WHEN a user PATCHes a forecast occurrence of a recurring or instalment transaction THEN the new values SHALL apply to that occurrence and every later forecast occurrence, and earlier occurrences SHALL be unchanged
    - condo fee `"20"` from `2026-11-05`; PATCH `2026-12-05` with `amount: "25"` → Nov `20`, Dec `25`, Jan `25`
-2. WHEN later occurrences are already consolidated THEN an edit SHALL NOT change them
-   - Jan consolidated at `20`, then PATCH Dec with `"25"` → Jan stays `20` consolidated, Feb `25`
-3. WHEN a user PATCHes a consolidated occurrence THEN only that occurrence SHALL change
+2. WHEN later occurrences are already settled THEN an edit SHALL NOT change them
+   - Jan settled at `20`, then PATCH Dec with `"25"` → Jan stays `20` settled, Feb `25`
+3. WHEN a user PATCHes a settled occurrence THEN only that occurrence SHALL change
 4. WHEN a later forecast edit was made earlier THEN an edit from an earlier date SHALL replace it: from the edited date on, every forecast occurrence takes all the values of the edited occurrence
    - PATCH Jan with `"30"`, then PATCH Dec with `"25"` → Jan forecast is `25`
 5. WHEN the edited occurrence is the first one of the transaction THEN the edit SHALL apply to the whole series from its start
@@ -227,8 +227,8 @@ Removing the future never touches what already happened.
 
 **Acceptance Criteria**
 
-1. WHEN a user DELETEs `/transactions/:id/occurrences/:date` on an occurrence THEN the system SHALL return `204`, remove that occurrence and every later one, and leave every earlier occurrence, forecast or consolidated, exactly as it was
-   - monthly from `2026-11-05`, Nov consolidated, DELETE `2027-01-05` → Nov and Dec still listed (Nov consolidated), Jan and later gone
+1. WHEN a user DELETEs `/transactions/:id/occurrences/:date` on an occurrence THEN the system SHALL return `204`, remove that occurrence and every later one, and leave every earlier occurrence, forecast or settled, exactly as it was
+   - monthly from `2026-11-05`, Nov settled, DELETE `2027-01-05` → Nov and Dec still listed (Nov settled), Jan and later gone
 2. WHEN `:date` is the first occurrence of the transaction, or the transaction is a one-off, THEN the whole transaction SHALL be removed
 3. WHEN a transaction was stopped THEN a request for a removed occurrence SHALL return `404`, and `GET` SHALL no longer list it
 4. WHEN an instalment is deleted from an occurrence THEN the same rules SHALL apply
@@ -238,7 +238,7 @@ Removing the future never touches what already happened.
 
 **Acceptance Criteria**
 
-1. WHEN a category used by transactions is deleted THEN the delete SHALL succeed as the Category rules say, every occurrence of those transactions, forecast and consolidated, SHALL stay listed with `categoryId: null`, and nothing else about them SHALL change
+1. WHEN a category used by transactions is deleted THEN the delete SHALL succeed as the Category rules say, every occurrence of those transactions, forecast and settled, SHALL stay listed with `categoryId: null`, and nothing else about them SHALL change
 2. WHEN an account used by transactions is deleted THEN the same SHALL hold with `accountId: null`
 3. WHEN a deleted category was one of several used by a user's transactions THEN only the occurrences that used it SHALL show `categoryId: null`
 4. WHEN a user PATCHes an occurrence whose category is `null` with only a `description` THEN the system SHALL return `200` and keep `categoryId: null`
@@ -248,7 +248,7 @@ Removing the future never touches what already happened.
 **Acceptance Criteria**
 
 1. IF a request to any `/transactions` route has no `X-User-Id` header, or a blank one, THEN the system SHALL return `401`
-2. IF a user addresses a transaction that does not exist, or one that belongs to another user, THEN PATCH, DELETE and consolidation SHALL return `404` NotFoundError (not `403`) and change nothing
+2. IF a user addresses a transaction that does not exist, or one that belongs to another user, THEN PATCH, DELETE and settlement SHALL return `404` NotFoundError (not `403`) and change nothing
 3. WHEN two users each have transactions THEN `GET /transactions` SHALL list only the calling user's
 
 ## Out of scope
@@ -264,7 +264,7 @@ Removing the future never touches what already happened.
 | Changing only one forecast occurrence and keeping the later ones | PRD: a forecast edit applies to later occurrences |
 | `GET /transactions/:id` | not in the PRD; the month view carries everything |
 | Transfers between accounts, currency | PRD silent; amounts are currency-agnostic ([database.md](../../../docs/tech/definitions/database.md)) |
-| Automatic consolidation, or an "overdue" marker | PRD: nothing is consolidated automatically; a past forecast is simply listed as `forecast` |
+| Automatic settlement, or an "overdue" marker | PRD: nothing is settled automatically; a past forecast is simply listed as `forecast` |
 | Changing how categories or accounts are deleted | PRD Unchanged: only their effect on transactions is specified here |
 | Daily, weekly or annual instalments | asked: instalments are monthly only |
 
@@ -274,18 +274,18 @@ Removing the future never touches what already happened.
 | --- | --- | --- | --- |
 | Month-end for monthly and annual entries | last day of the shorter month, back to the start day later | the user chose it when asked | y |
 | Instalment frequency and numbering | monthly only; the `date` belongs to the entered `number`; earlier numbers are not created | the user chose it when asked | y |
-| Undo of consolidation | allowed, back to forecast | the user chose it when asked | y |
+| Undo of settlement | allowed, back to forecast | the user chose it when asked | y |
 | Stopping a series | from a chosen occurrence, that one and later removed; a one-off is deleted whole; no single-occurrence removal | the user chose it when asked | y |
 | Recurring frequencies | daily, weekly, monthly, annually | the user added weekly and daily to the PRD | y |
-| Edit scope | forecast edit applies to later forecast occurrences, consolidated edit to one occurrence, real paid amount to one occurrence | PRD Journey rows, confirmed in the interview | y |
+| Edit scope | forecast edit applies to later forecast occurrences, settled edit to one occurrence, real paid amount to one occurrence | PRD Journey rows, confirmed in the interview | y |
 | Deleted category or account | transactions stay; the API returns `null` for the id, and "No category" / "No account" is the label a client draws | the user said to reuse the behaviour of the old tool; the label is presentation | n |
 | Description rule | 1 to 100 characters after trimming, any characters | the PRD gives none; descriptions such as "Market chair New office chair" need free text | n |
 | Amount rule | positive, at most 12 integer digits and 4 decimals, sent as a string | the PRD gives none; database.md fixes the storage, not the bounds | n |
 | Instalment total bound | at most 999 | the PRD example is 504; the bound only stops absurd input | n |
-| Consolidating a future-dated occurrence | allowed | the owner compares with the real account and decides; no PRD rule against it | n |
-| Consolidating twice, or undoing a forecast | `409` both | a state conflict, as Account reports duplicates | n |
-| Undo drops edits made on the consolidated occurrence | the occurrence returns to the schedule's values | the settled values were a snapshot of one occurrence | n |
-| Stopping at a consolidated occurrence | removes it too | the user chose "that occurrence and all later ones" | n |
+| Settling a future-dated occurrence | allowed | the owner compares with the real account and decides; no PRD rule against it | n |
+| Settling twice, or undoing a forecast | `409` both | a state conflict, as Account reports duplicates | n |
+| Undo drops edits made on the settled occurrence | the occurrence returns to the schedule's values | the settled values were a snapshot of one occurrence | n |
+| Stopping at a settled occurrence | removes it too | the user chose "that occurrence and all later ones" | n |
 | A bad reference in the body | `400` naming the field, same for unknown and another user's | existing error shape; never reveals another user's data | n |
 | Error body shape | `{ type, detail }` as the Account routes return | consistency with the code that exists today | n |
 | Month view size | not paginated | a month is bounded | n |
