@@ -1,6 +1,6 @@
 # Transactions
 
-**Approved**: <pending - written only when the user approves>
+**Approved**: 2026-11-12 - user: "Ok Agree"
 
 ## Problem
 
@@ -119,7 +119,7 @@ stateDiagram-v2
 | Deleting a category or account never blocks and never deletes transactions | `categoryId` and `accountId` on `transaction_revision` and `transaction_settlement` are nullable `REFERENCES category(id) ON DELETE SET NULL` / `REFERENCES account(id) ON DELETE SET NULL` | no foreign key plus clean-up calls from the Category and Account services - those aggregates would have to know about transactions, breaking the aggregate boundary rule; refusing the delete while transactions use it - contradicts the PRD |
 | The contract a future Web client binds to | routes and JSON exactly as in `Surface`, an occurrence addressed by `/:id/occurrences/:date`, lowercase enum values, amounts as strings | a numeric `amount` - binary floating point; addressing an occurrence by its own generated id - occurrences are not stored until paid |
 
-- Reaches past this feature: the calendar-date convention goes into `.specs/STATE.md` as `AD-001` once the plan is approved
+- Reaches past this feature: the calendar-date convention is recorded in `.specs/STATE.md` as `AD-001`
 - Nothing else in this change is hard to reverse
 
 ## Criteria
