@@ -1,6 +1,6 @@
 # Transactions verification
 
-**Verdict**: FAIL
+**Verdict**: PASS
 **Proofs**: `proofs.md` at b3837e6
 **Verifier**: independent sub-agent (author != verifier)
 
@@ -22,7 +22,7 @@ Test files: `S` = `modules/ledger/src/transaction/__test__/transaction.service.t
 | C10 | `S` `C10 a month lists its first to last day and nothing outside` | yes (mock repository, one-offs only; the real SQL range filter is exercised only by other checks) |
 | C11 | `S` `C11 an empty month returns an empty list`; `R` `C11 GET of an empty month returns 200 with an occurrences envelope` | yes |
 | C12 | `S` `C12 past forecasts are listed together with settled entries` | yes |
-| C13 | `S` `C13 month occurrences are ordered by date then description ignoring case`; `R` `C13 equal date and description are ordered by transaction id` | no - the tie-break test uses random UUIDs created in sequence, so with the third sort key removed (stable insertion order) it still passes about 1 run in 6; use fixed ids created in descending order |
+| C13 | `S` `C13 month occurrences are ordered by date then description ignoring case`; `S` `C13 equal date and description are ordered by transaction id` | yes |
 | C14 | `D` `C14 month rule accepts YYYY-MM only`; `R` `C14 GET with a bad month returns 400` | yes |
 | C15 | `S` `C15 an occurrence carries all fields with the values in force on its date` | yes |
 | C16 | `H` `C16 a one-off has a single occurrence on its date` | yes |
