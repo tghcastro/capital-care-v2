@@ -1,6 +1,6 @@
 # Transactions - Acceptance Tests
 
-Behaviour only, in the owner's words. These scenarios explain how Transactions work; they do not check field limits, empty values or error codes (the checks cover those). Amounts are written as in the owner's examples. Where the day matters, the scenario says what day it is.
+Behaviour only, in the owner's words. These scenarios explain how Transactions work; they do not check field limits, empty values or error codes (the checks cover those). Amounts are written with a decimal comma. Where the day matters, the scenario says what day it is. The names below (categories, accounts, descriptions) are sample data for reading; the system does not depend on them.
 
 **Related:** [plan.md](plan.md) - [`.prd/transactions.md`](../../../.prd/transactions.md)
 
@@ -11,15 +11,18 @@ Feature: Transactions
 
   Background:
     Given I have these categories:
-      | Category          |
-      | House Maintenance |
-      | Receipt           |
-      | Super Market      |
-      | Basic Costs       |
+      | Category  |
+      | Income    |
+      | Housing   |
+      | Groceries |
+      | Transport |
+      | Shopping  |
+      | Health    |
+      | Leisure   |
     And I have these accounts:
-      | Account       |
-      | Credit Card A |
-      | Santander     |
+      | Account          |
+      | Checking Account |
+      | Credit Card      |
 ```
 
 ## Recording a transaction
@@ -29,28 +32,28 @@ Feature: Recording a one-off transaction
 
   Scenario: A purchase appears in the month it was made
     When I record this transaction:
-      | Date        | Description                    | Category          | Account       | Amount | Type  |
-      | 2026-11-10  | Market chair New office chair  | House Maintenance | Credit Card A | 229,00 | Debit |
+      | Date       | Description      | Category | Account     | Amount | Type  |
+      | 2026-11-10 | New office chair | Shopping | Credit Card | 229,00 | Debit |
     Then November 2026 shows:
-      | Date        | Description                    | Category          | Account       | Amount | Type  | Status   |
-      | 2026-11-10  | Market chair New office chair  | House Maintenance | Credit Card A | 229,00 | Debit | Forecast |
+      | Date       | Description      | Category | Account     | Amount | Type  | Status   |
+      | 2026-11-10 | New office chair | Shopping | Credit Card | 229,00 | Debit | Forecast |
     And October 2026 shows nothing
     And December 2026 shows nothing
 
   Scenario: Money received is recorded as a receipt
     When I record this transaction:
-      | Date        | Description                  | Category | Account   | Amount  | Type    |
-      | 2026-11-01  | My Company - Monthly Income  | Receipt  | Santander | 1000,00 | Receipt |
+      | Date       | Description    | Category | Account          | Amount  | Type    |
+      | 2026-11-01 | Salary - Acme  | Income   | Checking Account | 3000,00 | Receipt |
     Then November 2026 shows:
-      | Date        | Description                  | Category | Account   | Amount  | Type    | Status   |
-      | 2026-11-01  | My Company - Monthly Income  | Receipt  | Santander | 1000,00 | Receipt | Forecast |
+      | Date       | Description    | Category | Account          | Amount  | Type    | Status   |
+      | 2026-11-01 | Salary - Acme  | Income   | Checking Account | 3000,00 | Receipt | Forecast |
 
   Scenario: A new transaction is always a forecast until I say it was paid
     Given today is 2026-11-12
     When I record this transaction:
-      | Date        | Description    | Category      | Account   | Amount | Type  |
-      | 2026-11-03  | Monthly Condo fees | Basic Costs | Santander | 20,00  | Debit |
-    Then November 2026 shows "Monthly Condo fees" on 2026-11-03 as Forecast
+      | Date       | Description | Category | Account          | Amount | Type  |
+      | 2026-11-03 | Dentist     | Health   | Checking Account | 120,00 | Debit |
+    Then November 2026 shows "Dentist" on 2026-11-03 as Forecast
 ```
 
 ## Seeing a month
@@ -61,17 +64,17 @@ Feature: Seeing a month
   Scenario: A month shows every entry, paid or not, from the first day to the last
     Given today is 2026-11-20
     And I have these transactions:
-      | Date        | Description                    | Amount | Status       |
-      | 2026-11-01  | My Company - Monthly Income    | 1000,00 | Consolidated |
-      | 2026-11-05  | Monthly Condo fees             | 20,00   | Consolidated |
-      | 2026-11-10  | Market chair New office chair  | 229,00  | Forecast     |
-      | 2026-11-28  | Gym                            | 50,00   | Forecast     |
+      | Date       | Description      | Amount  | Status       |
+      | 2026-11-01 | Salary - Acme    | 3000,00 | Consolidated |
+      | 2026-11-05 | Condo fees       | 450,00  | Consolidated |
+      | 2026-11-10 | New office chair | 229,00  | Forecast     |
+      | 2026-11-28 | Gym              | 50,00   | Forecast     |
     When I look at November 2026
     Then I see all four entries, in date order
     And the entry on 2026-11-10 is still listed as Forecast, even though that day has passed
 
   Scenario: I can look at months in the past and in the future
-    Given I have a monthly transaction "Monthly Condo fees" of 20,00 starting 2026-11-05
+    Given I have a monthly transaction "Condo fees" of 450,00 starting 2026-11-05
     Then I can look at November 2026 and see it
     And I can look at November 2027 and see it
     And I see nothing for October 2026
@@ -99,21 +102,23 @@ Feature: Transactions that repeat with no end
 
   Scenario: A monthly transaction repeats every month
     When I record this transaction:
-      | Date        | Description         | Category    | Account   | Amount | Type  | Recurrence |
-      | 2026-11-05  | Monthly Condo fees  | Basic Costs | Santander | 20,00  | Debit | Monthly    |
-    Then each month from November 2026 on shows "Monthly Condo fees" on the 5th
+      | Date       | Description | Category | Account          | Amount | Type  | Recurrence |
+      | 2026-11-05 | Condo fees  | Housing  | Checking Account | 450,00 | Debit | Monthly    |
+    Then each month from November 2026 on shows "Condo fees" on the 5th
     And October 2026 shows nothing
+    And no earlier month shows it either
 
   Scenario: An annual transaction appears once a year
     When I record this transaction:
-      | Date        | Description              | Category    | Account   | Amount | Type  | Recurrence |
-      | 2026-11-05  | Anually Vehicle Insurance | Basic Costs | Santander | 20,00  | Debit | Annually   |
+      | Date       | Description       | Category  | Account          | Amount  | Type  | Recurrence |
+      | 2026-11-05 | Vehicle insurance | Transport | Checking Account | 1200,00 | Debit | Annually   |
     Then November 2026 shows it on 2026-11-05
     And December 2026 shows nothing
     And November 2027 shows it on 2027-11-05
+    And November 2025 and every earlier month show nothing
 
   Scenario: A weekly transaction repeats every seven days
-    When I record a weekly transaction "Cleaning" starting 2026-11-05
+    When I record a weekly transaction "Cleaning service" starting 2026-11-05
     Then November 2026 shows it on:
       | 2026-11-05 |
       | 2026-11-12 |
@@ -125,14 +130,21 @@ Feature: Transactions that repeat with no end
       | 2026-12-17 |
       | 2026-12-24 |
       | 2026-12-31 |
+    And the days before 2026-11-05, including 2026-10-29, show nothing
 
   Scenario: A daily transaction appears every day
     When I record a daily transaction "Coffee" starting 2026-11-29
     Then November 2026 shows it on 2026-11-29 and 2026-11-30
     And December 2026 shows it on all 31 days
+    And 2026-11-28 and every earlier day show nothing
+
+  Scenario: A recurring transaction does not appear before its start, even in the same month
+    When I record a monthly transaction "Gym" starting 2026-11-20
+    Then November 2026 shows it only on 2026-11-20
+    And the days of November before the 20th show nothing
 
   Scenario Outline: A monthly transaction that starts on a day some months do not have
-    Given I have a monthly transaction "Rent" starting <start>
+    Given I have a monthly transaction "Internet bill" starting <start>
     Then <month> shows it on <day>
 
     Examples:
@@ -144,7 +156,7 @@ Feature: Transactions that repeat with no end
       | 2028-01-31 | February 2028 | 2028-02-29 |
 
   Scenario Outline: An annual transaction that starts on 29 February
-    Given I have an annual transaction "Club fee" starting 2024-02-29
+    Given I have an annual transaction "Tennis club fee" starting 2024-02-29
     Then <month> shows it on <day>
 
     Examples:
@@ -161,27 +173,28 @@ Feature: Purchases paid in instalments
 
   Scenario: A purchase that is part way through its instalments
     When I record this transaction:
-      | Date        | Description | Category          | Account   | Amount | Type  | Instalment |
-      | 2026-11-15  | New car     | House Maintenance | Santander | 100,00 | Debit | 97 of 504  |
-    Then November 2026 shows "New car" on 2026-11-15 as instalment 97 of 504
-    And December 2026 shows "New car" on 2026-12-15 as instalment 98 of 504
+      | Date       | Description | Category  | Account          | Amount | Type  | Instalment |
+      | 2026-11-15 | Car loan    | Transport | Checking Account | 650,00 | Debit | 17 of 48   |
+    Then November 2026 shows "Car loan" on 2026-11-15 as instalment 17 of 48
+    And December 2026 shows "Car loan" on 2026-12-15 as instalment 18 of 48
     And October 2026 shows nothing
+    And no earlier month shows it either
 
   Scenario: Instalments stop after the last one
-    Given I have recorded "New car" starting 2026-11-15 as instalment 97 of 504
-    Then October 2060 shows "New car" on 2060-10-15 as instalment 504 of 504
-    And November 2060 shows nothing
+    Given I have recorded "Car loan" starting 2026-11-15 as instalment 17 of 48
+    Then June 2029 shows "Car loan" on 2029-06-15 as instalment 48 of 48
+    And July 2029 shows nothing
 
   Scenario: A purchase that has just started
-    When I record "New sofa" on 2026-11-15 as instalment 1 of 10
-    Then August 2027 shows "New sofa" on 2027-08-15 as instalment 10 of 10
+    When I record "Laptop" on 2026-11-15 as instalment 1 of 10
+    Then August 2027 shows "Laptop" on 2027-08-15 as instalment 10 of 10
     And September 2027 shows nothing
 
   Scenario: Instalments are never paid by themselves
     Given today is 2026-11-12
-    And I have recorded "New car" starting 2026-01-15 as instalment 10 of 504
+    And I have recorded "Car loan" starting 2026-01-15 as instalment 8 of 48
     When I look at November 2026
-    Then "New car" on 2026-11-15 is instalment 20 of 504, still Forecast
+    Then "Car loan" on 2026-11-15 is instalment 18 of 48, still Forecast
     And the earlier instalments I never checked are still Forecast too
 ```
 
@@ -191,33 +204,33 @@ Feature: Purchases paid in instalments
 Feature: Consolidating (checking) a transaction
 
   Background:
-    Given I have a monthly transaction "Monthly Condo fees" of 20,00 starting 2026-11-05
+    Given I have a monthly transaction "Condo fees" of 450,00 starting 2026-11-05
 
   Scenario: I check an entry after comparing it with my account
     Given today is 2026-11-06
-    When I consolidate "Monthly Condo fees" on 2026-11-05
-    Then November 2026 shows "Monthly Condo fees" on 2026-11-05 as Consolidated
-    And December 2026 shows "Monthly Condo fees" on 2026-12-05 as Forecast
+    When I consolidate "Condo fees" on 2026-11-05
+    Then November 2026 shows "Condo fees" on 2026-11-05 as Consolidated
+    And December 2026 shows "Condo fees" on 2026-12-05 as Forecast
 
   Scenario: Nothing is checked unless I check it
     Given today is 2027-03-01
     When I look at November 2026
-    Then "Monthly Condo fees" on 2026-11-05 is still Forecast
+    Then "Condo fees" on 2026-11-05 is still Forecast
 
   Scenario: What I really paid is different from the forecast
-    When I consolidate "Monthly Condo fees" on 2026-12-05 with the amount 22,00
-    Then November 2026 shows it with 20,00 as Forecast
-    And December 2026 shows it with 22,00 as Consolidated
-    And January 2027 shows it with 20,00 as Forecast
+    When I consolidate "Condo fees" on 2026-12-05 with the amount 462,50
+    Then November 2026 shows it with 450,00 as Forecast
+    And December 2026 shows it with 462,50 as Consolidated
+    And January 2027 shows it with 450,00 as Forecast
 
   Scenario: I checked the wrong entry
-    Given I consolidated "Monthly Condo fees" on 2026-12-05 with the amount 22,00
+    Given I consolidated "Condo fees" on 2026-12-05 with the amount 462,50
     When I undo the consolidation of 2026-12-05
-    Then December 2026 shows it with 20,00 as Forecast
+    Then December 2026 shows it with 450,00 as Forecast
 
   Scenario: I can check an entry before its day arrives
     Given today is 2026-11-01
-    When I consolidate "Monthly Condo fees" on 2026-11-05
+    When I consolidate "Condo fees" on 2026-11-05
     Then November 2026 shows it as Consolidated
 ```
 
@@ -227,41 +240,41 @@ Feature: Consolidating (checking) a transaction
 Feature: Changing a transaction
 
   Background:
-    Given I have a monthly transaction "Monthly Condo fees" of 20,00 starting 2026-11-05
+    Given I have a monthly transaction "Condo fees" of 450,00 starting 2026-11-05
 
   Scenario: A forecast change reaches the following months
-    When I change "Monthly Condo fees" on 2026-12-05 to 25,00
-    Then November 2026 shows 20,00
-    And December 2026 shows 25,00
-    And January 2027 shows 25,00
+    When I change "Condo fees" on 2026-12-05 to 480,00
+    Then November 2026 shows 450,00
+    And December 2026 shows 480,00
+    And January 2027 shows 480,00
 
   Scenario: A change does not touch what I already paid
-    Given I consolidated "Monthly Condo fees" on 2027-01-05 with 20,00
-    When I change "Monthly Condo fees" on 2026-12-05 to 25,00
-    Then January 2027 still shows 20,00 as Consolidated
-    And February 2027 shows 25,00 as Forecast
+    Given I consolidated "Condo fees" on 2027-01-05 with 450,00
+    When I change "Condo fees" on 2026-12-05 to 480,00
+    Then January 2027 still shows 450,00 as Consolidated
+    And February 2027 shows 480,00 as Forecast
 
   Scenario: Changing something I already paid changes only that one
-    Given I consolidated "Monthly Condo fees" on 2026-11-05 with 20,00
-    When I change "Monthly Condo fees" on 2026-11-05 to 21,00
-    Then November 2026 shows 21,00 as Consolidated
-    And December 2026 shows 20,00 as Forecast
+    Given I consolidated "Condo fees" on 2026-11-05 with 450,00
+    When I change "Condo fees" on 2026-11-05 to 455,00
+    Then November 2026 shows 455,00 as Consolidated
+    And December 2026 shows 450,00 as Forecast
 
   Scenario: A later change replaces an earlier plan for the future
-    Given I changed "Monthly Condo fees" on 2027-01-05 to 30,00
-    When I change "Monthly Condo fees" on 2026-12-05 to 25,00
-    Then December 2026 shows 25,00
-    And January 2027 shows 25,00
+    Given I changed "Condo fees" on 2027-01-05 to 500,00
+    When I change "Condo fees" on 2026-12-05 to 480,00
+    Then December 2026 shows 480,00
+    And January 2027 shows 480,00
 
   Scenario: Changing the first occurrence changes the whole series
-    When I change "Monthly Condo fees" on 2026-11-05 to 18,00
-    Then November 2026 shows 18,00
-    And every later month shows 18,00
+    When I change "Condo fees" on 2026-11-05 to 430,00
+    Then November 2026 shows 430,00
+    And every later month shows 430,00
 
   Scenario: Moving a transaction to another account or category
-    When I change "Monthly Condo fees" on 2026-12-05 to use the account "Credit Card A" and the category "House Maintenance"
-    Then November 2026 shows "Santander" and "Basic Costs"
-    And December 2026 and the months after show "Credit Card A" and "House Maintenance"
+    When I change "Condo fees" on 2026-12-05 to use the account "Credit Card" and the category "Shopping"
+    Then November 2026 shows "Checking Account" and "Housing"
+    And December 2026 and the months after show "Credit Card" and "Shopping"
 ```
 
 ## Stopping and deleting
@@ -284,19 +297,19 @@ Feature: Stopping and deleting transactions
     Then no month shows "Gym"
 
   Scenario: Deleting a one-off removes it
-    Given I have a one-off transaction "Market chair New office chair" on 2026-11-10
+    Given I have a one-off transaction "New office chair" on 2026-11-10
     When I delete it
     Then November 2026 shows nothing
 
   Scenario: Stopping instalments
-    Given I have recorded "New car" starting 2026-11-15 as instalment 97 of 504
-    When I stop "New car" from 2027-03-15
-    Then February 2027 shows "New car" as instalment 100 of 504
+    Given I have recorded "Car loan" starting 2026-11-15 as instalment 17 of 48
+    When I stop "Car loan" from 2027-03-15
+    Then February 2027 shows "Car loan" as instalment 20 of 48
     And March 2027 shows nothing
 
   Scenario: A mistake in the past can still be removed
     Given today is 2026-11-12
-    And I have a one-off transaction "Typo" on 2026-10-05
+    And I have a one-off transaction "Entered by mistake" on 2026-10-05
     When I delete it
     Then October 2026 shows nothing
 ```
@@ -308,24 +321,24 @@ Feature: Removing a category or an account that transactions use
 
   Scenario: Transactions stay when their category is deleted
     Given I have these transactions:
-      | Date        | Description   | Category    | Account   | Amount |
-      | 2026-11-05  | Monthly Condo fees | Basic Costs | Santander | 20,00 |
-      | 2026-11-12  | Weekly shopping    | Super Market | Santander | 80,00 |
-    When I delete the category "Basic Costs"
-    Then November 2026 shows "Monthly Condo fees" with no category, for 20,00 on Santander
-    And "Weekly shopping" still shows the category "Super Market"
+      | Date       | Description     | Category  | Account          | Amount |
+      | 2026-11-05 | Condo fees      | Housing   | Checking Account | 450,00 |
+      | 2026-11-12 | Weekly shopping | Groceries | Checking Account | 80,00  |
+    When I delete the category "Housing"
+    Then November 2026 shows "Condo fees" with no category, for 450,00 on Checking Account
+    And "Weekly shopping" still shows the category "Groceries"
 
   Scenario: Transactions stay when their account is deleted
-    Given I have a monthly transaction "Gym" of 50,00 on the account "Credit Card A" starting 2026-11-05
+    Given I have a monthly transaction "Gym" of 50,00 on the account "Credit Card" starting 2026-11-05
     And I consolidated "Gym" on 2026-11-05
-    When I delete the account "Credit Card A"
+    When I delete the account "Credit Card"
     Then every month still shows "Gym", with no account
     And November 2026 still shows it as Consolidated
 ```
 
 ## A month in my life
 
-One story that puts the pieces together, using the owner's own examples.
+One story that puts the pieces together.
 
 ```gherkin
 Feature: November 2026 from start to finish
@@ -333,28 +346,28 @@ Feature: November 2026 from start to finish
   Scenario: Setting up and living through the month
     Given today is 2026-11-01
     When I record these transactions:
-      | Date        | Description                    | Category          | Account       | Amount  | Type    | Recurrence / Instalment |
-      | 2026-11-01  | My Company - Monthly Income    | Receipt           | Santander     | 1000,00 | Receipt | Monthly                 |
-      | 2026-11-05  | Monthly Condo fees             | Basic Costs       | Santander     | 20,00   | Debit   | Monthly                 |
-      | 2026-11-05  | Anually Vehicle Insurance      | Basic Costs       | Santander     | 20,00   | Debit   | Annually                |
-      | 2026-11-10  | Market chair New office chair  | House Maintenance | Credit Card A | 229,00  | Debit   |                         |
-      | 2026-11-15  | New car                        | House Maintenance | Santander     | 100,00  | Debit   | 1 of 10                 |
+      | Date       | Description       | Category  | Account          | Amount  | Type    | Recurrence / Instalment |
+      | 2026-11-01 | Salary - Acme     | Income    | Checking Account | 3000,00 | Receipt | Monthly                 |
+      | 2026-11-05 | Condo fees        | Housing   | Checking Account | 450,00  | Debit   | Monthly                 |
+      | 2026-11-05 | Vehicle insurance | Transport | Checking Account | 1200,00 | Debit   | Annually                |
+      | 2026-11-10 | New office chair  | Shopping  | Credit Card      | 229,00  | Debit   |                         |
+      | 2026-11-15 | Laptop            | Shopping  | Credit Card      | 180,00  | Debit   | 1 of 10                 |
     Then November 2026 shows these entries, in date order, all as Forecast:
-      | Date        | Description                    | Amount  |
-      | 2026-11-01  | My Company - Monthly Income    | 1000,00 |
-      | 2026-11-05  | Anually Vehicle Insurance      | 20,00   |
-      | 2026-11-05  | Monthly Condo fees             | 20,00   |
-      | 2026-11-10  | Market chair New office chair  | 229,00  |
-      | 2026-11-15  | New car                        | 100,00  |
+      | Date       | Description       | Amount  |
+      | 2026-11-01 | Salary - Acme     | 3000,00 |
+      | 2026-11-05 | Condo fees        | 450,00  |
+      | 2026-11-05 | Vehicle insurance | 1200,00 |
+      | 2026-11-10 | New office chair  | 229,00  |
+      | 2026-11-15 | Laptop            | 180,00  |
 
     Given today is 2026-11-16
-    And I compared my account and found all five paid, the insurance at 22,00
-    When I consolidate all five entries, entering 22,00 for the insurance
+    And I compared my accounts and found all five paid, the insurance at 1235,00
+    When I consolidate all five entries, entering 1235,00 for the insurance
     Then November 2026 shows all five as Consolidated
-    And the insurance shows 22,00
+    And the insurance shows 1235,00
 
     When I look at December 2026
-    Then I see the income, the condo fees and the new car (instalment 2 of 10), all as Forecast
+    Then I see the salary, the condo fees and the laptop (instalment 2 of 10), all as Forecast
     And I do not see the vehicle insurance
     And I do not see the office chair
 ```
