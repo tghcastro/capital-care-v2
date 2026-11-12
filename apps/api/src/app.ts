@@ -20,9 +20,10 @@ export function createApp(): express.Express {
   });
 
   // Mount routers from modules/ledger
-  const { categoryRouter, accountRouter } = createLedgerRouters();
+  const { categoryRouter, accountRouter, transactionRouter } = createLedgerRouters();
   app.use('/categories', categoryRouter);
   app.use('/accounts', accountRouter);
+  app.use('/transactions', transactionRouter);
 
   // Error handling middleware (last in the chain)
   app.use(
