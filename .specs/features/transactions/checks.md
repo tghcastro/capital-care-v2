@@ -276,7 +276,7 @@ Proof: run unit | ✓ C61 amount digit limit counts the integer part without lea
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** Verifier, sent at code HEAD `c5c43cd` (proofs.md at `d30f761`, 62 pass)
-- **Boundary:** C1-C56 built, tests green at `c5c43cd` (63 transaction tests; 114 in the whole suite)
+- **Dispatched:** Verifier, sent at code HEAD `c5c43cd` (proofs.md at `d30f761`, 62 pass); returned: 10 findings, closed in `3aea911`
+- **Boundary:** C1-C61 built, 81 proof lines green at `3aea911`
 - **Abandoned:** none
 - **Notes:** the amount rule needed `abort: true` on its pattern check, found by C4: without it, Zod ran the numeric check on `"1,5"` and threw. CI runs only `modules/ledger` tests, so the whole-app checks (C45-C48, C55) run locally here but not in that CI job. The plan was approved 2026-11-12 ("Ok Agree"); AD-001 is in `.specs/STATE.md`.
