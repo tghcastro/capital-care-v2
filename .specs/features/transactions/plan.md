@@ -6,6 +6,8 @@
 
 Capital Care can describe categories and accounts but cannot record money. The owner still keeps every expense, receipt and forecast in a third-party tool they find too complex and badly usable, and cannot see what they owe next month in their own product. The PRD gives no usage numbers: nothing is measured, and the capability does not exist yet ([`.prd/transactions.md`](../../../.prd/transactions.md)).
 
+The behaviour is also described as examples in [acceptance-tests.md](acceptance-tests.md), written in Gherkin and free of technical detail, to read the system's behaviour at a glance.
+
 When this ships, a caller of the API can record one-off, recurring (daily, weekly, monthly, annual) and instalment transactions, see any month of past and future entries, mark entries as paid (consolidated) by hand, correct, stop and delete them, and rely on a deleted category or account leaving the entries in place.
 
 ## Shape
@@ -298,5 +300,6 @@ None - the product matches the source; the source is a PRD, not a capture.
 ## Sources
 
 - [`.prd/transactions.md`](../../../.prd/transactions.md) - binding - confirmed 2026-11-11; scope, journey states and the user's interview answers
+- [`acceptance-tests.md`](acceptance-tests.md) - binding - the behaviour in Gherkin with the owner's own examples; no field limits or error cases (those are in the criteria above)
 - [`docs/tech/definitions/`](../../../docs/tech/definitions/) - binding - architecture, database, API and testing conventions
 - `modules/ledger/src/account/` - precedent - layering, routes and error shape to reuse
