@@ -1,0 +1,28 @@
+meta {
+  name: 04 Create with unknown category
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-11-05",
+    "description": "Condo fees {{$timestamp}}",
+    "categoryId": "unknown-category",
+    "accountId": "unknown-account",
+    "amount": "450.00",
+    "type": "debit"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: contains categoryId
+}

@@ -1,0 +1,20 @@
+meta {
+  name: 14 Settle a date that is not an occurrence
+  type: http
+  seq: 14
+}
+
+put {
+  url: {{baseUrl}}/transactions/{{ownedTransactionId}}/occurrences/2026-11-06/settlement
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 404
+  res.body.type: eq NotFoundError
+}

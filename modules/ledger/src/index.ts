@@ -16,10 +16,14 @@ import { createCategoryRouter } from './category/category.controller.js';
 import { AccountRepository } from './account/account.repository.js';
 import { AccountService } from './account/account.service.js';
 import { createAccountRouter } from './account/account.controller.js';
+import { TransactionRepository } from './transaction/transaction.repository.js';
+import { TransactionService } from './transaction/transaction.service.js';
+import { createTransactionRouter } from './transaction/transaction.controller.js';
 
 export { getLedgerConfig } from './config.js';
 export type { Category } from './category/category.types.js';
 export type { Account } from './account/account.types.js';
+export type { Transaction, Occurrence } from './transaction/transaction.types.js';
 
 export function createLedgerRouters() {
   const config = getLedgerConfig();
@@ -33,9 +37,18 @@ export function createLedgerRouters() {
   const accountService = new AccountService(accountRepository, config.accountLimit);
   const accountRouter = createAccountRouter(accountService);
 
+  const transactionRepository = new TransactionRepository(db);
+  const transactionService = new TransactionService(
+    transactionRepository,
+    accountService,
+    categoryService,
+  );
+  const transactionRouter = createTransactionRouter(transactionService);
+
   return {
     categoryRouter,
     accountRouter,
+    transactionRouter,
   };
 }
 

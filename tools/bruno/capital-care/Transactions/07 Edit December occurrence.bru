@@ -1,0 +1,30 @@
+meta {
+  name: 07 Edit December occurrence
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/transactions/{{txMonthlyId}}/occurrences/2026-12-05
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "amount": "480.00"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.transactionId: eq {{txMonthlyId}}
+  res.body.date: eq 2026-12-05
+  res.body.status: eq forecast
+}
+
+tests {
+  test("amount is 480, written as a canonical string", function() {
+    expect(res.body.amount).to.equal("480");
+  });
+}

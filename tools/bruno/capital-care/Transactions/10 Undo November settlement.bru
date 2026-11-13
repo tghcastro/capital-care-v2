@@ -1,0 +1,22 @@
+meta {
+  name: 10 Undo November settlement
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{txMonthlyId}}/occurrences/2026-11-05/settlement
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq forecast
+}
+
+tests {
+  test("amount is 450, written as a canonical string", function() {
+    expect(res.body.amount).to.equal("450");
+  });
+}

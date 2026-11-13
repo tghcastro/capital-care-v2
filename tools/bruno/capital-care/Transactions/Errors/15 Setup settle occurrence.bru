@@ -1,0 +1,20 @@
+meta {
+  name: 15 Setup settle occurrence
+  type: http
+  seq: 15
+}
+
+put {
+  url: {{baseUrl}}/transactions/{{ownedTransactionId}}/occurrences/2026-11-05/settlement
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq settled
+}

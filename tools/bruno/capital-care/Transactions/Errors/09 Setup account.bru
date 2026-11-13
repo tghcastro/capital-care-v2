@@ -1,0 +1,25 @@
+meta {
+  name: 09 Setup account
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/accounts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "ErrChecking {{$timestamp}}"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("errAccountId", res.body.id);
+}

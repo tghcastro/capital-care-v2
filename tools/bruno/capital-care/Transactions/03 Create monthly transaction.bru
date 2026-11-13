@@ -1,0 +1,47 @@
+meta {
+  name: 03 Create monthly transaction
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-11-05",
+    "description": "Condo fees {{$timestamp}}",
+    "categoryId": "{{txCategoryId}}",
+    "accountId": "{{txAccountId}}",
+    "amount": "450.00",
+    "type": "debit",
+    "recurrence": "monthly"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.id: isString
+  res.body.userId: eq {{userId}}
+  res.body.date: eq 2026-11-05
+  res.body.type: eq debit
+  res.body.recurrence: eq monthly
+  res.body.instalment: isNull
+  res.body.categoryId: eq {{txCategoryId}}
+  res.body.accountId: eq {{txAccountId}}
+  res.body.createdAt: isString
+  res.body.updatedAt: isString
+}
+
+script:post-response {
+  bru.setVar("txMonthlyId", res.body.id);
+}
+
+tests {
+  test("amount is 450, written as a canonical string", function() {
+    expect(res.body.amount).to.equal("450");
+  });
+}

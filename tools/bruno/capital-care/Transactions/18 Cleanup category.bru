@@ -1,0 +1,15 @@
+meta {
+  name: 18 Cleanup category
+  type: http
+  seq: 18
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{txCategoryId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

@@ -1,0 +1,15 @@
+meta {
+  name: 17 Cleanup account
+  type: http
+  seq: 17
+}
+
+delete {
+  url: {{baseUrl}}/accounts/{{txAccountId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

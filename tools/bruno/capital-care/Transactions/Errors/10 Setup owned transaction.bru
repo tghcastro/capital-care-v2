@@ -1,0 +1,31 @@
+meta {
+  name: 10 Setup owned transaction
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-11-05",
+    "description": "Owned {{$timestamp}}",
+    "categoryId": "{{errCategoryId}}",
+    "accountId": "{{errAccountId}}",
+    "amount": "450.00",
+    "type": "debit",
+    "recurrence": "monthly"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("ownedTransactionId", res.body.id);
+}

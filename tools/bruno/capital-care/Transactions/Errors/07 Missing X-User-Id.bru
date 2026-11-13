@@ -1,0 +1,21 @@
+meta {
+  name: 07 Missing X-User-Id
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/transactions?month=2026-11
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  req.deleteHeader("X-User-Id");
+}
+
+assert {
+  res.status: eq 401
+  res.body.type: eq UnauthorizedError
+  res.body.detail: eq User ID required
+}

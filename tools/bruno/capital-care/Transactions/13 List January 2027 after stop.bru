@@ -1,0 +1,22 @@
+meta {
+  name: 13 List January 2027 after stop
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/transactions?month=2027-01
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("the stopped transaction no longer appears", function() {
+    const ids = res.body.occurrences.map(function(o) { return o.transactionId; });
+    expect(ids).to.not.include(bru.getVar("txMonthlyId"));
+  });
+}

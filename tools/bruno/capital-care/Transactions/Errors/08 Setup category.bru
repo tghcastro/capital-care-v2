@@ -1,0 +1,25 @@
+meta {
+  name: 08 Setup category
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "ErrHousing-{{$timestamp}}"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("errCategoryId", res.body.id);
+}

@@ -44,6 +44,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: verification.md finding 5, C31 (routes)
 - last seen: 2026-11-11T14:19:07Z
 
+### L-006 - Assert each HTTP status and response envelope a check claims through the route, not only on the schema or the service
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: transactions
+- evidence: .specs/features/transactions/verification.md C3 C4 C5 C6 C11 C26 C28 C29 (routes)
+- last seen: 2026-11-12T12:31:33Z
+
+### L-007 - Prove a sort tie-break with ids seeded in an order that disagrees with the expected order, not with random ids
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `repo-layer` · harmful: 0
+- features: transactions
+- evidence: .specs/features/transactions/verification.md C13 (repo-layer)
+- last seen: 2026-11-12T12:31:33Z
+
+### L-008 - Prove user-scoping and stop rules against a real database with two users' data, not only on an in-memory mock that copies the rule
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `repo-layer` · harmful: 0
+- features: transactions
+- evidence: .specs/features/transactions/verification.md C40 C51 (repo-layer)
+- last seen: 2026-11-12T12:31:33Z
+
+### L-009 - Do not use Date.UTC for calendar arithmetic: it maps the years 0 to 99 to 1900-1999
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `dates` · harmful: 0
+- features: transactions
+- evidence: .specs/features/transactions/verification.md finding Dates in years 0000-0099 (dates)
+- last seen: 2026-11-12T12:31:33Z
+
+### L-010 - State whether a digit-count limit applies to the written value or the stored value
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `validation` · harmful: 0
+- features: transactions
+- evidence: .specs/features/transactions/verification.md finding Amount with leading zeros (validation)
+- last seen: 2026-11-12T12:31:33Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -1,0 +1,23 @@
+meta {
+  name: 08 List January 2027
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/transactions?month=2027-01
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("the edit reaches the following months, but not the earlier one", function() {
+    const jan = res.body.occurrences.find(function(o) { return o.transactionId === bru.getVar("txMonthlyId"); });
+    expect(jan.date).to.equal("2027-01-05");
+    expect(jan.amount).to.equal("480");
+  });
+}

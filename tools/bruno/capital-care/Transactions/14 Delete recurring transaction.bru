@@ -1,0 +1,15 @@
+meta {
+  name: 14 Delete recurring transaction
+  type: http
+  seq: 14
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{txMonthlyId}}/occurrences/2026-11-05
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}
