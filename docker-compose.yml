@@ -1,4 +1,5 @@
-# Base Compose definition for the Capital Care API.
+# Base Compose definition for Capital Care. The single `api` service serves the API and the
+# built web app (one image, one origin, one port).
 # Environment-specific behavior, including the host port, lives in the overrides:
 #   DEV: docker-compose.dev.yml  (host port 3000; database exists only while the container runs)
 #   PRD: docker-compose.prd.yml  (host port 8000; database persists in a named volume)

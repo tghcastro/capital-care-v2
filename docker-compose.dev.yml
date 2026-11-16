@@ -2,7 +2,7 @@
 # container stops or restarts, so every `up` starts from an empty database.
 # uid/gid match the non-root `node` user in the image (UID 1000) so it can
 # create the database file.
-# DEV host port: API_PORT (default 3000). The `api` and `api-latest` services
+# DEV host port: API_PORT (default 3000), shared by the API and the web app (http://localhost:3000/). The `api` and `api-latest` services
 # both publish this port, so they cannot run at the same time.
 services:
   api:
