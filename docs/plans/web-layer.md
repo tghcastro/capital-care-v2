@@ -1,10 +1,17 @@
-# Plan: Web layer (apps/web) — stack, tests, and documentation
+# Plan: Web layer (apps/web) — stack, tests, and a "Hello world" site
 
-Status: **Phase 1 (documentation) in progress. Phases 2–4 not started.**
+Status: **Phase 1 (documentation) done in this PR. Phases 2–3 not started.**
 
 ## Goal
 
-Add a browser client, `apps/web`, that talks to `apps/api` over HTTP only. Decide its libraries and its non-E2E test approach, record them in `docs/tech/definitions/`, then scaffold the app.
+Record the web stack and its non-E2E test approach in `docs/tech/definitions/`, then ship a **"Hello world" site**: `apps/web` with one temporary page that calls only `GET /health` and shows whether the API is up. It is built into the existing Docker image and served on the same origin as the API.
+
+## Out of scope
+
+- **Any other API integration**: ledger endpoints, the typed API client and Zod schemas in `packages/shared`, the acting-user header. Done in a separate request and branch.
+- **Real design and page structure**: the temporary page uses plain Tailwind utility classes, no shadcn/ui components, no layout system. The real design comes in another PR.
+- **Changes to API routes** (e.g. an `/api` prefix): needed once SPA routes could collide with API routes, so it belongs to the API-integration work. This plan only adds static file serving to `apps/api`.
+- Libraries the page does not use yet (React Router, React Hook Form, `decimal.js`, date-fns, shadcn/ui): they stay decided in `web.md` and are installed by the first feature that needs them.
 
 ## Decisions already made (do not re-litigate)
 
@@ -62,27 +69,25 @@ Docs only, no code. Follow `docs/tech/AGENTS.md` conventions: definitions are li
 5. **Update `docs/tech/AGENTS.md`**: add `web.md` to the file list and a "Implementing a web feature" line in "What to Read".
 6. **Update `docs/plans/AGENTS.md`**: list this plan.
 
-Not in phase 1: `ci-cd.md` describes the pipeline that actually runs. It changes in phase 4 together with the workflow.
+Not in phase 1: `ci-cd.md` describes the pipeline that actually runs. It changes in phase 3 together with the workflow.
 
-## Phase 2 — API prefix and shared package
+## Phase 2 — Scaffold `apps/web` with the health page
 
-0. Mount the API routes under `/api` (see [Prerequisite: API routes under `/api`](#prerequisite-api-routes-under-api) in phase 4).
-1. Move (or re-export) the ledger request/response Zod schemas from `modules/ledger/src/*/…dto.ts` into `packages/shared`, keeping the ledger module importing them from there.
-2. Add the typed `fetch` API client to `packages/shared` (base URL, acting-user header, error body → typed error).
-3. Unit tests for the client (MSW in node).
+1. Add `apps/web` (`@capital-care/web`) to `pnpm-workspace.yaml` and the root `workspaces`.
+2. Vite + React + TypeScript (strict flags, Bundler resolution), Tailwind CSS, and a TanStack Query provider. Nothing else from the stack table.
+3. **Health page** (the only page, at `/`): title "Capital Care", and an API status line driven by a TanStack Query call to `GET /health`:
+   - loading → "Checking API…"
+   - `200` with `{"status":"ok"}` → "API is up"
+   - error or any other response → "API is unreachable"
+   - Plain `fetch` inside the page's query function. No shared API client yet.
+4. Vite dev server proxies `/health` to `http://localhost:3000`.
+5. ESLint: `eslint-plugin-react-hooks` + `eslint-plugin-jsx-a11y`, scoped to `apps/web/**`.
+6. Tests: add the `web` Vitest project (jsdom, setup file with jest-dom and an MSW server); keep the existing node project unchanged. One component test file for the health page covering the three states above, with MSW answering `/health`.
+7. Root scripts: `pnpm build`, `pnpm test`, `pnpm lint` and `pnpm type-check` include `apps/web`.
 
-## Phase 3 — Scaffold `apps/web`
+## Phase 3 — Docker image, deployment, CI
 
-1. Add `apps/web` to `pnpm-workspace.yaml` and the root `workspaces`.
-2. Vite + React + TS config (Bundler resolution), Tailwind, shadcn/ui init, React Router, TanStack Query provider.
-3. Vite dev proxy `/api` → `http://localhost:3000`.
-4. Add the `web` Vitest project (jsdom, setup file with jest-dom and MSW server); keep the existing node project unchanged.
-5. ESLint: React plugins scoped to `apps/web/**`.
-6. One sample screen (e.g. accounts list) with a component test, to prove the setup end to end.
-
-## Phase 4 — Docker image, deployment, CI
-
-### Decision: one image (proposed default — owner confirms before phase 4)
+### Decision: one image (proposed default — owner confirms before phase 3)
 
 The web app ships **inside the existing API image**. Express serves the built SPA as static files, on the same port as the API. No second image, no nginx.
 
@@ -93,41 +98,36 @@ The web app ships **inside the existing API image**. Express serves the built SP
 
 Revisit B only if the web app needs a CDN, independent releases, or a different host from the API.
 
-### Prerequisite: API routes under `/api`
-
-Today the routers are mounted at the root (`/accounts`, `/categories`, `/transactions`). SPA routes such as `/accounts` would collide with them. Fix it in **phase 2**, before the web app exists:
-
-1. Mount the ledger routers under `/api` (`/api/accounts`, …). Keep `GET /health` at the root (Docker `HEALTHCHECK` and CI smoke test use it).
-2. Update the component tests in `apps/api/test/`, the Bruno environments (`baseUrl` gets `/api`), and `docs/tech/definitions/api.md` (route conventions).
-3. The Vite dev proxy then forwards `/api` to `http://localhost:3000` without rewriting.
-
-### Dockerfile changes
+### Dockerfile and API changes
 
 1. `deps` stage: also copy `apps/web/package.json` so the web dependencies install from the lockfile.
-2. `build` stage: run the web build (`pnpm --filter @capital-care/web build`) next to `pnpm build`, producing `apps/web/dist`.
+2. `build` stage: run the web build next to `pnpm build`, producing `apps/web/dist`.
 3. `runtime` stage: copy only the built static files (`apps/web/dist` → `/app/public`). No web `node_modules` in the runtime image; it stays slim.
-4. `apps/api`: serve `/app/public` with `express.static`, and add an SPA fallback that returns `index.html` for `GET` requests outside `/api` and `/health`. The static directory comes from an env var (e.g. `WEB_DIST_PATH`, documented in `.env.example`); when unset (local API development), the API serves no static files.
+4. `apps/api/src/app.ts`: serve the static directory with `express.static`, registered after the API routers so it never shadows them. The directory comes from an env var (e.g. `WEB_DIST_PATH`, set in the Dockerfile and documented in `.env.example`); when unset (local API development), no static files are served. No SPA fallback yet: there is only one page at `/`; the fallback comes with client-side routing.
 5. Cache headers: hashed assets under `/assets` get long-lived caching; `index.html` gets `no-cache`.
-6. `helmet` (planned in `security.md`): its default Content Security Policy must allow the Vite build output (no inline scripts); verify when both are in place.
 
 ### Local development and Compose
 
-- **DEV (day to day):** API in Docker or locally on port 3000, plus `pnpm --filter @capital-care/web dev` (Vite on port 5173, proxying `/api`). No web container: hot reload needs the Vite dev server.
-- **Compose:** no new service. `docker-compose.dev.yml` and `docker-compose.prd.yml` keep the single `api` service; the same container now also serves the web app on the same host port (DEV `3000`, PRD `8000`). Update the Compose header comments to say so.
+- **DEV (day to day):** API in Docker or locally on port 3000, plus `pnpm --filter @capital-care/web dev` (Vite, proxying `/health`). No web container: hot reload needs the Vite dev server.
+- **Compose:** no new service. The single `api` service now also serves the web app on the same host port (DEV `3000`, PRD `8000`). Update the Compose header comments to say so.
 
 ### CI (`ci-cd.md` updated in the same PR)
 
-1. `test` job: web type-check, lint, web Vitest project, and web build (already covered if `pnpm build`/`pnpm test` include `apps/web`).
-2. `build` job: keep the `GET /health` smoke test and add one check that `GET /` returns `index.html` (status `200`, `text/html`).
+1. `test` job: covered once the root scripts include `apps/web` (type-check, build, web Vitest project).
+2. `build` job: keep the `GET /health` smoke test and add one check that `GET /` returns the HTML page (status `200`, `text/html`).
 3. `publish`: unchanged; the same single image and tags.
 
-### Documentation to update in phase 4
+### Documentation to update in phase 3
 
-- `web.md` → "Same-Origin Serving": replace "mechanism recorded when implemented" with the one-image decision and the `/api` prefix.
-- `architecture.md` → Environment Configuration: the new static-path env var.
+- `web.md` → "Same-Origin Serving": replace "mechanism recorded when implemented" with the one-image decision.
+- `architecture.md` → Environment Configuration: the static-path env var.
 - `ci-cd.md`: the extra smoke check.
 
 ## Done when
 
 - Phase 1: definitions updated, cross-links resolve, no contradiction left between `web.md`, `architecture.md`, `security.md`, `testing.md`.
-- Phases 2–4: `pnpm test` runs both node and web projects green in CI; the image serves the SPA and API on one port; this plan is deleted and its decisions live in `docs/tech/definitions/`.
+- Phases 2–3:
+  - `pnpm test` runs the node and web projects green in CI.
+  - Running the image and opening `http://localhost:3000/` (DEV) shows the page with "API is up".
+  - Stopping the API in local Vite development shows "API is unreachable".
+  - No ledger endpoint is called from `apps/web`.
