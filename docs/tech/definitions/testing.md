@@ -27,11 +27,11 @@ Four levels, adapted from [Fowler's microservice testing taxonomy](https://marti
 
 - **Runner:** Vitest, as a separate `web` project under `test.projects` in the root `vitest.config.ts`, running in **jsdom**.
 - **Tools:** `@testing-library/react` + `@testing-library/jest-dom` for rendering and assertions; `@testing-library/user-event` for interactions.
-- **HTTP mocking:** MSW (Mock Service Worker), at the network boundary. Never mock `fetch` or TanStack Query internals.
+- **HTTP mocking:** MSW (Mock Service Worker), at the network boundary. Never mock `fetch` or TanStack Query internals. Web tests never depend on a running API: every HTTP request is answered by MSW inside the test process.
 - **Levels:**
   - **Unit** — pure functions with no DOM (money formatting, month ranges, API-data → view-model mapping). Plain Vitest.
   - **Component** — a component or screen rendered with Testing Library, with the API answered by MSW.
-  - **E2E** — as defined in Test Levels above.
+  - **E2E** — lives in a separate repository, not in this one. Until it exists, full user journeys against the real API are checked manually.
 - **Location:** co-located `__test__/` folders inside `apps/web/src`, mirroring the backend convention (see [Test Location](#test-location) above).
 
 ## Test Database Strategy
