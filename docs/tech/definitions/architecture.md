@@ -5,23 +5,23 @@
 - **TypeScript** on **Node.js**
 - Rationale: strong agent-workflow fit (compiler gives immediate, tool-visible feedback; dense training data for idiomatic generation); schema-as-code tooling (Drizzle, Zod) keeps DB/validation/types in sync.
 - **Node version pinning:** select the current Node.js LTS release when initializing the workspace; pin its exact version in `.nvmrc` and constrain `engines.node` in `package.json` to that major version. Pin the exact pnpm version in the root `package.json` `packageManager` field so local development and CI use the same package manager.
-- **ES modules:** use native Node.js ESM (`"type": "module"` in `package.json`) with TypeScript `module` and `moduleResolution` both set to `"NodeNext"`. Relative TypeScript imports include the emitted `.js` extension (for example, `import { helper } from './helper.js'`) to follow Node's ESM resolution rules.
+- **ES modules:** use native Node.js ESM (`"type": "module"` in `package.json`) with TypeScript `module` and `moduleResolution` both set to `"NodeNext"`. Relative TypeScript imports include the emitted `.js` extension (for example, `import { helper } from './helper.js'`) to follow Node's ESM resolution rules. **Exception:** `apps/web` uses `"module": "ESNext"` with `"moduleResolution": "Bundler"` and no `.js` extensions in imports (see [web.md](./web.md#module-resolution)).
 - **TypeScript strictness:** set `strict`, `noUncheckedIndexedAccess`, and `exactOptionalPropertyTypes` to `true` in `tsconfig.json`. These checks catch null/undefined, unchecked indexed access, and ambiguity between omitted and explicitly `undefined` optional properties at compile time, giving generated code stronger compiler feedback before runtime.
 
 ## Repository Structure
 
-Monorepo, single repository for API and (future) Web:
+Monorepo, single repository for API and Web:
 
 ```
 capital-care/
   docs/                 # project documents (tech decisions)
   apps/
     api/                 # thin bootstrap only — wires express, mounts module routers
-    web/                 # future web client
+    web/                 # React SPA (see web.md)
   modules/
     ledger/               # the module: all Capital Care business logic lives here
   packages/
-    shared/               # shared code you own: types, Zod schemas, API client
+    shared/               # shared code you own: types, request/response Zod schemas, typed API client used by apps/web
   package.json            # workspace root
 ```
 
@@ -82,4 +82,4 @@ capital-care/
 
 ## Tooling
 
-- **Linting & Formatting:** ESLint (flat config in `eslint.config.js`, `typescript-eslint` recommended + strict, TypeScript files only, no type-aware rules) + Prettier. `pnpm lint` runs in CI.
+- **Linting & Formatting:** ESLint (flat config in `eslint.config.js`, `typescript-eslint` recommended + strict, TypeScript files only, no type-aware rules) + Prettier. `eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y` apply to `apps/web` only (see [web.md](./web.md#lint)). `pnpm lint` runs in CI.

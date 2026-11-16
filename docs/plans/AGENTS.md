@@ -9,3 +9,4 @@ Scope: this file applies only to `docs/plans/` and its subfolders. See the [root
 Implementation plans: step-by-step work breakdowns written before the work starts, meant to be handed to an implementing agent or person. A plan is a temporary working document. Once it is implemented, the lasting decisions move to [docs/tech/definitions/](../tech/definitions/) and the plan can be deleted.
 
 - [ci-cd-pipeline.md](./ci-cd-pipeline.md) — GitHub Actions pipeline (test, security checks, image build, publish to GHCR), Dependabot and CodeQL.
+- [web-layer.md](./web-layer.md) — browser client (`apps/web`): stack, front-end tests, documentation, shared package, scaffold, build/serve/CI.

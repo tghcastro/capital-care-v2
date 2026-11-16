@@ -7,6 +7,7 @@
 - This middleware lives in the shared `middleware/` folder (see [architecture.md](./architecture.md#api-layering--composition)) — it is cross-cutting and intentionally not owned by any single aggregate.
 - **No acting user → `401`.** If a request carries no acting-user identity (missing header today; missing, invalid or expired token once JWT exists), the middleware rejects it with an unauthenticated error (`401`, e.g. `UnauthenticatedError` in the shared error hierarchy per [api.md](./api.md#error-handling)). Exempt routes: `POST /users` (registration) and `GET /health`.
 - **Unknown or deleted acting user → `404`.** The middleware only resolves the id; whether that user exists and is active is checked by the services (through the User service, never its repository), which throw `NotFoundError` (`404`). "Never existed" and "deleted" get the identical response, so it doesn't reveal whether a user ever existed. The check lives in services rather than the middleware so documented exceptions (e.g. repeating a deletion of one's own profile) stay possible.
+- The web client sets the acting-user header only in the shared API client in `packages/shared` (see [web.md](./web.md#api-client)).
 - The interim header is **not** a security barrier — any caller can send any id. The uniform `404` limits what probing reveals, but real protection arrives with JWT.
 - Entities tied to a user (Account, Transaction, etc.) still carry their normal owner/user reference column — that's a data-modeling requirement independent of how the current user is identified, not something deferred.
 
@@ -16,7 +17,7 @@
 
 ## CORS
 
-- Deferred — not needed until a browser-based client (the future Web app) exists. Only applies to the API once there is a `apps/web` origin to allow.
+- Not needed: web and API share one origin (see [web.md](./web.md#same-origin-serving)). Revisit only if they are ever served from different origins.
 
 ## Rate Limiting
 
