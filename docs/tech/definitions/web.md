@@ -42,6 +42,14 @@
   - `eslint-plugin-react-hooks`
   - `eslint-plugin-jsx-a11y`
 
+## Dependency and Front-End Security
+
+- **Release cooldown:** `minimumReleaseAge: 4320` (3 days, in minutes) in `pnpm-workspace.yaml`, so pnpm never installs a version younger than 3 days. This matches Dependabot's 3-day wait (see [ci-cd.md](./ci-cd.md)). Malicious versions published from hijacked maintainer accounts are usually caught and unpublished within hours to days.
+- **Build scripts:** no web package is added to the build-script allowlist (`.pnpmfile.cjs` / `allowBuilds` in `pnpm-workspace.yaml`). MSW's postinstall is not needed because tests use `msw/node`.
+- **shadcn/ui CLI:** never a dependency; run it with an exact version (`pnpm dlx shadcn@<version>`). Generated code is reviewed in the PR like any other code.
+- **Runtime exposure:** only the libraries bundled into the browser build reach production. Dev tooling (Vite, Vitest, MSW, jsdom, ESLint plugins) never ships, and the runtime image contains only the built static files.
+- **Code rules:** no secrets in `VITE_*` env vars (Vite inlines them into the public bundle); no `dangerouslySetInnerHTML` (React escapes everything else by default); rely on `helmet`'s Content Security Policy (see [security.md](./security.md#security-headers)).
+
 ## Folder Layout
 
 Suggested layout of `apps/web/src`:

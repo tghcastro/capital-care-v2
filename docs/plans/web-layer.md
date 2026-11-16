@@ -54,7 +54,7 @@ Vitest Browser Mode is a possible later switch if jsdom gaps hurt; not adopted n
 
 Docs only, no code. Follow `docs/tech/AGENTS.md` conventions: definitions are living documents, record only what is decided.
 
-1. **Create `docs/tech/definitions/web.md`** with the stack table above, the app boundary reminder, API client and current-user header rule, money/date rules, styling, lint additions, module-resolution exception, same-origin serving, and folder layout of `apps/web`.
+1. **Create `docs/tech/definitions/web.md`** with the stack table above, the app boundary reminder, API client and current-user header rule, money/date rules, styling, lint additions, module-resolution exception, same-origin serving, folder layout of `apps/web`, and dependency and front-end security rules.
 2. **Update `docs/tech/definitions/architecture.md`**
    - Repository structure: `apps/web` is no longer "future"; describe it as the React SPA, link `web.md`.
    - Language & runtime → ES modules: add the `apps/web` Bundler exception (link `web.md`).
@@ -74,16 +74,17 @@ Not in phase 1: `ci-cd.md` describes the pipeline that actually runs. It changes
 ## Phase 2 — Scaffold `apps/web` with the health page
 
 1. Add `apps/web` (`@capital-care/web`) to `pnpm-workspace.yaml` and the root `workspaces`.
-2. Vite + React + TypeScript (strict flags, Bundler resolution), Tailwind CSS, and a TanStack Query provider. Nothing else from the stack table.
-3. **Health page** (the only page, at `/`): title "Capital Care", and an API status line driven by a TanStack Query call to `GET /health`:
+2. Add `minimumReleaseAge: 4320` to `pnpm-workspace.yaml` before installing the web dependencies, and keep the build-script allowlist unchanged (see `web.md` → Dependency and Front-End Security).
+3. Vite + React + TypeScript (strict flags, Bundler resolution), Tailwind CSS, and a TanStack Query provider. Nothing else from the stack table.
+4. **Health page** (the only page, at `/`): title "Capital Care", and an API status line driven by a TanStack Query call to `GET /health`:
    - loading → "Checking API…"
    - `200` with `{"status":"ok"}` → "API is up"
    - error or any other response → "API is unreachable"
    - Plain `fetch` inside the page's query function. No shared API client yet.
-4. Vite dev server proxies `/health` to `http://localhost:3000`.
-5. ESLint: `eslint-plugin-react-hooks` + `eslint-plugin-jsx-a11y`, scoped to `apps/web/**`.
-6. Tests: add the `web` Vitest project (jsdom, setup file with jest-dom and an MSW server); keep the existing node project unchanged. One component test file for the health page covering the three states above, with MSW answering `/health`.
-7. Root scripts: `pnpm build`, `pnpm test`, `pnpm lint` and `pnpm type-check` include `apps/web`.
+5. Vite dev server proxies `/health` to `http://localhost:3000`.
+6. ESLint: `eslint-plugin-react-hooks` + `eslint-plugin-jsx-a11y`, scoped to `apps/web/**`.
+7. Tests: add the `web` Vitest project (jsdom, setup file with jest-dom and an MSW server); keep the existing node project unchanged. One component test file for the health page covering the three states above, with MSW answering `/health`.
+8. Root scripts: `pnpm build`, `pnpm test`, `pnpm lint` and `pnpm type-check` include `apps/web`.
 
 ## Phase 3 — Docker image, deployment, CI
 
