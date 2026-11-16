@@ -14,8 +14,9 @@ Decisions live in [docs/tech/definitions/](./definitions/), one file per topic:
 - [definitions/database.md](./definitions/database.md) — DB engine/driver, schema conventions (money, enums, deletion, timestamps, IDs, dates), constraints, transactions.
 - [definitions/api.md](./definitions/api.md) — API framework, route conventions, validation, error handling, documentation, request handling.
 - [definitions/security.md](./definitions/security.md) — authentication, security headers, CORS/rate-limiting status.
+- [definitions/web.md](./definitions/web.md) — web client (`apps/web`): stack, API client, module resolution, same-origin serving, lint additions, folder layout.
 - [definitions/logging.md](./definitions/logging.md) — logging library and request-context convention.
-- [definitions/testing.md](./definitions/testing.md) — test runner, test database strategy.
+- [definitions/testing.md](./definitions/testing.md) — test runner, test levels, test database strategy, web test tooling.
 - [definitions/git.md](./definitions/git.md) — branching and merge strategy, branch names, commit message pattern, pull request template.
 - [definitions/ci-cd.md](./definitions/ci-cd.md) — CI/CD pipeline stages and triggers, GHCR image tags and releases, audit gate, action pinning, permissions, Dependabot and CodeQL.
 
@@ -24,6 +25,7 @@ Decisions live in [docs/tech/definitions/](./definitions/), one file per topic:
 Don't read every file for every task — pick only the ones relevant to what you're building:
 
 - **Implementing an API endpoint:** `architecture.md`, `database.md`, `api.md`. Add `security.md` only if the task touches auth/current-user resolution; add `logging.md` only if adding/changing log statements.
+- **Implementing a web feature:** `web.md`, plus `architecture.md` for the app boundary rule. Add `api.md` if you need the endpoint contract, `security.md` only if the task touches the acting-user header, and `testing.md` for tests.
 - **Writing/running tests:** `testing.md`, plus whichever of the above covers the thing under test.
 - **Creating a branch, commit, or PR:** `git.md` only.
 - **Changing CI/CD, GitHub Actions workflows, releases, or dependency update automation:** `ci-cd.md` only.
