@@ -9,11 +9,11 @@
   },
   "scripts": {
     "clean": "rm -rf apps/*/dist modules/*/dist packages/*/dist tsconfig.tsbuildinfo apps/*/tsconfig.tsbuildinfo modules/*/tsconfig.tsbuildinfo packages/*/tsconfig.tsbuildinfo",
-    "build": "tsc -b && cp -r modules/ledger/src/shared/persistence/migrations modules/ledger/dist/shared/persistence/",
+    "build": "tsc -b && pnpm --filter @capital-care/web build && cp -r modules/ledger/src/shared/persistence/migrations modules/ledger/dist/shared/persistence/",
     "build:watch": "tsc -b --watch",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && pnpm --filter @capital-care/web type-check",
     "test": "vitest run",
     "db:migrate": "node apps/api/dist/migrate.js",
     "db:generate": "pnpm --filter @capital-care/ledger db:generate"
@@ -21,7 +21,10 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.14.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
+    "jsdom": "^31.0.1",
     "prettier": "^3.1.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.2",
@@ -29,6 +32,7 @@
   },
   "workspaces": [
     "apps/api",
+    "apps/web",
     "modules/ledger",
     "packages/shared"
   ]
