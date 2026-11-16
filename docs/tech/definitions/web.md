@@ -28,6 +28,7 @@
 ## Module Resolution
 
 - `apps/web` uses `"module": "ESNext"` with `"moduleResolution": "Bundler"`. This is a documented exception to the `NodeNext` rule in [architecture.md](./architecture.md#language--runtime): Vite resolves imports, so relative imports in `apps/web` have no `.js` extensions.
+- The exception covers code inside `apps/web` only. `packages/shared` is consumed by both the API and the web app, so it stays on `NodeNext` with `.js` extensions: code written for `NodeNext` also resolves under `Bundler`, but not the other way around.
 
 ## Same-Origin Serving
 
