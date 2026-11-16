@@ -15,11 +15,13 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc .pnpmfile.cjs ./
 COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
 COPY modules/ledger/package.json modules/ledger/
 COPY packages/shared/package.json packages/shared/
 RUN pnpm install --frozen-lockfile
 
-# Compile TypeScript (includes copying SQL migrations into dist)
+# Compile TypeScript and build the web app (pnpm build also copies SQL migrations into dist
+# and produces apps/web/dist)
 FROM deps AS build
 COPY tsconfig.json ./
 COPY packages ./packages
@@ -35,9 +37,12 @@ RUN pnpm --filter @capital-care/api deploy --prod /out
 FROM node:${NODE_VERSION}-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     PORT=3000 \
-    DB_PATH=/app/data/capital-care.db
+    DB_PATH=/app/data/capital-care.db \
+    WEB_DIST_PATH=/app/public
 WORKDIR /app
 COPY --from=deploy /out ./
+# Only the built static files of the web app; no web node_modules in the runtime image.
+COPY --from=build /app/apps/web/dist ./public
 RUN mkdir -p /app/data && chown node:node /app/data
 # The runtime only needs the node binary. Remove the npm and corepack bundled
 # with the base image: they are unused here and carry their own vulnerable

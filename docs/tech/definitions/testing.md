@@ -25,7 +25,9 @@ Four levels, adapted from [Fowler's microservice testing taxonomy](https://marti
 
 ## Web
 
-- **Runner:** Vitest, as a separate `web` project under `test.projects` in the root `vitest.config.ts`, running in **jsdom**.
+- **Runner:** Vitest, as a separate `web` project under `test.projects` in the root `vitest.config.ts`, running in **jsdom**. The existing backend tests run in the `node` project, which excludes `apps/web`. `pnpm test` runs both.
+- **Setup:** `apps/web/src/test-setup.ts` registers `@testing-library/jest-dom`, starts the MSW node server (`apps/web/src/mocks/server.ts`) before all tests with `onUnhandledFrame: 'error'` (MSW 3's name for the unhandled-request option, so an unmocked request fails the test), resets handlers and unmounts after each test. It also resolves relative `fetch` URLs against the jsdom origin, because Node's `fetch` rejects them.
+- **Query client:** each test renders with a fresh `QueryClient` with `retry: false`.
 - **Tools:** `@testing-library/react` + `@testing-library/jest-dom` for rendering and assertions; `@testing-library/user-event` for interactions.
 - **HTTP mocking:** MSW (Mock Service Worker), at the network boundary. Never mock `fetch` or TanStack Query internals. Web tests never depend on a running API: every HTTP request is answered by MSW inside the test process.
 - **Levels:**

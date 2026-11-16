@@ -33,8 +33,12 @@
 ## Same-Origin Serving
 
 - Web and API are served from one origin, so CORS is not needed (see [security.md](./security.md#cors)).
-- **DEV:** the Vite dev server proxies API requests to the API.
-- **PRD:** the built static files and the API share one origin. The exact serving mechanism is recorded here when implemented.
+- **DEV:** the Vite dev server proxies API requests to the API (today only `/health`, to `http://localhost:3000`, in `apps/web/vite.config.ts`).
+- **PRD (one image):** the web app ships inside the API image. The Docker build stage builds `apps/web`, and the runtime stage copies only `apps/web/dist` to `/app/public` (no web `node_modules`). Express serves it with `express.static` on the same port as the API. There is no second image and no nginx. Web and API share Zod schemas, so they are released together under one image and one version tag. Revisit a separate web image only if the web app needs a CDN, independent releases, or a different host.
+- **Configuration:** the directory comes from `WEB_DIST_PATH` (set to `/app/public` in the Dockerfile). When it is unset, as in local API development, the API serves no static files (see [architecture.md](./architecture.md#environment-configuration)).
+- **Routing order:** the static middleware is registered after the API routers, so it never shadows an API route. There is no SPA fallback yet: it arrives with client-side routing, together with a decision on how SPA routes avoid colliding with API routes.
+- **Cache headers:** files under `/assets/` (hashed names) get `Cache-Control: public, max-age=31536000, immutable`; `index.html` gets `no-cache`.
+- **Security headers:** `helmet` is not wired in yet. When it is, its Content Security Policy must allow what Vite emits: external module scripts and stylesheets from the same origin, and no inline scripts.
 
 ## Lint
 
@@ -52,7 +56,7 @@
 
 ## Folder Layout
 
-Suggested layout of `apps/web/src`:
+Suggested layout of `apps/web/src`. Today it holds `main.tsx` (entry, TanStack Query provider), `HealthPage.tsx` (the temporary page), `index.css` (Tailwind import), `mocks/server.ts` (MSW node server), `test-setup.ts` (Vitest setup) and `__test__/`:
 
 ```
 apps/web/src/

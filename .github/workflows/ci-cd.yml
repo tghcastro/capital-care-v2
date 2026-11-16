@@ -95,12 +95,23 @@ jobs:
             body=$(curl -fsS http://127.0.0.1:3000/health || true)
             if [ "$body" = '{"status":"ok"}' ]; then
               echo "Health check passed"
-              exit 0
+              break
             fi
             sleep 1
           done
-          echo "::error::Health check did not return {\"status\":\"ok\"} within 30 seconds"
-          exit 1
+          if [ "$body" != '{"status":"ok"}' ]; then
+            echo "::error::Health check did not return {\"status\":\"ok\"} within 30 seconds"
+            exit 1
+          fi
+          # The web app is served from the same image: GET / must return the HTML page.
+          root=$(curl -sS -o /dev/null -w '%{http_code} %{content_type}' http://127.0.0.1:3000/)
+          case "$root" in
+            "200 text/html"*) echo "Web page check passed" ;;
+            *)
+              echo "::error::GET / returned '$root', expected 200 with text/html"
+              exit 1
+              ;;
+          esac
       - name: Container logs and cleanup
         if: always()
         run: |

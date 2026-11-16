@@ -78,6 +78,7 @@ capital-care/
 ## Environment Configuration
 
 - All configuration (DB file path/connection string, future JWT secret, etc.) comes from a `.env` file — never hardcoded. Commit a `.env.example` template; the actual `.env` stays gitignored.
+- **Web app location:** `WEB_DIST_PATH` is the directory of the built web app (`apps/web/dist`) that the API serves on its own port, on the same origin (see [web.md](./web.md#same-origin-serving)). It is optional: when unset, the API serves no static files. The Dockerfile sets it to `/app/public`; `.env.example` documents it.
 - **Environment ports:** DEV host port `3000`, PRD host port `8000`. The container always listens on `3000` internally. The host port is set via `API_PORT` in the Compose overrides (`docker-compose.dev.yml`, `docker-compose.prd.yml`).
 
 ## Tooling

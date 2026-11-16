@@ -1,5 +1,8 @@
+minimumReleaseAge: 4320
+
 packages:
   - apps/api
+  - apps/web
   - modules/ledger
   - packages/shared
 allowBuilds:
