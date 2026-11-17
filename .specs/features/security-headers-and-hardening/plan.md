@@ -1,6 +1,6 @@
 # Security headers and pipeline hardening
 
-**Approved**: <pending>
+**Approved**: 2026-11-17 - user: "approved"
 
 ## Problem
 
@@ -50,7 +50,7 @@ None - nothing consumed outside. No route is added or changes signature; only re
 | One-way door | Literal shape | Alternative rejected |
 | --- | --- | --- |
 | new runtime dependency | `apps/api/package.json` dependencies: `"helmet": "^8.3.0"` | hand-written `res.setHeader` calls: they drift from the helmet defaults that `security.md` names and miss new headers helmet adds |
-| dependency overrides | `pnpm-workspace.yaml`: `overrides:` `'@esbuild-kit/core-utils>esbuild': ^0.25.12` and `'minimatch@>=10.0.0 <11.0.1': ^11.0.9` | upgrading `drizzle-kit` and `eslint`: neither has a release that drops the vulnerable range today; leaving the findings: Dependabot keeps raising them |
+| dependency overrides | `pnpm-workspace.yaml`: `overrides:` `'@esbuild-kit/core-utils>esbuild': ^0.25.12` and `'minimatch@>=10.0.0 <11.0.1': ^11.0.8` (11.0.9 is inside the repo's 3-day `minimumReleaseAge`) | upgrading `drizzle-kit` and `eslint`: neither has a release that drops the vulnerable range today; leaving the findings: Dependabot keeps raising them |
 
 - Nothing else in this change is hard to reverse
 
@@ -64,7 +64,7 @@ A request to any route of the API process gets the default helmet security heade
 
 1. WHEN a client requests `GET /health` THEN the system SHALL answer `200` with `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, a `Strict-Transport-Security` header, a `Content-Security-Policy` header containing `default-src 'self'`, and no `X-Powered-By` header
 2. WHEN a client requests a route that fails THEN the system SHALL send the same headers on the error response
-   - `GET /categories` without the acting-user header → 401 with the headers; `GET /does-not-exist` → 404 with the headers
+   - `GET /categories` without the acting-user header → 401 with the headers; `GET /does-not-exist` → 404 with the headers, where the CSP is Express's own stricter `default-src 'none'` (its 404 handler replaces helmet's policy)
 3. WHILE `WEB_DIST_PATH` is set, WHEN a client requests `GET /` THEN the system SHALL answer `200 text/html` with the same headers
 4. WHILE the built image is running, WHEN a browser opens `/` THEN the page SHALL render the app with no Content-Security-Policy violation in the console
 5. WHEN `pnpm install --frozen-lockfile` runs THEN `helmet` SHALL resolve from `apps/api` without changing `pnpm-lock.yaml`
