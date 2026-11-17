@@ -19,6 +19,7 @@ Proof: run web | ✓ TransactionsPage > loads the current month
 **C3** - Loading shows a loading state; a failure shows the API detail and "Try again" refetches (AC 3)
 Proof: run web | ✓ TransactionsPage > shows a loading state while occurrences load
 Proof: run web | ✓ TransactionsPage > shows the API detail on failure and Try again refetches
+Proof: run web | ✓ TransactionsPage details > shows Something went wrong when a failure carries no detail
 
 **C4** - An empty month shows "No transactions this month" and 0.00 footer totals (AC 4)
 Proof: run web | ✓ TransactionsPage > shows No transactions this month with 0.00 totals
@@ -29,6 +30,7 @@ Proof: run web | ✓ ledgerView > orders groups ascending by date
 
 **C6** - A row shows description, account, category, signed amount, recurring and settled icons, with Uncategorized/Unassigned for null ids (AC 6)
 Proof: run web | ✓ TransactionsPage > renders every row detail
+Proof: run web | ✓ TransactionsPage details > shows the recurring icon for an instalment-only transaction
 
 **C7** - Amounts show grouping and two decimals, summed with decimal.js (AC 7)
 Proof: run web | ✓ formatAmount > formats 1399.66 as 1,399.66 and 0.5 as 0.50
@@ -55,6 +57,7 @@ Proof: run web | ✓ TransactionsPage > shows the monthly summary in the footer
 
 **C12** - Active filters limit the running balance and totals to visible rows (AC 12)
 Proof: run web | ✓ ledgerView > filters limit the balance and totals to visible rows
+Proof: run web | ✓ ledgerView > a category filter limits the balance and totals to visible rows
 
 **C13** - "Back to top" scrolls the window to the top (AC 13)
 Proof: run web | ✓ TransactionsPage > Back to top scrolls the window to the top
@@ -102,6 +105,7 @@ Proof: run web | ✓ categories panel > Add posts a new item and lists it
 
 **C25** - Edit patches the name; the pseudo-entry offers no edit or delete (AC 25)
 Proof: run web | ✓ categories panel > Edit patches the name
+Proof: run web | ✓ categories panel description > Edit sends null when the description is cleared
 Proof: run web | ✓ categories panel > the pseudo-entry offers no edit or delete
 
 **C26** - Confirmed delete removes the item; a 409 shows its detail and keeps it (AC 26)
@@ -119,6 +123,7 @@ Proof: run web | ✓ accounts panel > lists the pseudo-entry first then names al
 
 **C29** - Accounts filter, add, edit and delete behave like categories; Unassigned matches null (AC 29)
 Proof: run web | ✓ ledgerView > account filter Unassigned matches null accountId
+Proof: run web | ✓ ledgerView > an account filter matches any of several selected accounts
 Proof: run web | ✓ accounts panel > selecting and deselecting items filters the list
 Proof: run web | ✓ accounts panel > Add posts a new item and lists it
 Proof: run web | ✓ accounts panel > Edit patches the name

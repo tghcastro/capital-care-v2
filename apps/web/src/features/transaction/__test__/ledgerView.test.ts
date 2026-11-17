@@ -111,4 +111,25 @@ describe('ledgerView', () => {
     );
     expect(items.map((i) => i.description)).toEqual(['both']);
   });
+
+  it('a category filter limits the balance and totals to visible rows', () => {
+    const rows = [
+      occ({ date: '2026-11-01', type: 'receipt', amount: '1000', categoryId: 'c1' }),
+      occ({ date: '2026-11-02', type: 'debit', amount: '30', categoryId: 'c2' }),
+    ];
+    const { totals } = buildLedger(rows, { categories: new Set(['c2']), accounts: new Set() });
+    expect(totals).toEqual({ received: '0', debits: '30', net: '-30', finalBalance: '-30' });
+  });
+
+  it('an account filter matches any of several selected accounts', () => {
+    const rows = [
+      occ({ description: 'a', accountId: 'a1' }),
+      occ({ description: 'b', accountId: 'a2' }),
+      occ({ description: 'c', accountId: 'a3' }),
+    ];
+    const items = buildLedger(rows, { categories: new Set(), accounts: new Set(['a1', 'a3']) }).groups.flatMap(
+      (g) => g.items,
+    );
+    expect(items.map((i) => i.description)).toEqual(['a', 'c']);
+  });
 });

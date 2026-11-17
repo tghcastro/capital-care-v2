@@ -82,14 +82,15 @@ export function createApiClient({ baseUrl, userId }: ApiClientOptions) {
       return body.occurrences;
     },
     createTransaction: (input: CreateTransactionInput) => request<unknown>('POST', '/transactions', input),
-    settle: (id: string, date: string) => request<unknown>('PUT', `${occurrence(id, date)}/settlement`, {}),
+    settle: (id: string, date: string, amount?: string) =>
+      request<unknown>('PUT', `${occurrence(id, date)}/settlement`, amount === undefined ? {} : { amount }),
     unsettle: (id: string, date: string) => request<unknown>('DELETE', `${occurrence(id, date)}/settlement`),
     async listCategories(): Promise<Category[]> {
       return (await request<{ categories: Category[] }>('GET', '/categories')).categories;
     },
-    createCategory: (input: { name: string; description?: string }) =>
+    createCategory: (input: { name: string; description?: string | null }) =>
       request<Category>('POST', '/categories', input),
-    updateCategory: (id: string, input: { name: string; description?: string }) =>
+    updateCategory: (id: string, input: { name: string; description?: string | null }) =>
       request<Category>('PATCH', `/categories/${encodeURIComponent(id)}`, input),
     deleteCategory: (id: string) => request<undefined>('DELETE', `/categories/${encodeURIComponent(id)}`),
     async listAccounts(): Promise<Account[]> {

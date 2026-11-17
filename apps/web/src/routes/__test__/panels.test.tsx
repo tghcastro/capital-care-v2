@@ -58,6 +58,31 @@ async function panelOf(k: Kind): Promise<HTMLElement> {
   return screen.getByRole('region', { name: k.region });
 }
 
+describe('categories panel description', () => {
+  it('Edit sends null when the description is cleared', async () => {
+    const api = mockApi({
+      occurrences: rows(),
+      categories: [{ id: 'c1', name: 'Food', description: 'Meals' }],
+    });
+    server.use(
+      http.patch('/categories/c1', async ({ request }) => {
+        api.requests.push({ method: 'PATCH', url: '/categories/c1', userId: 'alice', body: await request.json() });
+        return HttpResponse.json({ id: 'c1', name: 'Food', description: null });
+      }),
+    );
+    renderPage();
+    const panel = await panelOf(kinds[0] as Kind);
+    const u = userEvent.setup();
+    await u.click(await within(panel).findByRole('button', { name: 'Edit Food' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit category' });
+    expect(within(dialog).getByLabelText('Description')).toHaveValue('Meals');
+    await u.clear(within(dialog).getByLabelText('Description'));
+    await u.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(api.requests.some((r) => r.method === 'PATCH')).toBe(true));
+    expect(api.requests.find((r) => r.method === 'PATCH')?.body).toEqual({ name: 'Food', description: null });
+  });
+});
+
 describe.each(kinds)('$panel', (k) => {
   it('lists the pseudo-entry first then names alphabetically', async () => {
     mockApi({ occurrences: rows() });

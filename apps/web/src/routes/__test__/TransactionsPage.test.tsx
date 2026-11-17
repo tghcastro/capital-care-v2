@@ -57,8 +57,9 @@ describe('TransactionsPage', () => {
     renderPage();
     expect(await screen.findByText('No transactions this month')).toBeInTheDocument();
     const footer = screen.getByRole('region', { name: 'Monthly summary' });
-    expect(within(footer).getByText('Total received').nextSibling).toHaveTextContent('0.00');
-    expect(within(footer).getByText('Final available balance').nextSibling).toHaveTextContent('0.00');
+    for (const label of ['Total received', 'Total debits', 'Monthly net total', 'Final available balance']) {
+      expect(within(footer).getByText(label).nextSibling?.textContent).toBe('0.00');
+    }
   });
 
   it('renders every row detail', async () => {
@@ -129,10 +130,10 @@ describe('TransactionsPage', () => {
     renderPage();
     await screen.findByText('Groceries');
     const footer = screen.getByRole('region', { name: 'Monthly summary' });
-    expect(within(footer).getByText('Total received').nextSibling).toHaveTextContent('1,500.50');
-    expect(within(footer).getByText('Total debits').nextSibling).toHaveTextContent('100.35');
-    expect(within(footer).getByText('Monthly net total').nextSibling).toHaveTextContent('1,400.15');
-    expect(within(footer).getByText('Final available balance').nextSibling).toHaveTextContent('1,400.15');
+    expect(within(footer).getByText('Total received').nextSibling?.textContent).toBe('1,500.50');
+    expect(within(footer).getByText('Total debits').nextSibling?.textContent).toBe('100.35');
+    expect(within(footer).getByText('Monthly net total').nextSibling?.textContent).toBe('1,400.15');
+    expect(within(footer).getByText('Final available balance').nextSibling?.textContent).toBe('1,400.15');
   });
 
   it('Back to top scrolls the window to the top', async () => {
@@ -156,6 +157,22 @@ async function fillQuickAdd(u: ReturnType<typeof userEvent.setup>, over: { amoun
   await u.selectOptions(within(form).getByLabelText('Account'), 'Checking');
   return form;
 }
+
+describe('TransactionsPage details', () => {
+  it('shows the recurring icon for an instalment-only transaction', async () => {
+    mockApi({ occurrences: [occ({ description: 'Sofa', instalment: { number: 1, total: 3 } })] });
+    renderPage();
+    const row = (await screen.findByText('Sofa')).closest('li') as HTMLElement;
+    expect(within(row).getByLabelText('Recurring')).toBeInTheDocument();
+  });
+
+  it('shows Something went wrong when a failure carries no detail', async () => {
+    mockApi();
+    server.use(http.get('/transactions', () => new HttpResponse(null, { status: 500 })));
+    renderPage();
+    expect(await screen.findByText('Something went wrong')).toBeInTheDocument();
+  });
+});
 
 describe('TransactionsPage quick add', () => {
   it('quick-add posts a one-off transaction and lists it', async () => {
@@ -201,7 +218,9 @@ describe('TransactionsPage quick add', () => {
     await u.selectOptions(within(form).getByLabelText('Repeat'), recurrence);
     await u.click(within(form).getByRole('button', { name: 'Add transaction' }));
     await waitFor(() => expect(api.requests.some((r) => r.method === 'POST')).toBe(true));
-    expect(api.requests.find((r) => r.method === 'POST')?.body).toMatchObject({ recurrence });
+    const body = api.requests.find((r) => r.method === 'POST')?.body as Record<string, unknown>;
+    expect(body.recurrence).toBe(recurrence);
+    expect('instalment' in body).toBe(false);
   });
 
   it('More details sends an instalment and hides recurrence', async () => {

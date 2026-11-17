@@ -10,7 +10,8 @@ export interface PanelItem {
 
 export interface PanelValues {
   name: string;
-  description?: string;
+  /** On edit an empty description is sent as null so it can be cleared. */
+  description?: string | null;
 }
 
 interface Props {
@@ -123,7 +124,11 @@ function SaveDialog({
     setError(null);
     try {
       const values: PanelValues = { name: name.trim() };
-      if (withDescription && description.trim()) values.description = description.trim();
+      if (withDescription) {
+        const text = description.trim();
+        if (text) values.description = text;
+        else if (item) values.description = null;
+      }
       await onSave(item?.id ?? null, values);
       onClose();
     } catch (e) {
