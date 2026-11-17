@@ -1,1 +1,25 @@
 @import 'tailwindcss';
+
+/* Design tokens from docs/tech/definitions/design.md (Wise-based). */
+@theme {
+  --color-primary: #9fe870;
+  --color-primary-active: #cdffad;
+  --color-primary-pale: #e2f6d5;
+  --color-ink: #0e0f0c;
+  --color-body: #454745;
+  --color-mute: #868685;
+  --color-canvas-soft: #e8ebe6;
+  --color-positive-deep: #054d28;
+  --color-negative: #d03238;
+  --color-negative-deep: #a72027;
+  --radius-card: 24px;
+  --radius-input: 12px;
+  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--color-canvas-soft);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'calt';
+}

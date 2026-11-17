@@ -91,7 +91,7 @@ Proof: run web | ✓ TransactionsPage > shows the API detail and keeps the icon 
 ### S6 - Categories panel
 
 **C22** - Uncategorized first, then categories alphabetically, flat (AC 22)
-Proof: run web | ✓ categories panel > lists Uncategorized first then names alphabetically
+Proof: run web | ✓ categories panel > lists the pseudo-entry first then names alphabetically
 
 **C23** - Selecting categories filters rows; Uncategorized matches null; deselect and none-selected work (AC 23)
 Proof: run web | ✓ ledgerView > category filter matches any selected id and Uncategorized matches null
@@ -115,7 +115,7 @@ Proof: run web | ✓ categories panel > a duplicate name answered 409 shows the 
 ### S7 - Accounts panel
 
 **C28** - Unassigned first, then accounts alphabetically, flat (AC 28)
-Proof: run web | ✓ accounts panel > lists Unassigned first then names alphabetically
+Proof: run web | ✓ accounts panel > lists the pseudo-entry first then names alphabetically
 
 **C29** - Accounts filter, add, edit and delete behave like categories; Unassigned matches null (AC 29)
 Proof: run web | ✓ ledgerView > account filter Unassigned matches null accountId
