@@ -7,12 +7,16 @@
 
 import path from 'node:path';
 import express from 'express';
+import helmet from 'helmet';
 import { createLedgerRouters } from '@capital-care/ledger';
 
 export function createApp(): express.Express {
   const app = express();
 
   // Middleware
+  // Security headers (helmet defaults, see docs/tech/definitions/security.md). First, so every
+  // response carries them: routes, static files and errors.
+  app.use(helmet());
   app.use(express.json({ limit: '100kb' }));
 
   // Health check
