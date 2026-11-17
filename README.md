@@ -55,7 +55,12 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 - Open the UI at **http://localhost:3000/**
 - Health check: `curl http://localhost:3000/health`
 - Stop it with `Ctrl+C`. The DEV database lives in memory and is discarded on stop.
-- Always keep `--build`; without it Compose may reuse an old image that has no UI.
+- Don't want to build? Run the latest published image from GHCR instead (same URL, **http://localhost:3000/**):
+  ```bash
+  docker compose -f docker-compose.yml -f docker-compose.dev.yml up api-latest
+  ```
+  It pulls `ghcr.io/tghcastro/capital-care-v2:latest` on every start. If the pull is denied, the package is private: run `docker login ghcr.io` with a GitHub token that has `read:packages`.
+- When building, keep `--build`; without it Compose may reuse an old image that has no UI.
 - For persistent data use the PRD profile (UI at http://localhost:8000/), see [Running with Docker](#running-with-docker).
 
 ### Option B: Local, two terminals (UI with hot reload)
