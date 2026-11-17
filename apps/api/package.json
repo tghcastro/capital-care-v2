@@ -15,7 +15,8 @@
   "dependencies": {
     "express": "^5.0.0",
     "@capital-care/ledger": "workspace:*",
-    "@capital-care/shared": "workspace:*"
+    "@capital-care/shared": "workspace:*",
+    "helmet": "^8.3.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
