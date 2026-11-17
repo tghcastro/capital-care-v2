@@ -74,6 +74,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: .specs/features/transactions/verification.md finding Amount with leading zeros (validation)
 - last seen: 2026-11-12T12:31:33Z
 
+### L-011 - Record a pipeline change the user asked for in chat as a plan criterion with a check before verifying, or the Verifier reports it as unplanned.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `.github/workflows` · harmful: 0
+- features: security-headers-and-hardening
+- evidence: plan.md AC 10 (.github/workflows)
+- last seen: 2026-11-17T14:01:22Z
+
+### L-012 - A check script that parses a config file by regex must also cover an added entry with no optional fields, and be mutation-tested with one.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `.specs checks` · harmful: 0
+- features: security-headers-and-hardening
+- evidence: C7 (.specs checks)
+- last seen: 2026-11-17T14:01:22Z
+
+### L-013 - Prove middleware order against each mount type (routes, errors, static) with a response from each, not one of them.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `apps/api/test` · harmful: 0
+- features: security-headers-and-hardening
+- evidence: C4 (apps/api/test)
+- last seen: 2026-11-17T14:01:22Z
+
+### L-014 - Express's default 404 handler replaces the Content-Security-Policy with default-src 'none'; assert that value, not the app's policy, on unknown routes.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `apps/api` · harmful: 0
+- features: security-headers-and-hardening
+- evidence: AC 2 (apps/api)
+- last seen: 2026-11-17T14:01:22Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

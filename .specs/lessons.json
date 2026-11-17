@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 11,
+  "next_id": 15,
   "lessons": [
     {
       "id": "L-001",
@@ -184,6 +184,78 @@
       ],
       "created": "2026-11-12T12:31:33Z",
       "last_seen": "2026-11-12T12:31:33Z"
+    },
+    {
+      "id": "L-011",
+      "key": "spec_deviation::record a pipeline change the user asked for in chat as a plan criterion with a check before verifying or the verifier reports it as unplanned",
+      "text": "Record a pipeline change the user asked for in chat as a plan criterion with a check before verifying, or the Verifier reports it as unplanned.",
+      "signal": "spec_deviation",
+      "scope": ".github/workflows",
+      "status": "candidate",
+      "features": [
+        "security-headers-and-hardening"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "plan.md AC 10 (.github/workflows)"
+      ],
+      "created": "2026-11-17T14:01:22Z",
+      "last_seen": "2026-11-17T14:01:22Z"
+    },
+    {
+      "id": "L-012",
+      "key": "weak_test::a check script that parses a config file by regex must also cover an added entry with no optional fields and be mutation tested with one",
+      "text": "A check script that parses a config file by regex must also cover an added entry with no optional fields, and be mutation-tested with one.",
+      "signal": "weak_test",
+      "scope": ".specs checks",
+      "status": "candidate",
+      "features": [
+        "security-headers-and-hardening"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C7 (.specs checks)"
+      ],
+      "created": "2026-11-17T14:01:22Z",
+      "last_seen": "2026-11-17T14:01:22Z"
+    },
+    {
+      "id": "L-013",
+      "key": "weak_test::prove middleware order against each mount type routes errors static with a response from each not one of them",
+      "text": "Prove middleware order against each mount type (routes, errors, static) with a response from each, not one of them.",
+      "signal": "weak_test",
+      "scope": "apps/api/test",
+      "status": "candidate",
+      "features": [
+        "security-headers-and-hardening"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C4 (apps/api/test)"
+      ],
+      "created": "2026-11-17T14:01:22Z",
+      "last_seen": "2026-11-17T14:01:22Z"
+    },
+    {
+      "id": "L-014",
+      "key": "ac_gap::express s default 404 handler replaces the content security policy with default src none assert that value not the app s policy on unknown routes",
+      "text": "Express's default 404 handler replaces the Content-Security-Policy with default-src 'none'; assert that value, not the app's policy, on unknown routes.",
+      "signal": "ac_gap",
+      "scope": "apps/api",
+      "status": "candidate",
+      "features": [
+        "security-headers-and-hardening"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AC 2 (apps/api)"
+      ],
+      "created": "2026-11-17T14:01:22Z",
+      "last_seen": "2026-11-17T14:01:22Z"
     }
   ]
 }
