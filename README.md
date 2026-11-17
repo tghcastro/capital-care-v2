@@ -40,17 +40,42 @@ This is a learning project: the real goal is practicing agentic development work
 
 ---
 
-## Running the API
+## Running the whole system (UI + API)
 
-### Start the server
+There are two ways. Option A is the simplest and runs everything from one command.
+
+### Option A: Docker (recommended)
+
+One container serves the API and the built web app on the same port. Requires Docker.
 
 ```bash
-npm run dev
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-The API starts on `http://localhost:3000`.
+- Open the UI at **http://localhost:3000/**
+- Health check: `curl http://localhost:3000/health`
+- Stop it with `Ctrl+C`. The DEV database lives in memory and is discarded on stop.
+- Always keep `--build`; without it Compose may reuse an old image that has no UI.
+- For persistent data use the PRD profile (UI at http://localhost:8000/), see [Running with Docker](#running-with-docker).
 
-Health check: `curl http://localhost:3000/health`
+### Option B: Local, two terminals (UI with hot reload)
+
+Run once: `pnpm install`, then `pnpm build` (compiles the API and builds the web app).
+
+Terminal 1, the API on `http://localhost:3000`:
+
+```bash
+pnpm db:migrate
+pnpm --filter @capital-care/api start
+```
+
+Terminal 2, the UI on **http://localhost:5173/** (Vite proxies API calls to port 3000):
+
+```bash
+pnpm --filter @capital-care/web dev
+```
+
+Open http://localhost:5173/. Rebuild the API (`pnpm build`) after changing API code.
 
 ---
 
@@ -125,7 +150,7 @@ The API requests live in a [Bruno](https://www.usebruno.com) collection (open-so
   - `DEV`: `baseUrl` `http://localhost:3000`
   - `PRD`: `baseUrl` `http://localhost:8000`
   - `userId` is the user sent in the `X-User-Id` header (every request). `otherUserId` is a second user, used to check that one user cannot read another user's data.
-- **Run from the CLI** (optional): `npm i -g @usebruno/cli`, then `cd tools/bruno/capital-care && bru run --env DEV -r`. Start the API first (see [Running the API](#running-the-api) or [Running with Docker](#running-with-docker)).
+- **Run from the CLI** (optional): `npm i -g @usebruno/cli`, then `cd tools/bruno/capital-care && bru run --env DEV -r`. Start the API first (see [Running the whole system](#running-the-whole-system-ui--api) or [Running with Docker](#running-with-docker)).
 - **Accounts folder:** `Accounts/` mirrors `Categories/`. Its last error request fills `otherUserId`'s accounts up to the account limit (`ACCOUNT_LIMIT`: 5 in DEV, 99 in PRD) and checks that the next create is refused, then deletes everything it created.
 - **Transactions folder:** `Transactions/` creates its own category and account, then walks a monthly, a one-off and an instalment transaction through create, month view, edit, settle, undo settlement and stop, and removes everything it created. Its `Errors/` folder covers the 4xx responses (invalid fields, unknown category, another user's transaction, settling twice).
 - **Add requests:** create a `.bru` file in the matching folder (or use *New Request* in Bruno), then commit it with the code. Keep names unique per run (for example with `{{$timestamp}}`), and delete any data the request creates, because PRD data persists.
