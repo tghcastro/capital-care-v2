@@ -139,7 +139,7 @@ Proof: run web | ✓ ledgerView > category and account filters combine with AND
 ### S8 - Look and layout
 
 **C31** - Screens follow `docs/tech/definitions/design.md` (AC 31)
-Proof: walk - open the page in a browser at 1280px and check lime primary buttons, 24px radius, Inter, sage canvas with white cards
+Proof: walk - open the page in a browser at 1280px and check spruce #008254 primary buttons with 2px radius, 8px bordered cards without shadow, Montserrat font, weight 300 body
 
 **C32** - Under 768px the panels stack above the list with no horizontal page scroll (AC 32)
 Proof: walk - open the page at 375px and check the panels stack and the page does not scroll sideways
@@ -178,3 +178,4 @@ Proof: walk - open the page at 375px and check the panels stack and the page doe
 - **Boundary:** C1-C32 built at `95845da` (+ mobile row layout fix)
 - **Abandoned:** none
 - **Walked:** ran the real API (fresh sqlite DB, alice with 2 categories, 1 account, a monthly receipt and a debit) and `vite` dev with its proxy; in Chromium at 1280px added "Coffee" through the quick-add form and settled a row, and read computed styles (primary button rgb(159,232,112), button and card radius 24px, Inter, canvas rgb(232,235,230)) = C31; at 375px the page width equals the viewport (no sideways scroll) and the panels stack above the list = C32. The first 375px pass truncated descriptions, fixed before commit. No capture exists, so no pictures are owed.
+- **Walked (2026-11-17, after AD-004):** re-walked in Chromium against the real API with the NerdWallet-based design: computed styles at 1280px were primary button rgb(0,130,84) with 2px radius and uppercase label, outline button 8px radius, cards 8px with a 1px rgb(216,217,218) border and no shadow, body Montserrat Variable weight 300 on rgb(247,247,247), h1 rgb(0,130,84) weight 700 = C31; page width equals viewport at 1280px; the 375px view stacks the form and panels = C32. Screenshots retaken.

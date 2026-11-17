@@ -42,9 +42,13 @@ describe('TransactionsPage', () => {
   it('shows the API detail on failure and Try again refetches', async () => {
     mockApi({ occurrences: [occ()] });
     server.use(
-      http.get('/transactions', () => HttpResponse.json({ type: 'X', detail: 'Database offline' }, { status: 500 }), {
-        once: true,
-      }),
+      http.get(
+        '/transactions',
+        () => HttpResponse.json({ type: 'X', detail: 'Database offline' }, { status: 500 }),
+        {
+          once: true,
+        }
+      )
     );
     renderPage();
     expect(await screen.findByText('Database offline')).toBeInTheDocument();
@@ -57,7 +61,12 @@ describe('TransactionsPage', () => {
     renderPage();
     expect(await screen.findByText('No transactions this month')).toBeInTheDocument();
     const footer = screen.getByRole('region', { name: 'Monthly summary' });
-    for (const label of ['Total received', 'Total debits', 'Monthly net total', 'Final available balance']) {
+    for (const label of [
+      'Total received',
+      'Total debits',
+      'Monthly net total',
+      'Final available balance',
+    ]) {
       expect(within(footer).getByText(label).nextSibling?.textContent).toBe('0.00');
     }
   });
@@ -65,9 +74,21 @@ describe('TransactionsPage', () => {
   it('renders every row detail', async () => {
     mockApi({
       occurrences: [
-        occ({ description: 'Pay', type: 'receipt', amount: '500.01', recurrence: 'monthly', status: 'settled' }),
+        occ({
+          description: 'Pay',
+          type: 'receipt',
+          amount: '500.01',
+          recurrence: 'monthly',
+          status: 'settled',
+        }),
         occ({ transactionId: 't2', description: 'Lunch', type: 'debit', amount: '100.35' }),
-        occ({ transactionId: 't3', description: 'Mystery', categoryId: null, accountId: null, amount: '1' }),
+        occ({
+          transactionId: 't3',
+          description: 'Mystery',
+          categoryId: null,
+          accountId: null,
+          amount: '1',
+        }),
       ],
     });
     renderPage();
@@ -93,7 +114,9 @@ describe('TransactionsPage', () => {
     await screen.findByText('Groceries');
     await user().selectOptions(screen.getByLabelText('Month'), 'March');
     await user().selectOptions(screen.getByLabelText('Year'), '2025');
-    await waitFor(() => expect(api.requests.some((r) => r.url === '/transactions?month=2025-03')).toBe(true));
+    await waitFor(() =>
+      expect(api.requests.some((r) => r.url === '/transactions?month=2025-03')).toBe(true)
+    );
   });
 
   it('Next month and Previous month buttons change the month', async () => {
@@ -101,10 +124,14 @@ describe('TransactionsPage', () => {
     renderPage();
     await screen.findByText('Groceries');
     await user().click(screen.getByRole('button', { name: 'Next month' }));
-    await waitFor(() => expect(api.requests.some((r) => r.url === '/transactions?month=2026-12')).toBe(true));
+    await waitFor(() =>
+      expect(api.requests.some((r) => r.url === '/transactions?month=2026-12')).toBe(true)
+    );
     await user().click(screen.getByRole('button', { name: 'Previous month' }));
     await user().click(screen.getByRole('button', { name: 'Previous month' }));
-    await waitFor(() => expect(api.requests.some((r) => r.url === '/transactions?month=2026-10')).toBe(true));
+    await waitFor(() =>
+      expect(api.requests.some((r) => r.url === '/transactions?month=2026-10')).toBe(true)
+    );
   });
 
   it('shows the running balance after each day group', async () => {
@@ -133,7 +160,9 @@ describe('TransactionsPage', () => {
     expect(within(footer).getByText('Total received').nextSibling?.textContent).toBe('1,500.50');
     expect(within(footer).getByText('Total debits').nextSibling?.textContent).toBe('100.35');
     expect(within(footer).getByText('Monthly net total').nextSibling?.textContent).toBe('1,400.15');
-    expect(within(footer).getByText('Final available balance').nextSibling?.textContent).toBe('1,400.15');
+    expect(within(footer).getByText('Final available balance').nextSibling?.textContent).toBe(
+      '1,400.15'
+    );
   });
 
   it('Back to top scrolls the window to the top', async () => {
@@ -147,7 +176,10 @@ describe('TransactionsPage', () => {
   });
 });
 
-async function fillQuickAdd(u: ReturnType<typeof userEvent.setup>, over: { amount?: string; description?: string } = {}) {
+async function fillQuickAdd(
+  u: ReturnType<typeof userEvent.setup>,
+  over: { amount?: string; description?: string } = {}
+) {
   const form = screen.getByRole('form', { name: 'Quick add transaction' });
   await u.clear(within(form).getByLabelText('Description'));
   await u.type(within(form).getByLabelText('Description'), over.description ?? 'Coffee');
@@ -181,9 +213,11 @@ describe('TransactionsPage quick add', () => {
       http.post('/transactions', async ({ request }) => {
         const body = (await request.json()) as Record<string, string>;
         api.requests.push({ method: 'POST', url: '/transactions', userId: 'alice', body });
-        api.occurrences = [occ({ description: body.description ?? '', amount: body.amount ?? '0' })];
+        api.occurrences = [
+          occ({ description: body.description ?? '', amount: body.amount ?? '0' }),
+        ];
         return HttpResponse.json({ id: 't9' }, { status: 201 });
-      }),
+      })
     );
     renderPage();
     await screen.findByText('No transactions this month');
@@ -202,34 +236,47 @@ describe('TransactionsPage quick add', () => {
     });
   });
 
-  it.each(['daily', 'weekly', 'monthly', 'annually'])('More details sends the chosen recurrence (%s)', async (recurrence) => {
-    const api = mockApi();
-    server.use(
-      http.post('/transactions', async ({ request }) => {
-        api.requests.push({ method: 'POST', url: '/transactions', userId: 'alice', body: await request.json() });
-        return HttpResponse.json({ id: 't9' }, { status: 201 });
-      }),
-    );
-    renderPage();
-    await screen.findByText('No transactions this month');
-    const u = user();
-    const form = await fillQuickAdd(u);
-    await u.click(within(form).getByRole('button', { name: 'More details' }));
-    await u.selectOptions(within(form).getByLabelText('Repeat'), recurrence);
-    await u.click(within(form).getByRole('button', { name: 'Add transaction' }));
-    await waitFor(() => expect(api.requests.some((r) => r.method === 'POST')).toBe(true));
-    const body = api.requests.find((r) => r.method === 'POST')?.body as Record<string, unknown>;
-    expect(body.recurrence).toBe(recurrence);
-    expect('instalment' in body).toBe(false);
-  });
+  it.each(['daily', 'weekly', 'monthly', 'annually'])(
+    'More details sends the chosen recurrence (%s)',
+    async (recurrence) => {
+      const api = mockApi();
+      server.use(
+        http.post('/transactions', async ({ request }) => {
+          api.requests.push({
+            method: 'POST',
+            url: '/transactions',
+            userId: 'alice',
+            body: await request.json(),
+          });
+          return HttpResponse.json({ id: 't9' }, { status: 201 });
+        })
+      );
+      renderPage();
+      await screen.findByText('No transactions this month');
+      const u = user();
+      const form = await fillQuickAdd(u);
+      await u.click(within(form).getByRole('button', { name: 'More details' }));
+      await u.selectOptions(within(form).getByLabelText('Repeat'), recurrence);
+      await u.click(within(form).getByRole('button', { name: 'Add transaction' }));
+      await waitFor(() => expect(api.requests.some((r) => r.method === 'POST')).toBe(true));
+      const body = api.requests.find((r) => r.method === 'POST')?.body as Record<string, unknown>;
+      expect(body.recurrence).toBe(recurrence);
+      expect('instalment' in body).toBe(false);
+    }
+  );
 
   it('More details sends an instalment and hides recurrence', async () => {
     const api = mockApi();
     server.use(
       http.post('/transactions', async ({ request }) => {
-        api.requests.push({ method: 'POST', url: '/transactions', userId: 'alice', body: await request.json() });
+        api.requests.push({
+          method: 'POST',
+          url: '/transactions',
+          userId: 'alice',
+          body: await request.json(),
+        });
         return HttpResponse.json({ id: 't9' }, { status: 201 });
-      }),
+      })
     );
     renderPage();
     await screen.findByText('No transactions this month');
@@ -259,14 +306,21 @@ describe('TransactionsPage quick add', () => {
     expect(await within(form).findByText('amount must be greater than zero')).toBeInTheDocument();
     await fillQuickAdd(u, { amount: '5', description: 'x'.repeat(101) });
     await u.click(within(form).getByRole('button', { name: 'Add transaction' }));
-    expect(await within(form).findByText('description must not exceed 100 characters')).toBeInTheDocument();
+    expect(
+      await within(form).findByText('description must not exceed 100 characters')
+    ).toBeInTheDocument();
     expect(api.requests.some((r) => r.method === 'POST')).toBe(false);
   });
 
   it('shows the API detail and keeps typed values when create fails', async () => {
     mockApi();
     server.use(
-      http.post('/transactions', () => HttpResponse.json({ type: 'ValidationError', detail: 'category not found' }, { status: 400 })),
+      http.post('/transactions', () =>
+        HttpResponse.json(
+          { type: 'ValidationError', detail: 'category not found' },
+          { status: 400 }
+        )
+      )
     );
     renderPage();
     await screen.findByText('No transactions this month');
@@ -290,7 +344,9 @@ describe('TransactionsPage quick add', () => {
     await waitFor(() => expect(within(form).getByLabelText('Description')).toHaveValue(''));
     expect(within(form).getByLabelText('Amount')).toHaveValue('');
     await waitFor(() =>
-      expect(api.requests.filter((r) => r.url.startsWith('/transactions?')).length).toBeGreaterThan(before),
+      expect(api.requests.filter((r) => r.url.startsWith('/transactions?')).length).toBeGreaterThan(
+        before
+      )
     );
   });
 });
@@ -303,7 +359,7 @@ describe('TransactionsPage settlement', () => {
         api.requests.push({ method: 'PUT', url: 'settle', userId: 'alice', body: undefined });
         api.occurrences = [occ({ status: 'settled' })];
         return HttpResponse.json({});
-      }),
+      })
     );
     renderPage();
     await user().click(await screen.findByRole('button', { name: 'Mark as settled' }));
@@ -317,7 +373,7 @@ describe('TransactionsPage settlement', () => {
       http.delete('/transactions/t1/occurrences/2026-11-16/settlement', () => {
         api.occurrences = [occ({ status: 'forecast' })];
         return HttpResponse.json({});
-      }),
+      })
     );
     renderPage();
     await user().click(await screen.findByRole('button', { name: 'Mark as unsettled' }));
@@ -328,8 +384,8 @@ describe('TransactionsPage settlement', () => {
     mockApi({ occurrences: [occ()] });
     server.use(
       http.put('/transactions/t1/occurrences/2026-11-16/settlement', () =>
-        HttpResponse.json({ type: 'ConflictError', detail: 'Already settled' }, { status: 409 }),
-      ),
+        HttpResponse.json({ type: 'ConflictError', detail: 'Already settled' }, { status: 409 })
+      )
     );
     renderPage();
     await user().click(await screen.findByRole('button', { name: 'Mark as settled' }));

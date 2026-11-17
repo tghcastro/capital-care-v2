@@ -1,26 +1,40 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/montserrat';
 
-/* Design tokens from docs/tech/definitions/design.md (Wise-based). */
+/* Design tokens from docs/tech/definitions/design.md (NerdWallet-based, AD-004). */
 @theme {
-  --color-primary: #9fe870;
-  --color-primary-active: #cdffad;
-  --color-primary-pale: #e2f6d5;
-  --color-ink: #0e0f0c;
-  --color-body: #454745;
-  --color-mute: #868685;
-  --color-canvas-soft: #e8ebe6;
-  --color-positive-deep: #054d28;
-  --color-negative: #d03238;
-  --color-negative-deep: #a72027;
-  --radius-card: 24px;
-  --radius-input: 12px;
-  --font-sans: 'Inter Variable', Inter, system-ui, -apple-system, sans-serif;
+  --color-primary: #008254;
+  --color-primary-deep: #006642;
+  --color-forest: #00482f;
+  --color-lime-panel: #e8fdac;
+  --color-canvas-soft: #f7f7f7;
+  --color-mint-50: #effcf8;
+  --color-mint-100: #e3faf2;
+  --color-mint-200: #b7ecda;
+  --color-hairline: #ebebec;
+  --color-hairline-strong: #d8d9da;
+  --color-ink: #000000;
+  --color-body: #3d4045;
+  --color-muted: #64666a;
+  --color-faint: #b1b3b5;
+  --color-error: #de2828;
+  --radius-control: 2px;
+  --radius-card: 8px;
+  --shadow-button: 0 4px 16px rgba(100, 102, 106, 0.05), 0 16px 40px rgba(100, 102, 104, 0.05);
+  --shadow-overlay: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  /* Montserrat stands in for the licensed Gotham face (see design.md). */
+  --font-sans: 'Montserrat Variable', Montserrat, system-ui, -apple-system, sans-serif;
 }
 
 body {
   background-color: var(--color-canvas-soft);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: 'calt';
+  font-weight: 300;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
 }

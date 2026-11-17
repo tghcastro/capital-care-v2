@@ -1,11 +1,12 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'tertiary' | 'danger';
+type Variant = 'primary' | 'secondary' | 'outline' | 'danger';
 const variants: Record<Variant, string> = {
-  primary: 'bg-primary text-ink hover:bg-primary-active',
-  secondary: 'bg-canvas-soft text-ink hover:bg-[#dde1d9]',
-  tertiary: 'bg-white text-ink border border-ink hover:bg-canvas-soft',
-  danger: 'bg-negative text-white hover:bg-negative-deep',
+  primary: 'bg-primary text-white shadow-button hover:bg-primary-deep uppercase',
+  secondary: 'bg-canvas-soft text-primary hover:bg-mint-100 uppercase',
+  outline:
+    'border border-hairline-strong bg-white text-primary hover:bg-mint-50 !rounded-card !px-4 !py-2',
+  danger: 'bg-error text-white hover:bg-[#b61f1f] uppercase',
 };
 
 export function Button({
@@ -17,20 +18,24 @@ export function Button({
     <button
       type="button"
       {...props}
-      className={`min-h-12 rounded-card px-6 py-3 text-base font-semibold disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`rounded-control px-4 py-3 text-sm font-bold tracking-wide disabled:opacity-50 ${variants[variant]} ${className}`}
     />
   );
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-card bg-white p-6 ${className}`}>{children}</div>;
+  return (
+    <div className={`rounded-card border border-hairline-strong bg-white p-5 ${className}`}>
+      {children}
+    </div>
+  );
 }
 
+// The containing card supplies the chrome; the input is a flat soft-canvas field with a rule beneath.
 export const inputClass =
-  'w-full rounded-input border border-ink bg-white px-4 py-3 text-base text-ink';
-
+  'w-full rounded-none border-0 border-b border-hairline-strong bg-canvas-soft px-3 py-2.5 text-base font-normal text-ink focus:border-primary focus:outline-2 focus:outline-primary';
 export const compactInput =
-  'w-full rounded-input border border-ink bg-white px-3 py-2 text-sm text-ink';
+  'w-full rounded-none border-0 border-b border-hairline-strong bg-canvas-soft px-3 py-2 text-sm font-normal text-ink focus:border-primary focus:outline-2 focus:outline-primary';
 
 export function Field({
   label,
@@ -43,12 +48,12 @@ export function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-semibold">
+      <label className="block text-xs font-medium text-body">
         {label}
-        <div className="mt-1 font-normal">{children}</div>
+        <div className="mt-1">{children}</div>
       </label>
       {error ? (
-        <p role="alert" className="mt-1 text-sm text-negative-deep">
+        <p role="alert" className="mt-1 text-xs font-medium text-error">
           {error}
         </p>
       ) : null}
@@ -63,9 +68,9 @@ export function Dialog({ title, children }: { title: string; children: ReactNode
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-md rounded-card bg-white p-6"
+        className="w-full max-w-md rounded-card border border-hairline-strong bg-white p-6 shadow-overlay"
       >
-        <h2 className="mb-4 text-2xl font-semibold">{title}</h2>
+        <h2 className="mb-4 text-xl font-bold">{title}</h2>
         {children}
       </div>
     </div>

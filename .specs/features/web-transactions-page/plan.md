@@ -146,7 +146,7 @@ The Transactions page lists the selected month's occurrences grouped by day, in 
 
 **Acceptance Criteria**
 
-31. WHEN any screen renders THEN the system SHALL follow `docs/tech/definitions/design.md` (lime `#9fe870` primary buttons, 24px card/button radius, Inter, sage `#e8ebe6` canvas with white cards)
+31. WHEN any screen renders THEN the system SHALL follow `docs/tech/definitions/design.md` as replaced on 2026-11-17 (AD-004): spruce `#008254` primary buttons with 2px radius, 8px bordered cards with no shadow, Montserrat with weight 300 body, white page and `#f7f7f7` soft canvas
 32. WHEN the window is under 768px wide THEN the system SHALL stack the filter panels above the list with no horizontal page scroll
 
 ## Out of scope

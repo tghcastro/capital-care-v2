@@ -50,7 +50,13 @@ const kinds: Kind[] = [
 
 const rows = () => [
   occ({ description: 'Lunch', categoryId: 'c1', accountId: 'a1' }),
-  occ({ transactionId: 't2', description: 'Pay', type: 'receipt', categoryId: 'c2', accountId: 'a2' }),
+  occ({
+    transactionId: 't2',
+    description: 'Pay',
+    type: 'receipt',
+    categoryId: 'c2',
+    accountId: 'a2',
+  }),
 ];
 
 async function panelOf(k: Kind): Promise<HTMLElement> {
@@ -66,9 +72,14 @@ describe('categories panel description', () => {
     });
     server.use(
       http.patch('/categories/c1', async ({ request }) => {
-        api.requests.push({ method: 'PATCH', url: '/categories/c1', userId: 'alice', body: await request.json() });
+        api.requests.push({
+          method: 'PATCH',
+          url: '/categories/c1',
+          userId: 'alice',
+          body: await request.json(),
+        });
         return HttpResponse.json({ id: 'c1', name: 'Food', description: null });
-      }),
+      })
     );
     renderPage();
     const panel = await panelOf(kinds[0] as Kind);
@@ -79,7 +90,10 @@ describe('categories panel description', () => {
     await u.clear(within(dialog).getByLabelText('Description'));
     await u.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(api.requests.some((r) => r.method === 'PATCH')).toBe(true));
-    expect(api.requests.find((r) => r.method === 'PATCH')?.body).toEqual({ name: 'Food', description: null });
+    expect(api.requests.find((r) => r.method === 'PATCH')?.body).toEqual({
+      name: 'Food',
+      description: null,
+    });
   });
 });
 
@@ -116,7 +130,7 @@ describe.each(kinds)('$panel', (k) => {
         const key = k.noun === 'category' ? 'categories' : 'accounts';
         api[key] = [...api[key], { id: 'new', name: body.name, description: null }] as never;
         return HttpResponse.json({ id: 'new', name: body.name }, { status: 201 });
-      }),
+      })
     );
     renderPage();
     const panel = await panelOf(k);
@@ -135,11 +149,18 @@ describe.each(kinds)('$panel', (k) => {
     server.use(
       http.patch(`${k.path}/${k.firstId}`, async ({ request }) => {
         const body = (await request.json()) as { name: string };
-        api.requests.push({ method: 'PATCH', url: `${k.path}/${k.firstId}`, userId: 'alice', body });
+        api.requests.push({
+          method: 'PATCH',
+          url: `${k.path}/${k.firstId}`,
+          userId: 'alice',
+          body,
+        });
         const key = k.noun === 'category' ? 'categories' : 'accounts';
-        api[key] = api[key].map((i) => (i.id === k.firstId ? { ...i, name: body.name } : i)) as never;
+        api[key] = api[key].map((i) =>
+          i.id === k.firstId ? { ...i, name: body.name } : i
+        ) as never;
         return HttpResponse.json({ id: k.firstId, name: body.name });
-      }),
+      })
     );
     renderPage();
     const panel = await panelOf(k);
@@ -172,7 +193,7 @@ describe.each(kinds)('$panel', (k) => {
         const key = k.noun === 'category' ? 'categories' : 'accounts';
         api[key] = api[key].filter((i) => i.id !== k.firstId) as never;
         return new HttpResponse(null, { status: 204 });
-      }),
+      })
     );
     renderPage();
     const panel = await panelOf(k);
@@ -188,8 +209,11 @@ describe.each(kinds)('$panel', (k) => {
     mockApi({ occurrences: rows() });
     server.use(
       http.delete(`${k.path}/${k.firstId}`, () =>
-        HttpResponse.json({ type: 'ConflictError', detail: 'Cannot delete: it is in use' }, { status: 409 }),
-      ),
+        HttpResponse.json(
+          { type: 'ConflictError', detail: 'Cannot delete: it is in use' },
+          { status: 409 }
+        )
+      )
     );
     renderPage();
     const panel = await panelOf(k);
@@ -218,8 +242,11 @@ describe.each(kinds)('$panel', (k) => {
     mockApi({ occurrences: rows() });
     server.use(
       http.post(k.path, () =>
-        HttpResponse.json({ type: 'ConflictError', detail: 'This name already exists' }, { status: 409 }),
-      ),
+        HttpResponse.json(
+          { type: 'ConflictError', detail: 'This name already exists' },
+          { status: 409 }
+        )
+      )
     );
     renderPage();
     const panel = await panelOf(k);

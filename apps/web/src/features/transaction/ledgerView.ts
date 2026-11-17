@@ -30,10 +30,12 @@ function matches(selected: ReadonlySet<string>, id: string | null): boolean {
 /** Filters, orders by date, groups by day and computes the running balance and totals. */
 export function buildLedger(
   occurrences: readonly Occurrence[],
-  filters: Filters,
+  filters: Filters
 ): { groups: DayGroup[]; totals: Totals } {
   const visible = occurrences
-    .filter((o) => matches(filters.categories, o.categoryId) && matches(filters.accounts, o.accountId))
+    .filter(
+      (o) => matches(filters.categories, o.categoryId) && matches(filters.accounts, o.accountId)
+    )
     .map((o, index) => ({ o, index }))
     .sort((a, b) => a.o.date.localeCompare(b.o.date) || a.index - b.index)
     .map(({ o }) => o);

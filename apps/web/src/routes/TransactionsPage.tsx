@@ -97,10 +97,10 @@ export function TransactionsPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-white px-6 py-3">
+      <header className="border-b border-hairline bg-white px-6 py-3">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <h1 className="text-2xl font-black">Capital Care</h1>
-          <p className="text-sm font-semibold">
+          <h1 className="text-2xl font-bold text-primary">Capital Care</h1>
+          <p className="text-sm font-medium text-body">
             Signed in as <span>{CURRENT_USER.id}</span>
           </p>
         </div>
@@ -110,14 +110,13 @@ export function TransactionsPage() {
         <section aria-label="Controls" className="space-y-4">
           <Card className="flex flex-wrap items-end gap-3 px-5 py-3">
             <Button
-              variant="secondary"
-              className="min-h-10 px-4 py-2"
+              variant="outline"
               aria-label="Previous month"
               onClick={() => setMonth(shiftMonth(month, -1))}
             >
               ‹
             </Button>
-            <label className="text-sm font-semibold">
+            <label className="text-xs font-medium text-body">
               Month
               <select
                 className={`${compactInput} mt-1`}
@@ -131,7 +130,7 @@ export function TransactionsPage() {
                 ))}
               </select>
             </label>
-            <label className="text-sm font-semibold">
+            <label className="text-xs font-medium text-body">
               Year
               <select
                 className={`${compactInput} mt-1`}
@@ -146,8 +145,7 @@ export function TransactionsPage() {
               </select>
             </label>
             <Button
-              variant="secondary"
-              className="min-h-10 px-4 py-2"
+              variant="outline"
               aria-label="Next month"
               onClick={() => setMonth(shiftMonth(month, 1))}
             >
@@ -207,13 +205,16 @@ export function TransactionsPage() {
 
           <section aria-label="Transactions" className="min-w-0 space-y-3">
             {settleError ? (
-              <p role="alert" className="rounded-input bg-white p-3 text-sm text-negative-deep">
+              <p
+                role="alert"
+                className="rounded-card border border-hairline-strong bg-white p-3 text-sm text-error"
+              >
                 {settleError}
               </p>
             ) : null}
             {loadError ? (
               <Card>
-                <p role="alert" className="mb-3 text-negative-deep">
+                <p role="alert" className="mb-3 text-error">
                   {errorText(loadError)}
                 </p>
                 <Button
@@ -237,8 +238,8 @@ export function TransactionsPage() {
             ) : (
               <Card className="overflow-hidden p-0">
                 {groups.map((group) => (
-                  <div key={group.date} className="border-b border-canvas-soft last:border-b-0">
-                    <h3 className="bg-canvas-soft/60 px-5 py-2 text-sm font-semibold text-body">
+                  <div key={group.date} className="border-b border-hairline last:border-b-0">
+                    <h3 className="border-b border-hairline bg-mint-50 px-5 py-2 text-sm font-bold text-ink">
                       {groupTitle(group.date)}
                     </h3>
                     <ul>
@@ -248,7 +249,7 @@ export function TransactionsPage() {
                           className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-5 py-2"
                         >
                           <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
-                            <p className="break-words text-sm font-semibold">{item.description}</p>
+                            <p className="break-words text-sm font-bold">{item.description}</p>
                             <p className="text-xs text-body">
                               <span>
                                 {accountNames.get(item.accountId ?? NONE) ?? 'Unassigned'}
@@ -282,17 +283,15 @@ export function TransactionsPage() {
                                 settled: item.status === 'settled',
                               })
                             }
-                            className={`rounded-full px-2 text-sm font-semibold ${
-                              item.status === 'settled'
-                                ? 'bg-primary-pale text-positive-deep'
-                                : 'text-mute'
+                            className={`rounded-full px-2 text-sm font-bold ${
+                              item.status === 'settled' ? 'bg-primary text-white' : 'text-muted'
                             }`}
                           >
                             <span aria-hidden="true">{item.status === 'settled' ? '✔' : '○'}</span>
                           </button>
                           <p
-                            className={`ml-auto text-right text-sm font-semibold sm:w-28 ${
-                              item.type === 'receipt' ? 'text-positive-deep' : 'text-ink'
+                            className={`ml-auto text-right text-sm font-bold sm:w-28 ${
+                              item.type === 'receipt' ? 'text-primary' : 'text-ink'
                             }`}
                           >
                             {item.type === 'receipt' ? '+' : '-'}
@@ -303,7 +302,7 @@ export function TransactionsPage() {
                     </ul>
                     <p
                       data-testid="day-balance"
-                      className="px-5 pb-2 text-right text-xs font-semibold text-body"
+                      className="px-5 pb-2 text-right text-xs font-medium text-muted"
                     >
                       Balance {formatAmount(group.balance)}
                     </p>
@@ -314,30 +313,30 @@ export function TransactionsPage() {
 
             <section
               aria-label="Monthly summary"
-              className="rounded-card bg-ink p-6 text-canvas-soft"
+              className="rounded-card bg-primary-deep p-6 text-white"
             >
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div className="flex justify-between gap-4">
                   <dt>Total received</dt>
-                  <dd className="font-semibold text-primary">{formatAmount(totals.received)}</dd>
+                  <dd className="text-lg font-bold">{formatAmount(totals.received)}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt>Total debits</dt>
-                  <dd className="font-semibold">{formatAmount(totals.debits)}</dd>
+                  <dd className="text-lg font-bold">{formatAmount(totals.debits)}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt>Monthly net total</dt>
-                  <dd className="font-semibold">{formatAmount(totals.net)}</dd>
+                  <dd className="text-lg font-bold">{formatAmount(totals.net)}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt>Final available balance</dt>
-                  <dd className="font-semibold text-primary">
+                  <dd className="text-lg font-bold text-lime-panel">
                     {formatAmount(totals.finalBalance)}
                   </dd>
                 </div>
               </dl>
               <Button
-                variant="primary"
+                variant="secondary"
                 className="mt-4"
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               >

@@ -148,12 +148,11 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
             </select>
           </Field>
           <div className="flex gap-2 self-end sm:col-span-2 lg:col-span-1">
-            <Button type="submit" className="min-h-10 px-4 py-2 text-sm" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               Add transaction
             </Button>
             <Button
-              variant="tertiary"
-              className="min-h-10 px-4 py-2 text-sm"
+              variant="outline"
               aria-expanded={expanded}
               onClick={() => {
                 setExpanded((v) => !v);
@@ -197,7 +196,7 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
           </div>
         ) : null}
         {serverError ? (
-          <p role="alert" className="text-sm text-negative-deep">
+          <p role="alert" className="text-sm text-error">
             {serverError}
           </p>
         ) : null}

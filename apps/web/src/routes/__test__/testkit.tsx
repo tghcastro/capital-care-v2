@@ -42,7 +42,8 @@ export function mockApi(partial: Partial<ApiState> = {}): ApiState {
   const state: ApiState = { occurrences: [], categories, accounts, requests: [], ...partial };
   const record = async (request: Request) => {
     let body: unknown = undefined;
-    if (request.method !== 'GET' && request.method !== 'DELETE') body = await request.clone().json();
+    if (request.method !== 'GET' && request.method !== 'DELETE')
+      body = await request.clone().json();
     state.requests.push({
       method: request.method,
       url: new URL(request.url).pathname + new URL(request.url).search,
@@ -62,7 +63,7 @@ export function mockApi(partial: Partial<ApiState> = {}): ApiState {
     http.get('/accounts', async ({ request }) => {
       await record(request);
       return HttpResponse.json({ accounts: state.accounts });
-    }),
+    })
   );
   return state;
 }
@@ -72,6 +73,6 @@ export function renderPage(): void {
   render(
     <QueryClientProvider client={queryClient}>
       <TransactionsPage />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }

@@ -23,7 +23,7 @@ describe('ledgerView', () => {
   it('orders groups ascending by date', () => {
     const { groups } = buildLedger(
       [occ({ date: '2026-11-20' }), occ({ date: '2026-11-03' }), occ({ date: '2026-11-11' })],
-      none,
+      none
     );
     expect(groups.map((g) => g.date)).toEqual(['2026-11-03', '2026-11-11', '2026-11-20']);
   });
@@ -35,7 +35,7 @@ describe('ledgerView', () => {
         occ({ date: '2026-11-01', type: 'receipt', amount: '500.01' }),
         occ({ date: '2026-11-02', type: 'debit', amount: '400.00' }),
       ],
-      none,
+      none
     );
     expect(groups.map((g) => g.balance)).toEqual(['399.66', '-0.34']);
   });
@@ -43,7 +43,7 @@ describe('ledgerView', () => {
   it('sums 0.1 and 0.2 exactly', () => {
     const { totals } = buildLedger(
       [occ({ type: 'receipt', amount: '0.1' }), occ({ type: 'receipt', amount: '0.2' })],
-      none,
+      none
     );
     expect(totals.received).toBe('0.3');
   });
@@ -54,9 +54,14 @@ describe('ledgerView', () => {
         occ({ date: '2026-11-01', type: 'receipt', amount: '500.01' }),
         occ({ date: '2026-11-02', type: 'debit', amount: '100.35' }),
       ],
-      none,
+      none
     );
-    expect(totals).toEqual({ received: '500.01', debits: '100.35', net: '399.66', finalBalance: '399.66' });
+    expect(totals).toEqual({
+      received: '500.01',
+      debits: '100.35',
+      net: '399.66',
+      finalBalance: '399.66',
+    });
   });
 
   it('empty month has 0.00 totals', () => {
@@ -70,7 +75,10 @@ describe('ledgerView', () => {
       occ({ date: '2026-11-01', type: 'receipt', amount: '1000', accountId: 'a1' }),
       occ({ date: '2026-11-02', type: 'debit', amount: '30', accountId: 'a2' }),
     ];
-    const { groups, totals } = buildLedger(rows, { categories: new Set(), accounts: new Set(['a2']) });
+    const { groups, totals } = buildLedger(rows, {
+      categories: new Set(),
+      accounts: new Set(['a2']),
+    });
     expect(groups).toHaveLength(1);
     expect(groups[0]?.balance).toBe('-30');
     expect(totals).toEqual({ received: '0', debits: '30', net: '-30', finalBalance: '-30' });
@@ -93,10 +101,14 @@ describe('ledgerView', () => {
   });
 
   it('account filter Unassigned matches null accountId', () => {
-    const rows = [occ({ description: 'a', accountId: 'a1' }), occ({ description: 'b', accountId: null })];
-    const items = buildLedger(rows, { categories: new Set(), accounts: new Set([NONE]) }).groups.flatMap(
-      (g) => g.items,
-    );
+    const rows = [
+      occ({ description: 'a', accountId: 'a1' }),
+      occ({ description: 'b', accountId: null }),
+    ];
+    const items = buildLedger(rows, {
+      categories: new Set(),
+      accounts: new Set([NONE]),
+    }).groups.flatMap((g) => g.items);
     expect(items.map((i) => i.description)).toEqual(['b']);
   });
 
@@ -106,9 +118,10 @@ describe('ledgerView', () => {
       occ({ description: 'cat only', categoryId: 'c1', accountId: 'a2' }),
       occ({ description: 'acc only', categoryId: 'c2', accountId: 'a1' }),
     ];
-    const items = buildLedger(rows, { categories: new Set(['c1']), accounts: new Set(['a1']) }).groups.flatMap(
-      (g) => g.items,
-    );
+    const items = buildLedger(rows, {
+      categories: new Set(['c1']),
+      accounts: new Set(['a1']),
+    }).groups.flatMap((g) => g.items);
     expect(items.map((i) => i.description)).toEqual(['both']);
   });
 
@@ -127,9 +140,10 @@ describe('ledgerView', () => {
       occ({ description: 'b', accountId: 'a2' }),
       occ({ description: 'c', accountId: 'a3' }),
     ];
-    const items = buildLedger(rows, { categories: new Set(), accounts: new Set(['a1', 'a3']) }).groups.flatMap(
-      (g) => g.items,
-    );
+    const items = buildLedger(rows, {
+      categories: new Set(),
+      accounts: new Set(['a1', 'a3']),
+    }).groups.flatMap((g) => g.items);
     expect(items.map((i) => i.description)).toEqual(['a', 'c']);
   });
 });

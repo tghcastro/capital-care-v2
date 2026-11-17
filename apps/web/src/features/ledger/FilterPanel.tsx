@@ -26,7 +26,8 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
 }
 
-type Dialogue = { kind: 'add' } | { kind: 'edit'; item: PanelItem } | { kind: 'delete'; item: PanelItem } | null;
+type Dialogue =
+  { kind: 'add' } | { kind: 'edit'; item: PanelItem } | { kind: 'delete'; item: PanelItem } | null;
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong';
@@ -35,15 +36,21 @@ function message(error: unknown): string {
 export function FilterPanel(props: Props) {
   const { title, noun, noneLabel, items, selected, onToggle } = props;
   const [dialogue, setDialogue] = useState<Dialogue>(null);
-  const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+  const sorted = [...items].sort((a, b) =>
+    a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
+  );
   const entries: PanelItem[] = [{ id: NONE, name: noneLabel }, ...sorted];
 
   return (
     <Card className="min-w-0">
       <section aria-label={title}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <Button variant="secondary" className="min-h-10 whitespace-nowrap px-4 py-2" onClick={() => setDialogue({ kind: 'add' })}>
+          <h2 className="text-lg font-bold">{title}</h2>
+          <Button
+            variant="outline"
+            className="whitespace-nowrap"
+            onClick={() => setDialogue({ kind: 'add' })}
+          >
             Add {noun}
           </Button>
         </div>
@@ -57,8 +64,8 @@ export function FilterPanel(props: Props) {
                   type="button"
                   aria-pressed={on}
                   onClick={() => onToggle(item.id)}
-                  className={`flex-1 rounded-input px-3 py-2 text-left text-sm font-semibold ${
-                    on ? 'bg-primary text-ink' : 'hover:bg-canvas-soft'
+                  className={`flex-1 rounded-control px-3 py-2 text-left text-sm font-medium ${
+                    on ? 'bg-mint-100 font-bold text-primary-deep' : 'hover:bg-mint-50'
                   }`}
                 >
                   {item.name}
@@ -69,7 +76,7 @@ export function FilterPanel(props: Props) {
                       type="button"
                       aria-label={`Edit ${item.name}`}
                       onClick={() => setDialogue({ kind: 'edit', item })}
-                      className="rounded-full p-2 text-body hover:bg-canvas-soft"
+                      className="rounded-full p-2 text-muted hover:bg-mint-50"
                     >
                       <span aria-hidden="true">✎</span>
                     </button>
@@ -77,7 +84,7 @@ export function FilterPanel(props: Props) {
                       type="button"
                       aria-label={`Delete ${item.name}`}
                       onClick={() => setDialogue({ kind: 'delete', item })}
-                      className="rounded-full p-2 text-body hover:bg-canvas-soft"
+                      className="rounded-full p-2 text-muted hover:bg-mint-50"
                     >
                       <span aria-hidden="true">🗑</span>
                     </button>
@@ -96,7 +103,11 @@ export function FilterPanel(props: Props) {
         />
       ) : null}
       {dialogue?.kind === 'delete' ? (
-        <DeleteDialog item={dialogue.item} onDelete={props.onDelete} onClose={() => setDialogue(null)} />
+        <DeleteDialog
+          item={dialogue.item}
+          onDelete={props.onDelete}
+          onClose={() => setDialogue(null)}
+        />
       ) : null}
     </Card>
   );
@@ -145,16 +156,20 @@ function SaveDialog({
         </Field>
         {withDescription ? (
           <Field label="Description">
-            <input className={inputClass} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <input
+              className={inputClass}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </Field>
         ) : null}
         {error ? (
-          <p role="alert" className="text-sm text-negative-deep">
+          <p role="alert" className="text-sm text-error">
             {error}
           </p>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button variant="tertiary" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit" disabled={busy}>
@@ -191,12 +206,12 @@ function DeleteDialog({
   return (
     <Dialog title={`Delete ${item.name}?`}>
       {error ? (
-        <p role="alert" className="mb-4 text-sm text-negative-deep">
+        <p role="alert" className="mb-4 text-sm text-error">
           {error}
         </p>
       ) : null}
       <div className="flex justify-end gap-2">
-        <Button variant="tertiary" onClick={onClose}>
+        <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
         <Button variant="danger" onClick={confirm} disabled={busy}>
