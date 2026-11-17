@@ -23,6 +23,18 @@ test ──► security ──► build ──► publish
 
 Concurrent runs are cancelled for pull requests only. Runs on `main` and on tags always finish.
 
+## Job Time Limits
+
+Every job declares `timeout-minutes`, so a hung job ends on its own instead of running for the 6-hour default and holding the concurrency group.
+
+| Job | Workflow | Limit (minutes) |
+|---|---|---|
+| test | ci-cd.yml | 15 |
+| security | ci-cd.yml | 10 |
+| build | ci-cd.yml | 20 |
+| publish | ci-cd.yml | 15 |
+| Analyze | codeql.yml | 30 |
+
 ## Image Registry and Tags
 
 Images are published to GitHub Container Registry at `ghcr.io/tghcastro/capital-care-v2`.
@@ -39,11 +51,20 @@ Images are published to GitHub Container Registry at `ghcr.io/tghcastro/capital-
 ## Security Policy
 
 - **Audit gate:** `critical` advisories in production dependencies block the pipeline. Lower severities are reported but do not block. `zod` has a `high` advisory whose fix is a major upgrade, so `high` is not a gate.
-- **Lint:** not part of the pipeline. `pnpm lint` currently fails with 24 parser errors, because the ESLint configuration points at a `tsconfig.json` that does not include the source files.
 - **Permissions:** the workflow defaults to `contents: read`. Each job grants only what it needs. Only the publish job can write packages and attestations.
+- **Checkout credentials:** every `actions/checkout` step sets `persist-credentials: false`, so the `GITHUB_TOKEN` is not left in `.git/config` for later steps. The publish job's `git fetch origin` works because the repository is public.
 - **Secrets:** none. The pipeline uses the built-in `GITHUB_TOKEN`.
 - **Action pinning:** every third-party action is pinned to a full commit SHA, with the release version in a trailing comment. Dependabot proposes updates to the pins.
 - **CodeQL:** [.github/workflows/codeql.yml](../../../.github/workflows/codeql.yml) analyzes the TypeScript source on pull requests, pushes to `main`, and weekly. Code scanning default setup is disabled, because it conflicts with the workflow file.
+
+## Dependency Overrides
+
+`pnpm-workspace.yaml` pins two dev-only transitive packages whose parents have no release that clears their advisories yet, so `pnpm audit` reports no vulnerabilities:
+
+- `@esbuild-kit/core-utils>esbuild` to `^0.25.12` (GHSA-67mh-4wv8-2f99, reached through `drizzle-kit`).
+- `minimatch@>=10.0.0 <11.0.1` to `^11.0.8` (GHSA-g3hv-75wg-m249, reached through ESLint). `11.0.9` is newer than the repository's `minimumReleaseAge`, so the range resolves to `11.0.8`.
+
+Remove an override when its parent package depends on a fixed version.
 
 ## Dependency Updates
 
