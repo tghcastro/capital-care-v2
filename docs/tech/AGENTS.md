@@ -19,6 +19,7 @@ Decisions live in [docs/tech/definitions/](./definitions/), one file per topic:
 - [definitions/testing.md](./definitions/testing.md) — test runner, test levels, test database strategy, web test tooling.
 - [definitions/git.md](./definitions/git.md) — branching and merge strategy, branch names, commit message pattern, pull request template.
 - [definitions/ci-cd.md](./definitions/ci-cd.md) — CI/CD pipeline stages and triggers, GHCR image tags and releases, audit gate, action pinning, permissions, Dependabot and CodeQL.
+- [definitions/design.md](./definitions/design.md) — Web pages design based on "[NerdWallet](https://www.nerdwallet.com/)". This design should be used for the Capital Care front-end.
 
 ## What to Read, Depending on the Task
 

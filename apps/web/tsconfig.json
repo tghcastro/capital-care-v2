@@ -15,7 +15,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": { "@capital-care/shared": ["../../packages/shared/src/index.ts"] }
   },
   "include": ["src", "vite.config.ts"]
 }

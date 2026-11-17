@@ -25,6 +25,9 @@ export default defineConfig({
         test: {
           name: 'web',
           root: './apps/web',
+          alias: {
+            '@capital-care/shared': fileURLToPath(new URL('./packages/shared/src/index.ts', import.meta.url)),
+          },
           environment: 'jsdom',
           globals: true,
           include: ['src/**/__test__/**/*.test.{ts,tsx}'],
