@@ -29,10 +29,21 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
 export const inputClass =
   'w-full rounded-input border border-ink bg-white px-4 py-3 text-base text-ink';
 
-export function Field({ label, children, error }: { label: string; children: ReactNode; error?: string | undefined }) {
+export const compactInput =
+  'w-full rounded-input border border-ink bg-white px-3 py-2 text-sm text-ink';
+
+export function Field({
+  label,
+  children,
+  error,
+}: {
+  label: string;
+  children: ReactNode;
+  error?: string | undefined;
+}) {
   return (
     <div>
-      <label className="block text-sm font-semibold">
+      <label className="block text-xs font-semibold">
         {label}
         <div className="mt-1 font-normal">{children}</div>
       </label>
@@ -48,7 +59,12 @@ export function Field({ label, children, error }: { label: string; children: Rea
 export function Dialog({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-4">
-      <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-card bg-white p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="w-full max-w-md rounded-card bg-white p-6"
+      >
         <h2 className="mb-4 text-2xl font-semibold">{title}</h2>
         {children}
       </div>

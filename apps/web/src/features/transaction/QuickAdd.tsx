@@ -1,7 +1,7 @@
 import { createTransactionSchema, type Account, type Category } from '@capital-care/shared';
 import { useState } from 'react';
 import { useForm, useWatch, type FieldErrors, type Resolver } from 'react-hook-form';
-import { Button, Card, Field, inputClass } from '../../components/ui';
+import { Button, Card, Field, compactInput as inputClass } from '../../components/ui';
 import { api } from '../../lib/api';
 
 interface FormValues {
@@ -26,7 +26,10 @@ function payloadOf(values: FormValues): Record<string, unknown> {
     type: values.type,
   };
   if (values.repeat === 'instalments') {
-    payload.instalment = { number: Number(values.instalmentNumber), total: Number(values.instalmentTotal) };
+    payload.instalment = {
+      number: Number(values.instalmentNumber),
+      total: Number(values.instalmentTotal),
+    };
   } else if (values.repeat !== 'none') {
     payload.recurrence = values.repeat;
   }
@@ -106,9 +109,9 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
   });
 
   return (
-    <Card>
-      <form aria-label="Quick add transaction" onSubmit={submit} noValidate className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <Card className="px-5 py-3">
+      <form aria-label="Quick add transaction" onSubmit={submit} noValidate className="space-y-3">
+        <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-[9.5rem_minmax(0,1fr)_7rem_9.5rem_9.5rem_6.5rem_auto]">
           <Field label="Date" error={errors.date?.message}>
             <input type="date" className={inputClass} {...register('date')} />
           </Field>
@@ -144,9 +147,25 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
               <option value="receipt">Credit</option>
             </select>
           </Field>
+          <div className="flex gap-2 self-end sm:col-span-2 lg:col-span-1">
+            <Button type="submit" className="min-h-10 px-4 py-2 text-sm" disabled={isSubmitting}>
+              Add transaction
+            </Button>
+            <Button
+              variant="tertiary"
+              className="min-h-10 px-4 py-2 text-sm"
+              aria-expanded={expanded}
+              onClick={() => {
+                setExpanded((v) => !v);
+                if (expanded) setValue('repeat', 'none');
+              }}
+            >
+              More details
+            </Button>
+          </div>
         </div>
         {expanded ? (
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <Field label="Repeat" error={errors.repeat?.message}>
               <select className={inputClass} {...register('repeat')}>
                 <option value="none">Does not repeat</option>
@@ -160,10 +179,18 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
             {repeat === 'instalments' ? (
               <>
                 <Field label="Instalment number" error={errors.instalmentNumber?.message}>
-                  <input inputMode="numeric" className={inputClass} {...register('instalmentNumber')} />
+                  <input
+                    inputMode="numeric"
+                    className={inputClass}
+                    {...register('instalmentNumber')}
+                  />
                 </Field>
                 <Field label="Instalment total" error={errors.instalmentTotal?.message}>
-                  <input inputMode="numeric" className={inputClass} {...register('instalmentTotal')} />
+                  <input
+                    inputMode="numeric"
+                    className={inputClass}
+                    {...register('instalmentTotal')}
+                  />
                 </Field>
               </>
             ) : null}
@@ -174,21 +201,6 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
             {serverError}
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-2">
-          <Button type="submit" disabled={isSubmitting}>
-            Add transaction
-          </Button>
-          <Button
-            variant="tertiary"
-            aria-expanded={expanded}
-            onClick={() => {
-              setExpanded((v) => !v);
-              if (expanded) setValue('repeat', 'none');
-            }}
-          >
-            More details
-          </Button>
-        </div>
       </form>
     </Card>
   );
