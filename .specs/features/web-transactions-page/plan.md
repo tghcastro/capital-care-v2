@@ -1,6 +1,6 @@
 # Web Transactions Page
 
-**Approved**: <pending - written only when the user approves>
+**Approved**: 2026-11-17 - user: "Ok. Approved"
 
 ## Problem
 
