@@ -82,7 +82,7 @@ Proof: `python3 -I .specs/features/security-headers-and-hardening/check_pipeline
 ## Handoff
 
 - **Settled mid-build:** user approved the plan ("approved"); user chose helmet defaults, job timeouts and the two audit findings in scope, raw-body out of scope
-- **Dispatched:** Verifier at `2f65e38` (diff range `origin/main..2f65e38`)
-- **Boundary:** C1-C13 closed at `2f65e38`
+- **Dispatched:** Verifier at `2f65e38` (diff range `origin/main..2f65e38`) - returned, 4 findings, all closed at `45b3db5`
+- **Boundary:** C1-C14 closed at `45b3db5`
 - **Abandoned:** `check_timeouts.py` - replaced by `check_pipeline.py` after the Verifier showed it missed jobs without a `name:` line;  `minimatch` override `^11.0.9` - published inside the repo's 3-day `minimumReleaseAge`, so install fails; used `^11.0.8`
 - **Walked:** C5 - built the web app, started the API with `WEB_DIST_PATH`, opened `http://127.0.0.1:3411/` in Chromium: title "Capital Care", `#root` has 1 child, body text starts "Capital Care | Signed in as alice | ... Month ...", console empty, no failed requests
