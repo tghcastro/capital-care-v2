@@ -53,6 +53,7 @@ Images are published to GitHub Container Registry at `ghcr.io/tghcastro/capital-
 - **Audit gate:** `critical` advisories in production dependencies block the pipeline. Lower severities are reported but do not block. `zod` has a `high` advisory whose fix is a major upgrade, so `high` is not a gate.
 - **Lint:** not part of the pipeline. `pnpm lint` currently fails with 24 parser errors, because the ESLint configuration points at a `tsconfig.json` that does not include the source files.
 - **Permissions:** the workflow defaults to `contents: read`. Each job grants only what it needs. Only the publish job can write packages and attestations.
+- **Checkout credentials:** every `actions/checkout` step sets `persist-credentials: false`, so the `GITHUB_TOKEN` is not left in `.git/config` for later steps. The publish job's `git fetch origin` works because the repository is public.
 - **Secrets:** none. The pipeline uses the built-in `GITHUB_TOKEN`.
 - **Action pinning:** every third-party action is pinned to a full commit SHA, with the release version in a trailing comment. Dependabot proposes updates to the pins.
 - **CodeQL:** [.github/workflows/codeql.yml](../../../.github/workflows/codeql.yml) analyzes the TypeScript source on pull requests, pushes to `main`, and weekly. Code scanning default setup is disabled, because it conflicts with the workflow file.

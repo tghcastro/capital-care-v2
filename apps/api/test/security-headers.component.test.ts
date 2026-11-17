@@ -39,8 +39,9 @@ beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-care-headers-'));
   process.env.DB_PATH = path.join(dir, 'test.db');
   migrateLedger(process.env.DB_PATH);
-  fs.mkdirSync(path.join(dir, 'dist'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'dist', 'assets'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'dist', 'index.html'), '<!doctype html><title>Capital Care</title>');
+  fs.writeFileSync(path.join(dir, 'dist', 'assets', 'index-abc123.js'), 'console.log("hi");');
 });
 
 afterEach(async () => {
@@ -82,7 +83,7 @@ describe('API app: security headers', () => {
     expectSecurityHeaders(response, "'none'");
   });
 
-  it('sends the helmet headers on the web app at / when WEB_DIST_PATH is set', async () => {
+  it('sends the helmet headers on the web app at / and on a static asset when WEB_DIST_PATH is set', async () => {
     process.env.WEB_DIST_PATH = path.join(dir, 'dist');
     const base = await start();
 
@@ -91,5 +92,10 @@ describe('API app: security headers', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/html');
     expectSecurityHeaders(response);
+
+    const asset = await fetch(`${base}/assets/index-abc123.js`);
+
+    expect(asset.status).toBe(200);
+    expectSecurityHeaders(asset);
   });
 });

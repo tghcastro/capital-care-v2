@@ -7,6 +7,7 @@
 Three things are true today that should not be:
 
 - The API and the web app it serves answer with no security headers. Aikido's SAST finding "Express is not emitting security headers" says so, and `docs/tech/definitions/security.md` already decides on `helmet()` with its defaults, but nothing implements it. Aikido's autofix PR (tghcastro/capital-care-v2#29) adds `app.use(helmet())` to `apps/api/src/app.ts` without adding `helmet` to any `package.json` or the lockfile, so its `test` job fails and it cannot merge.
+- Every `actions/checkout` step in both workflows persists the job's `GITHUB_TOKEN` in `.git/config` (Aikido's Git Credentials finding). The change is already made and pushed at the user's request in this session; this plan now records it.
 - No job in `ci-cd.yml` or `codeql.yml` has a `timeout-minutes`, so a hung job runs for the 6-hour default and holds the concurrency group on `main`.
 - `pnpm audit` reports 2 moderate advisories, both in dev-only dependencies: `esbuild@0.18.20` (via `drizzle-kit > @esbuild-kit/esm-loader > @esbuild-kit/core-utils`, fixed in >=0.25.0) and `minimatch@10.2.6` (via ESLint, fixed in >=11.0.1). Dependabot raises the same two on every push.
 
@@ -69,9 +70,9 @@ A request to any route of the API process gets the default helmet security heade
 4. WHILE the built image is running, WHEN a browser opens `/` THEN the page SHALL render the app with no Content-Security-Policy violation in the console
 5. WHEN `pnpm install --frozen-lockfile` runs THEN `helmet` SHALL resolve from `apps/api` without changing `pnpm-lock.yaml`
 
-### S2: Every pipeline job has a time limit (P2)
+### S2: Pipeline jobs are time-limited and hold no stored credential (P2)
 
-A hung job ends on its own.
+A hung job ends on its own, and no job keeps the token on disk.
 
 **Acceptance Criteria**
 
@@ -85,6 +86,8 @@ A hung job ends on its own.
 7. WHEN `pnpm audit` runs with no severity filter THEN the system SHALL report no vulnerabilities (today: 2 moderate)
 8. WHEN the overrides are applied THEN `pnpm build`, `pnpm type-check` and `pnpm test` SHALL still exit 0, and `pnpm lint` SHALL fail on no more files than it does before the change
 9. The system SHALL document in `docs/tech/definitions/ci-cd.md` the job time limits and the two overrides
+10. The system SHALL set `persist-credentials: false` on every `actions/checkout` step in `.github/workflows/ci-cd.yml` and `.github/workflows/codeql.yml`
+    - the `publish` job's `git fetch origin` still works because the repository is public
 
 ## Out of scope
 
@@ -105,6 +108,7 @@ A hung job ends on its own.
 | raw-body | out of scope until the finding is shown | the user chose this when asked | y |
 | timeout values | test 15, security 10, build 20, publish 15, analyze 30 minutes | each is well above a normal run (the test job ran about 20 seconds on PR #29) and far below 6 hours | n |
 | `upgrade-insecure-requests` | kept, as a helmet default | it is part of `helmet()`; it makes a browser request `http://` sub-resources over `https://`, so the app may not load when served over plain http from a host other than localhost. C4 checks `http://127.0.0.1` only | n |
+| repository visibility | public, so `publish`'s `git fetch origin +refs/heads/main` needs no stored credential | the user said "It's a public repository" | y |
 | lint baseline | measure it before any change and compare after | `ci-cd.md` says lint fails with parser errors and is not part of the pipeline | n |
 
 **Open questions:** none - all resolved or logged above.
