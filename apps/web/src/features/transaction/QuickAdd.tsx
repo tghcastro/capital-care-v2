@@ -148,18 +148,27 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
             </select>
           </Field>
           <div className="flex gap-2 self-end sm:col-span-2 lg:col-span-1">
-            <Button type="submit" disabled={isSubmitting}>
-              Add transaction
+            <Button
+              type="submit"
+              aria-label="Add transaction"
+              title="Add transaction"
+              className="h-10 w-10 !p-0 text-xl leading-none"
+              disabled={isSubmitting}
+            >
+              <span aria-hidden="true">+</span>
             </Button>
             <Button
               variant="outline"
+              aria-label="More details"
+              title="More details"
+              className="h-10 w-10 !p-0 text-xl leading-none"
               aria-expanded={expanded}
               onClick={() => {
                 setExpanded((v) => !v);
                 if (expanded) setValue('repeat', 'none');
               }}
             >
-              More details
+              <span aria-hidden="true">⋯</span>
             </Button>
           </div>
         </div>
