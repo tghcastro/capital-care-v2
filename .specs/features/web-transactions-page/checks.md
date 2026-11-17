@@ -169,7 +169,7 @@ Proof: walk - open the page at 375px and check the panels stack and the page doe
 ## Handoff
 
 - **Settled mid-build:** user answered four questions during planning (AD-002, AD-003, settle toggle); approved the plan 2026-11-17 "Ok. Approved"; later said "Everything is pre-approved. Tomorrow I'm going to review the PR before merging" (push and PR authorised)
-- **Dispatched:** none yet
+- **Dispatched:** Verifier (fresh sub-agent) at HEAD 647cde4; screens sub-agent not needed (no capture)
 - **Boundary:** C1-C32 built at `95845da` (+ mobile row layout fix)
 - **Abandoned:** none
 - **Walked:** ran the real API (fresh sqlite DB, alice with 2 categories, 1 account, a monthly receipt and a debit) and `vite` dev with its proxy; in Chromium at 1280px added "Coffee" through the quick-add form and settled a row, and read computed styles (primary button rgb(159,232,112), button and card radius 24px, Inter, canvas rgb(232,235,230)) = C31; at 375px the page width equals the viewport (no sideways scroll) and the panels stack above the list = C32. The first 375px pass truncated descriptions, fixed before commit. No capture exists, so no pictures are owed.
