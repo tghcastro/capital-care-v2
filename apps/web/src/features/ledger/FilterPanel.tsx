@@ -48,7 +48,7 @@ export function FilterPanel(props: Props) {
           <h2 className="text-lg font-bold">{title}</h2>
           <Button
             variant="outline"
-            className="whitespace-nowrap"
+            className="whitespace-nowrap !px-3 text-xs"
             onClick={() => setDialogue({ kind: 'add' })}
           >
             Add {noun}

@@ -164,25 +164,6 @@ export function TransactionsPage() {
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <aside className="space-y-4">
             <FilterPanel
-              title="Categories"
-              noun="category"
-              noneLabel="Uncategorized"
-              withDescription
-              items={categories.data ?? []}
-              selected={categoryFilter}
-              onToggle={(id) => setCategoryFilter(toggled(categoryFilter, id))}
-              onSave={saveCategory}
-              onDelete={async (id) => {
-                await api.deleteCategory(id);
-                setCategoryFilter((s) => {
-                  const next = new Set(s);
-                  next.delete(id);
-                  return next;
-                });
-                await queryClient.invalidateQueries({ queryKey: ['categories'] });
-              }}
-            />
-            <FilterPanel
               title="Accounts"
               noun="account"
               noneLabel="Unassigned"
@@ -199,6 +180,25 @@ export function TransactionsPage() {
                   return next;
                 });
                 await queryClient.invalidateQueries({ queryKey: ['accounts'] });
+              }}
+            />
+            <FilterPanel
+              title="Categories"
+              noun="category"
+              noneLabel="Uncategorized"
+              withDescription
+              items={categories.data ?? []}
+              selected={categoryFilter}
+              onToggle={(id) => setCategoryFilter(toggled(categoryFilter, id))}
+              onSave={saveCategory}
+              onDelete={async (id) => {
+                await api.deleteCategory(id);
+                setCategoryFilter((s) => {
+                  const next = new Set(s);
+                  next.delete(id);
+                  return next;
+                });
+                await queryClient.invalidateQueries({ queryKey: ['categories'] });
               }}
             />
           </aside>
