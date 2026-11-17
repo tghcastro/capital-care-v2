@@ -40,9 +40,9 @@ export function FilterPanel(props: Props) {
   return (
     <Card className="min-w-0">
       <section aria-label={title}>
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-xl font-semibold">{title}</h2>
-          <Button variant="secondary" className="min-h-10 px-4 py-2" onClick={() => setDialogue({ kind: 'add' })}>
+          <Button variant="secondary" className="min-h-10 whitespace-nowrap px-4 py-2" onClick={() => setDialogue({ kind: 'add' })}>
             Add {noun}
           </Button>
         </div>

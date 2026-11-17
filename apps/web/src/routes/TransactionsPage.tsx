@@ -214,8 +214,8 @@ export function TransactionsPage() {
                         key={`${item.transactionId}-${item.date}`}
                         className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-canvas-soft px-6 py-3 last:border-b-0"
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-semibold">{item.description}</p>
+                        <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
+                          <p className="break-words font-semibold">{item.description}</p>
                           <p className="text-sm text-body">
                             <span>{accountNames.get(item.accountId ?? NONE) ?? 'Unassigned'}</span>
                             {' · '}
@@ -245,7 +245,7 @@ export function TransactionsPage() {
                           <span aria-hidden="true">{item.status === 'settled' ? '✔' : '○'}</span>
                         </button>
                         <p
-                          className={`w-32 text-right font-semibold ${
+                          className={`ml-auto text-right font-semibold sm:w-32 ${
                             item.type === 'receipt' ? 'text-positive-deep' : 'text-ink'
                           }`}
                         >
