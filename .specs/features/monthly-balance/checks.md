@@ -165,5 +165,6 @@ Proof: run web | ✓ TransactionsPage monthly balance > MB26 shows the API detai
 
 - **Settled mid-build:** none
 - **Dispatched:** none
-- **Boundary:** none closed
+- **Boundary:** C1-C26 built at `33270e2` (API `65f753d`, web `33270e2`); transactions C38 test changed with door 2 (`date` no longer ignored)
 - **Abandoned:** none
+- **Walked:** built app (`pnpm build`, API with `WEB_DIST_PATH=apps/web/dist`) on a fresh database seeded with the PRD background through the API; in Chromium at 1280x1000 chose each month in the Month/Year selects: October 2026 0.00/0.00; November 2,321.00/2,321.00 with day balances 3,000.00, 2,771.00, 2,321.00; December final 4,641.00; January day balances 8,641.00 … 7,531.00, final 7,531.00; February no rows, final 7,531.00; March 10,531.00. Clicked Accounts > Checking Account in January: 8,980.00, 8,480.00, 8,280.00, net 3,300.00, final 8,280.00. Clicked it again, then Categories > Shopping: Winter jacket and Running shoes, balances -180.00 and -330.00, summary totals hidden (only Back to top shown). Clicked Shopping again: the four totals came back with final 7,531.00. The owner reaches every state from the Month/Year selects and the panel items
