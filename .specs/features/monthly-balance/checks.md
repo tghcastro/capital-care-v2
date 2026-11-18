@@ -5,7 +5,7 @@ Run node: `npx vitest run --project node --reporter=verbose`
 Run web: `npx vitest run --project web --reporter=verbose`
 Plan: `.specs/features/monthly-balance/plan.md`
 
-26 checks in 5 slices · 2 one-way doors · 0 open
+27 checks in 5 slices · 2 one-way doors · 0 open
 
 The acceptance tests follow the PRD's Gherkin scenarios one month at a time: each Examples row and each scenario is its own test in `apps/api/test/monthly-balance.component.test.ts`, which seeds the PRD background through the real API on a disposable database. Expected values are written as the PRD writes them (`2,321.00`) and compared with the API's canonical decimal strings. Test titles carry `MB<n>`, the number of the check they prove.
 
@@ -115,6 +115,10 @@ Proof: run node | ✓ TransactionService move > MB22 a date equal to the current
 **C23** - A series shift is one database transaction: if creating the new series fails, the old series is not stopped (door 2)
 Proof: run node | ✓ TransactionRepository (real SQLite) > MB23 a failed series shift leaves the old series unchanged
 
+**C27** - Moving an occurrence of a stopped series keeps the number of occurrences the series had left from it: monthly 100.00 from 2027-01-10 stopped from 2027-06-10, move 2027-03-10 → 2027-03-20 gives Mar 20, Apr 20, May 20 and nothing from June; moving its last occurrence 2027-05-10 → 2027-06-15 keeps that one occurrence (AC 12; found by the Verifier)
+Proof: run node | ✓ TransactionService move > MB27 moving inside a stopped series keeps the number of occurrences it had left
+Proof: run node | ✓ TransactionService move > MB27 moving the last occurrence of a stopped series past its old stop keeps it
+
 ### Surface
 
 **C24** - `GET /transactions/balance` answers 400 for a bad month and 401 without a user id; `GET /transactions` with filters answers 200, 400 for a bad month and 401 without a user id (Surface)
@@ -143,7 +147,7 @@ Proof: run web | ✓ TransactionsPage monthly balance > MB26 shows the API detai
 | filter params sent by the page (6) | nothing selected C9 · one category C9 · one account C9 · several ids C9 · `category=none` C9 · `account=none` C9 | - |
 | filter matching in the API (5) | OR within a param C13 · AND between params C13 · `none` category C13 · `none` account C8 C13 · another user's id C13 | - |
 | summary totals hidden by a category filter (4) | Total received C12 · Total debits C12 · Monthly net total C12 · Final available balance C12 | - |
-| date move outcomes, door 2 (6) | one-off C16 · monthly shift C18 · instalment shift C19 · first occurrence C20 · settled → 409 C21 · invalid → 400 C22 | - |
+| date move outcomes, door 2 (7) | one-off C16 · monthly shift C18 · instalment shift C19 · first occurrence C20 · stopped series C27 · settled → 409 C21 · invalid → 400 C22 | - |
 | `GET /transactions/balance` statuses (3) | 200 C1 · 400 C24 · 401 C24 | - |
 | `GET /transactions` statuses (3) | 200 C24 · 400 C24 · 401 C24 | - |
 | `PATCH /transactions/:id/occurrences/:date` statuses (5) | 200 C16 · 400 C22 · 404 C25 · 409 C21 · 401 C25 | - |

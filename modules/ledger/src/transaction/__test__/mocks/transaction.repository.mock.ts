@@ -22,7 +22,7 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
       startDate: input.startDate,
       recurrence: input.recurrence,
       instalment: input.instalment,
-      stopDate: null,
+      stopDate: input.stopDate ?? null,
       createdAt: now,
       updatedAt: now,
     };

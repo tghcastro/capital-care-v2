@@ -25,6 +25,8 @@ export interface NewTransaction {
   recurrence: Recurrence | null;
   instalment: InstalmentPlan | null;
   values: TransactionValues;
+  /** Exclusive end of the schedule; omitted for an open schedule. */
+  stopDate?: string | null;
 }
 
 export interface ITransactionRepository {
@@ -79,7 +81,7 @@ export class TransactionRepository implements ITransactionRepository {
         frequency: input.recurrence,
         instalmentStartNumber: input.instalment?.startNumber ?? null,
         instalmentTotal: input.instalment?.total ?? null,
-        stopDate: null,
+        stopDate: input.stopDate ?? null,
         createdAt: now,
         updatedAt: now,
       })

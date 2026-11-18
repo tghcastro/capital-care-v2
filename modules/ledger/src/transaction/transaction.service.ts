@@ -62,6 +62,16 @@ function previousMonth(month: string): string {
   return `${String(Math.floor(index / 12)).padStart(4, '0')}-${String((index % 12) + 1).padStart(2, '0')}`;
 }
 
+/** `YYYY-MM` one month later. */
+function nextMonth(month: string): string {
+  const [y, m] = month.split('-').map(Number) as [number, number];
+  const index = y * 12 + (m - 1) + 1;
+  return `${String(Math.floor(index / 12)).padStart(4, '0')}-${String((index % 12) + 1).padStart(2, '0')}`;
+}
+
+/** How far ahead a shifted schedule is searched for its end: 100 years. */
+const SHIFT_SEARCH_MONTHS = 1200;
+
 /** Every `YYYY-MM` from `from` to `to`, both included. */
 function monthsBetween(from: string, to: string): string[] {
   const months: string[] = [];
@@ -243,14 +253,21 @@ export class TransactionService {
 
     const base = this.valuesOn(bundle, date);
     const number = instalmentNumber(this.spec(bundle), date);
+    const startDate = patch.date ?? date;
+    const instalment =
+      definition.instalment && number !== null
+        ? { startNumber: number, total: definition.instalment.total }
+        : null;
     const next = this.repository.shiftSeries(definition.id, date, {
       userId: definition.userId,
-      startDate: patch.date ?? date,
+      startDate,
       recurrence: definition.recurrence,
-      instalment:
-        definition.instalment && number !== null
-          ? { startNumber: number, total: definition.instalment.total }
-          : null,
+      instalment,
+      stopDate: this.shiftedStop(bundle, date, {
+        startDate,
+        recurrence: definition.recurrence,
+        instalment,
+      }),
       values: {
         description: patch.description ?? base.description,
         categoryId: patch.categoryId ?? base.categoryId,
@@ -260,6 +277,31 @@ export class TransactionService {
       },
     });
     return this.occurrenceOn(next, next.definition.startDate);
+  }
+
+  /**
+   * The end of a shifted series: a stopped series keeps the number of occurrences it had left from
+   * `date`, so the new one stops at its next occurrence after that many; an open one stays open.
+   */
+  private shiftedStop(bundle: TransactionBundle, date: string, next: ScheduleSpec): string | null {
+    const { stopDate } = bundle.definition;
+    if (stopDate === null) return null;
+
+    let left = 0;
+    for (const month of monthsBetween(date.slice(0, 7), stopDate.slice(0, 7))) {
+      left += this.datesInMonth(bundle, month).filter((d) => d >= date).length;
+    }
+
+    let month = next.startDate.slice(0, 7);
+    let seen = 0;
+    for (let i = 0; i < SHIFT_SEARCH_MONTHS; i += 1, month = nextMonth(month)) {
+      for (const d of occurrencesInMonth(next, month)) {
+        if (d < next.startDate) continue;
+        if (seen === left) return d;
+        seen += 1;
+      }
+    }
+    return null;
   }
 
   private isSeries(bundle: TransactionBundle): boolean {

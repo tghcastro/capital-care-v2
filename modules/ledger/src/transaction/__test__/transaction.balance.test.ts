@@ -294,4 +294,37 @@ describe('TransactionService move', () => {
     });
     expect(occurrences(service, '2027-03').map((o) => [o.date, o.transactionId])).toEqual([['2027-03-12', series.id]]);
   });
+
+  it('MB27 moving inside a stopped series keeps the number of occurrences it had left', () => {
+    const { service } = setup();
+    const { id } = create(service, { date: '2027-01-10', amount: '100', recurrence: 'monthly' });
+    service.stopFrom(ALICE, id, '2027-06-10');
+
+    const moved = service.editOccurrence(ALICE, id, '2027-03-10', { date: '2027-03-20' });
+
+    const months = ['2027-01', '2027-02', '2027-03', '2027-04', '2027-05', '2027-06', '2027-07', '2028-01'];
+    expect(months.flatMap((month) => occurrences(service, month).map((o) => o.date))).toEqual([
+      '2027-01-10',
+      '2027-02-10',
+      '2027-03-20',
+      '2027-04-20',
+      '2027-05-20',
+    ]);
+    expect(moved.date).toBe('2027-03-20');
+    expect(finalBalance(service, '2028-01')).toBe('-500');
+  });
+
+  it('MB27 moving the last occurrence of a stopped series past its old stop keeps it', () => {
+    const { service } = setup();
+    const { id } = create(service, { date: '2027-01-10', amount: '100', recurrence: 'monthly' });
+    service.stopFrom(ALICE, id, '2027-06-10');
+
+    service.editOccurrence(ALICE, id, '2027-05-10', { date: '2027-06-15' });
+
+    const months = ['2027-04', '2027-05', '2027-06', '2027-07', '2027-08'];
+    expect(months.flatMap((month) => occurrences(service, month).map((o) => o.date))).toEqual([
+      '2027-04-10',
+      '2027-06-15',
+    ]);
+  });
 });
