@@ -32,6 +32,7 @@
 ## Documentation
 
 - **OpenAPI**, generated from the same Zod schemas already used for request/response validation (e.g. via `zod-to-openapi`) — one source of truth instead of hand-maintained docs drifting from the real validation.
+- **Bruno collection** ([tools/bruno/capital-care](../../../tools/bruno/capital-care), see [tools/AGENTS.md](../../../tools/AGENTS.md)): every change that adds a route or changes an API contract (path, query params, request body, response shape, status codes) updates the collection in the same change. Add or edit the requests in the matching folder, covering the success path and the new or changed error statuses, and keep each request self-cleaning with names unique per run, because PRD data persists. Assert only on data the run creates itself, for example by filtering on an account it created, so existing DEV or PRD data cannot change the expected values.
 
 ## Request Handling
 
