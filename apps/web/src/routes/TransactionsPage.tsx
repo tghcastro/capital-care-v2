@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, compactInput } from '../components/ui';
 import { FilterPanel, type PanelValues } from '../features/ledger/FilterPanel';
-import { buildLedger, NONE } from '../features/transaction/ledgerView';
+import { groupByDay, NONE } from '../features/transaction/ledgerView';
 import { QuickAdd } from '../features/transaction/QuickAdd';
 import { api, CURRENT_USER } from '../lib/api';
 import { groupTitle, monthOf, shiftMonth } from '../lib/dates';
@@ -30,6 +30,11 @@ function toggled(set: ReadonlySet<string>, id: string): Set<string> {
   return next;
 }
 
+/** The selected panel ids as the API takes them: the pseudo-entry is `none`. */
+function apiIds(selected: ReadonlySet<string>): string[] {
+  return [...selected].map((id) => (id === NONE ? 'none' : id)).sort();
+}
+
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong';
 }
@@ -41,9 +46,17 @@ export function TransactionsPage() {
   const [accountFilter, setAccountFilter] = useState<ReadonlySet<string>>(new Set());
   const [settleError, setSettleError] = useState<string | null>(null);
 
+  const filters = useMemo(
+    () => ({ categoryIds: apiIds(categoryFilter), accountIds: apiIds(accountFilter) }),
+    [categoryFilter, accountFilter]
+  );
   const transactions = useQuery({
-    queryKey: ['transactions', month],
-    queryFn: () => api.listMonth(month),
+    queryKey: ['transactions', month, filters],
+    queryFn: () => api.listMonth(month, filters),
+  });
+  const balance = useQuery({
+    queryKey: ['transactions', 'balance', month, filters],
+    queryFn: () => api.getBalance(month, filters),
   });
   const categories = useQuery({ queryKey: ['categories'], queryFn: () => api.listCategories() });
   const accounts = useQuery({ queryKey: ['accounts'], queryFn: () => api.listAccounts() });
@@ -66,11 +79,11 @@ export function TransactionsPage() {
     () => new Map((accounts.data ?? []).map((a) => [a.id, a.name])),
     [accounts.data]
   );
-  const { groups, totals } = useMemo(
-    () =>
-      buildLedger(transactions.data ?? [], { categories: categoryFilter, accounts: accountFilter }),
-    [transactions.data, categoryFilter, accountFilter]
+  const groups = useMemo(
+    () => groupByDay(transactions.data ?? [], balance.data?.days ?? []),
+    [transactions.data, balance.data]
   );
+  const totals = balance.data?.totals ?? null;
 
   const [yearText, monthText] = month.split('-') as [string, string];
   const year = Number(yearText);
@@ -82,7 +95,7 @@ export function TransactionsPage() {
       : `${month}-01`;
   })();
 
-  const loadError = transactions.error ?? categories.error ?? accounts.error;
+  const loadError = transactions.error ?? balance.error ?? categories.error ?? accounts.error;
 
   const saveCategory = async (id: string | null, v: PanelValues) => {
     if (id) await api.updateCategory(id, v);
@@ -220,6 +233,7 @@ export function TransactionsPage() {
                 <Button
                   onClick={() => {
                     void transactions.refetch();
+                    void balance.refetch();
                     void categories.refetch();
                     void accounts.refetch();
                   }}
@@ -300,12 +314,14 @@ export function TransactionsPage() {
                         </li>
                       ))}
                     </ul>
-                    <p
-                      data-testid="day-balance"
-                      className="px-5 pb-2 text-right text-xs font-medium text-muted"
-                    >
-                      Balance {formatAmount(group.balance)}
-                    </p>
+                    {group.balance !== null && (
+                      <p
+                        data-testid="day-balance"
+                        className="px-5 pb-2 text-right text-xs font-medium text-muted"
+                      >
+                        Balance {formatAmount(group.balance)}
+                      </p>
+                    )}
                   </div>
                 ))}
               </Card>
@@ -315,26 +331,28 @@ export function TransactionsPage() {
               aria-label="Monthly summary"
               className="rounded-card bg-primary-deep p-6 text-white"
             >
-              <dl className="grid gap-3 sm:grid-cols-2">
-                <div className="flex justify-between gap-4">
-                  <dt>Total received</dt>
-                  <dd className="text-lg font-bold">{formatAmount(totals.received)}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt>Total debits</dt>
-                  <dd className="text-lg font-bold">{formatAmount(totals.debits)}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt>Monthly net total</dt>
-                  <dd className="text-lg font-bold">{formatAmount(totals.net)}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt>Final available balance</dt>
-                  <dd className="text-lg font-bold text-lime-panel">
-                    {formatAmount(totals.finalBalance)}
-                  </dd>
-                </div>
-              </dl>
+              {totals && (
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <div className="flex justify-between gap-4">
+                    <dt>Total received</dt>
+                    <dd className="text-lg font-bold">{formatAmount(totals.received)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Total debits</dt>
+                    <dd className="text-lg font-bold">{formatAmount(totals.debits)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Monthly net total</dt>
+                    <dd className="text-lg font-bold">{formatAmount(totals.net)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Final available balance</dt>
+                    <dd className="text-lg font-bold text-lime-panel">
+                      {formatAmount(totals.finalBalance)}
+                    </dd>
+                  </div>
+                </dl>
+              )}
               <Button
                 variant="secondary"
                 className="mt-4"

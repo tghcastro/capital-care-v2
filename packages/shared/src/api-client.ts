@@ -16,6 +16,30 @@ export interface Occurrence {
   status: 'forecast' | 'settled';
 }
 
+/** The balance of one month, as GET /transactions/balance computes it. */
+export interface MonthBalance {
+  /** One entry per date with occurrences, ascending: the balance after that day. */
+  days: { date: string; balance: string }[];
+  /** Null while a category filter is active. */
+  totals: { received: string; debits: string; net: string; finalBalance: string } | null;
+}
+
+/** Selected ids; `none` selects transactions with no category / no account. Empty = no filter. */
+export interface MonthFilters {
+  categoryIds: readonly string[];
+  accountIds: readonly string[];
+}
+
+const NO_FILTER: MonthFilters = { categoryIds: [], accountIds: [] };
+
+/** `month=YYYY-MM`, then one `category` / `account` param per selected id. */
+function monthQuery(month: string, filters: MonthFilters): string {
+  const params = new URLSearchParams({ month });
+  for (const id of filters.categoryIds) params.append('category', id);
+  for (const id of filters.accountIds) params.append('account', id);
+  return params.toString();
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -74,13 +98,15 @@ export function createApiClient({ baseUrl, userId }: ApiClientOptions) {
 
   return {
     userId,
-    async listMonth(month: string): Promise<Occurrence[]> {
+    async listMonth(month: string, filters: MonthFilters = NO_FILTER): Promise<Occurrence[]> {
       const body = await request<{ occurrences: Occurrence[] }>(
         'GET',
-        `/transactions?month=${month}`,
+        `/transactions?${monthQuery(month, filters)}`,
       );
       return body.occurrences;
     },
+    getBalance: (month: string, filters: MonthFilters = NO_FILTER) =>
+      request<MonthBalance>('GET', `/transactions/balance?${monthQuery(month, filters)}`),
     createTransaction: (input: CreateTransactionInput) => request<unknown>('POST', '/transactions', input),
     settle: (id: string, date: string, amount?: string) =>
       request<unknown>('PUT', `${occurrence(id, date)}/settlement`, amount === undefined ? {} : { amount }),

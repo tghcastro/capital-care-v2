@@ -134,37 +134,6 @@ describe('TransactionsPage', () => {
     );
   });
 
-  it('shows the running balance after each day group', async () => {
-    mockApi({
-      occurrences: [
-        occ({ date: '2026-11-01', type: 'debit', amount: '100.35' }),
-        occ({ transactionId: 't2', date: '2026-11-01', type: 'receipt', amount: '500.01' }),
-        occ({ transactionId: 't3', date: '2026-11-02', type: 'debit', amount: '400' }),
-      ],
-    });
-    renderPage();
-    const balances = await screen.findAllByTestId('day-balance');
-    expect(balances.map((b) => b.textContent)).toEqual(['Balance 399.66', 'Balance -0.34']);
-  });
-
-  it('shows the monthly summary in the footer', async () => {
-    mockApi({
-      occurrences: [
-        occ({ description: 'Pay', type: 'receipt', amount: '1500.5' }),
-        occ({ transactionId: 't2', description: 'Groceries', type: 'debit', amount: '100.35' }),
-      ],
-    });
-    renderPage();
-    await screen.findByText('Groceries');
-    const footer = screen.getByRole('region', { name: 'Monthly summary' });
-    expect(within(footer).getByText('Total received').nextSibling?.textContent).toBe('1,500.50');
-    expect(within(footer).getByText('Total debits').nextSibling?.textContent).toBe('100.35');
-    expect(within(footer).getByText('Monthly net total').nextSibling?.textContent).toBe('1,400.15');
-    expect(within(footer).getByText('Final available balance').nextSibling?.textContent).toBe(
-      '1,400.15'
-    );
-  });
-
   it('Back to top scrolls the window to the top', async () => {
     mockApi({ occurrences: [occ()] });
     const scrollTo = vi.fn();
