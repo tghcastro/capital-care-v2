@@ -1,0 +1,23 @@
+meta {
+  name: 22 Move a settled series occurrence
+  type: http
+  seq: 22
+}
+
+patch {
+  url: {{baseUrl}}/transactions/{{mbGymId}}/occurrences/2027-01-10
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2027-01-15"
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.type: eq ConflictError
+  res.body.detail: contains settled
+}

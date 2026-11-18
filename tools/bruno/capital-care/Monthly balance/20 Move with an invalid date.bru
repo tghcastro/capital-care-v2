@@ -1,0 +1,23 @@
+meta {
+  name: 20 Move with an invalid date
+  type: http
+  seq: 20
+}
+
+patch {
+  url: {{baseUrl}}/transactions/{{mbSalaryId}}/occurrences/2026-11-01
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-02-30"
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: eq date must be a real date written YYYY-MM-DD
+}

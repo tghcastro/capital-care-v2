@@ -1,0 +1,22 @@
+meta {
+  name: 11 Balance November with a category filter
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/transactions/balance?month=2026-11&category={{mbShoppingCategoryId}}&account={{mbAccountId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("a category filter starts at 0 and returns no totals", function() {
+    expect(res.body.days).to.eql([{ date: "2026-11-10", balance: "-229" }]);
+    expect(res.body.totals).to.eql(null);
+  });
+}

@@ -1,0 +1,30 @@
+meta {
+  name: 05 Create November chair
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-11-10",
+    "description": "Office chair {{$timestamp}}",
+    "categoryId": "{{mbShoppingCategoryId}}",
+    "accountId": "{{mbAccountId}}",
+    "amount": "229.00",
+    "type": "debit"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("mbChairId", res.body.id);
+}

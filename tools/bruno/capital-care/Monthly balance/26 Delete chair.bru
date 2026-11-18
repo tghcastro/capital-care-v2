@@ -1,0 +1,15 @@
+meta {
+  name: 26 Delete chair
+  type: http
+  seq: 26
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{mbChairId}}/occurrences/2026-11-10
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

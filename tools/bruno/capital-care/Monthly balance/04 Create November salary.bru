@@ -1,0 +1,30 @@
+meta {
+  name: 04 Create November salary
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-11-01",
+    "description": "Salary {{$timestamp}}",
+    "categoryId": "{{mbIncomeCategoryId}}",
+    "accountId": "{{mbAccountId}}",
+    "amount": "3000.00",
+    "type": "receipt"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("mbSalaryId", res.body.id);
+}

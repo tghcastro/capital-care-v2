@@ -1,0 +1,15 @@
+meta {
+  name: 24 Delete gym series
+  type: http
+  seq: 24
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{mbGymId}}/occurrences/2027-01-10
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

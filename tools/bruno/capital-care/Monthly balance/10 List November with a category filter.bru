@@ -1,0 +1,22 @@
+meta {
+  name: 10 List November with a category filter
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/transactions?month=2026-11&category={{mbShoppingCategoryId}}&account={{mbAccountId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("only the Shopping row of the account is listed", function() {
+    expect(res.body.occurrences.length).to.equal(1);
+    expect(res.body.occurrences[0].transactionId).to.equal(bru.getVar("mbChairId"));
+  });
+}

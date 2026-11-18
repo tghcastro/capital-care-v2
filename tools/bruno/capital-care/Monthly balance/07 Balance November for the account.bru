@@ -1,0 +1,22 @@
+meta {
+  name: 07 Balance November for the account
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/transactions/balance?month=2026-11&account={{mbAccountId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("the first month opens at 0 and ends at 2771", function() {
+    expect(res.body.days).to.eql([{ date: "2026-11-01", balance: "3000" }, { date: "2026-11-10", balance: "2771" }]);
+    expect(res.body.totals).to.eql({ received: "3000", debits: "229", net: "2771", finalBalance: "2771" });
+  });
+}
