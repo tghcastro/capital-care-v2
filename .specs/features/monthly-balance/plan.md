@@ -1,5 +1,7 @@
 # Monthly Balance
 
+**Approved**: 2026-11-18 - user: "Approved, go ahead with the checks and tests"
+
 ## Problem
 
 The transactions page shows one month at a time, and every balance on it starts again at 0.00 on the first day of the month (AD-003). The "Final available balance" is therefore only that month's net total, not the money the owner has. To know how much money they actually have, overall or in one account, the owner adds up previous months by hand, which stops the page from replacing the old tool's monthly view (the cutover goal of the Transactions PRD). The web page also computes balances, totals and filters itself, so the rules that decide what the owner reads live in the browser. A past transaction cannot be moved to another day through the API. Evidence: none measured; the owner's own judgment from using the first version (`.prd/monthly-balance.md`, confirmed 2026-11-17).
