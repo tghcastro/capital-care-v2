@@ -28,7 +28,7 @@ In: the per-day running balance, the Monthly net total and the Final available b
 
 Out:
 - Transfers between accounts (debit A, credit B) - a separate feature.
-- Account opening balances - every account starts at 0.00 before its first transaction (see Open questions).
+- Account opening balances - every account starts at 0.00 before its first transaction. To start from a real amount, the owner records a Receipt or a Debit for it.
 - Balances for a range of months, reports and charts - not needed for parity with the old tool.
 
 Unchanged:
@@ -48,10 +48,10 @@ Terms: the **Monthly net total** is the net of the selected month only (receipts
 | Month after the last transaction | Same as an empty month: the closing balance of the last month with transactions. | Final available balance equal to the last active month's |
 | Several transactions on one day | One running balance after all of that day's transactions. | One "Balance" per day group |
 | Account filter (one or several accounts) | Every balance is calculated from the selected accounts only, still carrying over from earlier months. | Day balances, Monthly net total and Final available balance for those accounts only |
-| Category filter (one or several categories) | Only the selected month counts: the running balance starts at 0.00 on the first day of the month. Monthly net total and Final available balance are hidden. | Day balances for that category within the month; no Monthly net total, no Final available balance |
+| Category filter (one or several categories) | Only the selected month counts: the running balance starts at 0.00 on the first day of the month. The summary totals are hidden: Total received, Total debits, Monthly net total and Final available balance. | Day balances for that category within the month; no summary totals |
 | Category and account filters together | The category rule applies (start at 0.00, summaries hidden), counting only transactions in both the selected categories and the selected accounts. | Day balances for that category in that account within the month |
 | A past transaction is edited, deleted, or moved to another month or account | Every balance from that transaction's month on reflects the change. Nothing has to be recalculated by hand. | Updated balances in that month and all later months, and in the affected account's filtered view |
-| Forecast and settled entries | Both count towards every balance, as they do today. | Balances that include forecasts |
+| Forecast and settled entries | A forecast is a normal transaction that has not been settled yet. Both count towards every balance, as they do today. | Balances that include forecasts |
 
 ## Acceptance scenarios
 
@@ -183,8 +183,12 @@ Feature: Monthly balance carries over between months
         | Date       | Balance |
         | 2027-01-05 | -180.00 |
         | 2027-01-20 | -330.00 |
-      And the Monthly net total is not displayed
-      And the Final available balance is not displayed
+      And these totals are not displayed:
+        | Total                   |
+        | Total received          |
+        | Total debits            |
+        | Monthly net total       |
+        | Final available balance |
 
     Scenario: Category and account filters together follow the category rule
       Given I filter by category "Groceries"
@@ -196,8 +200,12 @@ Feature: Monthly balance carries over between months
       And the day balances are:
         | Date       | Balance |
         | 2027-01-12 | -200.00 |
-      And the Monthly net total is not displayed
-      And the Final available balance is not displayed
+      And these totals are not displayed:
+        | Total                   |
+        | Total received          |
+        | Total debits            |
+        | Monthly net total       |
+        | Final available balance |
 
   Rule: Changing a past transaction updates every later balance
 
@@ -224,9 +232,3 @@ Feature: Monthly balance carries over between months
       Then the Final available balance of "December 2026" is "4,870.00"
       And the Final available balance of "January 2027" is "8,170.00"
 ```
-
-## Open questions
-
-1. Account opening balances - default taken: every account starts at 0.00. Money held before the first month is recorded as a Receipt transaction in that month.
-2. Total received and Total debits under a category filter - default taken: still shown, covering that month's listed transactions only. Only the Monthly net total and the Final available balance are hidden.
-3. Forecasts in balances - default taken: forecast and settled entries both count, as today. A balance from settled entries only is not part of this round.
