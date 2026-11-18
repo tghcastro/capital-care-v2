@@ -55,7 +55,7 @@ flowchart TD
 | domain | With a category filter the summary totals were shown for the visible rows; now the API returns `totals: null` and the page hides them |
 | domain | Filtering, balances and totals move from `apps/web` `ledgerView.buildLedger` to `TransactionService` (AD-006); `buildLedger` keeps only grouping by day |
 | stored data | nothing to migrate; balances are derived on every read; a date move writes through existing tables |
-| readers | `GET /transactions?month=` gains optional filters (without them it answers as today); `PATCH .../occurrences/:date` gains optional `date`; `packages/shared` client gains `getBalance` and filter arguments on `listMonth`; web tests tied to AD-003 and to client-side filtering (web-transactions-page criteria 10-12, 23, 29, 30) change with their criteria |
+| readers | `GET /transactions?month=` gains optional filters (without them it answers as today); `PATCH .../occurrences/:date` gains optional `date`; `packages/shared` client gains `getBalance` and filter arguments on `listMonth`; web tests tied to AD-003 and to client-side filtering (web-transactions-page criteria 10-12, 23, 29, 30) change with their criteria; transactions check C38 ("`date` in the body is ignored") changes with door 2 |
 
 ```mermaid
 erDiagram

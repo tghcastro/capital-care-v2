@@ -223,13 +223,12 @@ describe('transaction routes (HTTP)', () => {
 
     expect((await call('PATCH', url, ALICE, {})).status).toBe(400);
     expect(
-      (await call('PATCH', url, ALICE, { date: '2030-01-01', recurrence: 'daily', instalment: { number: 1, total: 2 } }))
-        .status,
+      (await call('PATCH', url, ALICE, { recurrence: 'daily', instalment: { number: 1, total: 2 } })).status,
     ).toBe(400);
 
+    // `date` is no longer ignored: it moves the occurrence (monthly-balance C22).
     const edited = await call('PATCH', url, ALICE, {
       amount: '21',
-      date: '2030-01-01',
       recurrence: 'daily',
       instalment: { number: 1, total: 2 },
     });
@@ -454,5 +453,79 @@ describe('transaction routes (HTTP)', () => {
       ['2026-11-10', '229', 'forecast'],
       ['2026-11-15', '650', 'settled'],
     ]);
+  });
+
+  it('MB21 PATCH date on a settled series occurrence answers 409', async () => {
+    const id = await createFor(ALICE, monthly());
+    await call('PUT', `/transactions/${id}/occurrences/2026-12-05/settlement`, ALICE, {});
+
+    const response = await call('PATCH', `/transactions/${id}/occurrences/2026-12-05`, ALICE, { date: '2026-12-20' });
+
+    expect(response.status).toBe(409);
+    expect(response.body?.detail).toMatch(/settled/);
+    expect(await amountsIn('2026-12')).toEqual([['2026-12-05', '20', 'settled']]);
+    expect(await amountsIn('2027-01')).toEqual([['2027-01-05', '20', 'forecast']]);
+  });
+
+  it('MB22 PATCH with an invalid date answers 400 and changes nothing', async () => {
+    const id = await createFor(ALICE, monthly({ recurrence: undefined }));
+
+    for (const date of ['2026-02-30', '2026-12-1', '20/12/2026', '']) {
+      const response = await call('PATCH', `/transactions/${id}/occurrences/2026-11-05`, ALICE, { date });
+      expect(response.status, JSON.stringify(date)).toBe(400);
+      expect(response.body?.detail).toBe('date must be a real date written YYYY-MM-DD');
+    }
+    expect(await amountsIn('2026-11')).toEqual([['2026-11-05', '20', 'forecast']]);
+  });
+
+  it('MB24 GET balance answers 400 for a bad month and 401 without a user id', async () => {
+    await createFor(ALICE, monthly());
+
+    for (const month of ['2026-13', '2026-1', 'november', '']) {
+      expect((await call('GET', `/transactions/balance?month=${month}`, ALICE)).status, month).toBe(400);
+    }
+    expect((await call('GET', '/transactions/balance', ALICE)).status).toBe(400);
+    for (const userId of [null, '', '   ']) {
+      expect((await call('GET', '/transactions/balance?month=2026-11', userId)).status).toBe(401);
+    }
+    const ok = await call('GET', '/transactions/balance?month=2026-12', ALICE);
+    expect(ok.status).toBe(200);
+    expect(ok.body).toEqual({
+      days: [{ date: '2026-12-05', balance: '-40' }],
+      totals: { received: '0', debits: '20', net: '-20', finalBalance: '-40' },
+    });
+  });
+
+  it('MB24 GET transactions with category and account params answers 200 with the matching occurrences', async () => {
+    await createFor(ALICE, monthly({ recurrence: undefined, description: 'Housing here' }));
+    await createFor(ALICE, monthly({ recurrence: undefined, description: 'Shopping', categoryId: alice.categoryId2 }));
+    const names = async (query: string) => {
+      const response = await call('GET', `/transactions?month=2026-11${query}`, ALICE);
+      expect(response.status, query).toBe(200);
+      return (response.body?.occurrences as { description: string }[]).map((o) => o.description);
+    };
+
+    expect(await names('')).toEqual(['Housing here', 'Shopping']);
+    expect(await names(`&category=${alice.categoryId2}`)).toEqual(['Shopping']);
+    expect(await names(`&category=${alice.categoryId}&category=${alice.categoryId2}`)).toEqual(['Housing here', 'Shopping']);
+    expect(await names(`&category=${alice.categoryId2}&account=${alice.accountId}`)).toEqual(['Shopping']);
+    expect(await names(`&account=none`)).toEqual([]);
+    expect(await names(`&category=none`)).toEqual([]);
+    expect(await names(`&category=${bob.categoryId}`)).toEqual([]);
+
+    const balance = await call('GET', `/transactions/balance?month=2026-11&category=${alice.categoryId2}`, ALICE);
+    expect(balance.status).toBe(200);
+    expect(balance.body).toEqual({ days: [{ date: '2026-11-05', balance: '-20' }], totals: null });
+  });
+
+  it("MB25 PATCH date answers 404 for another user's transaction and 401 without a user id", async () => {
+    const bobsId = await createFor(BOB, monthly({ recurrence: undefined, categoryId: bob.categoryId, accountId: bob.accountId }));
+    const url = `/transactions/${bobsId}/occurrences/2026-11-05`;
+
+    expect((await call('PATCH', url, ALICE, { date: '2026-11-20' })).status).toBe(404);
+    for (const userId of [null, '', '   ']) {
+      expect((await call('PATCH', url, userId, { date: '2026-11-20' })).status).toBe(401);
+    }
+    expect(await amountsIn('2026-11', BOB)).toEqual([['2026-11-05', '20', 'forecast']]);
   });
 });

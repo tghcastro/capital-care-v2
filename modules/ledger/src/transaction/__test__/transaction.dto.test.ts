@@ -6,6 +6,7 @@ import {
   instalmentSchema,
   monthSchema,
   transactionTypeSchema,
+  updateTransactionSchema,
 } from '../transaction.dto.js';
 
 const valid = {
@@ -96,5 +97,20 @@ describe('transaction schemas', () => {
     expect(amountSchema.safeParse('1234567890123').success).toBe(false);
     expect(amountSchema.safeParse('00000000000000').success).toBe(false);
     expect(amountSchema.parse('123456789012')).toBe('123456789012');
+  });
+
+  it('MB22 the edit date accepts real YYYY-MM-DD dates only', () => {
+    for (const bad of ['2026-02-30', '2026-1-5', '05/11/2026', '', 20261105, null]) {
+      const parsed = updateTransactionSchema.safeParse({ date: bad });
+      expect(parsed.success, JSON.stringify(bad)).toBe(false);
+    }
+    expect(updateTransactionSchema.safeParse({ date: '2026-02-30' }).error?.issues[0]?.message).toBe(
+      'date must be a real date written YYYY-MM-DD',
+    );
+    expect(updateTransactionSchema.parse({ date: '2028-02-29' })).toEqual({ date: '2028-02-29' });
+    expect(updateTransactionSchema.parse({ date: '2027-01-02', amount: '450.00' })).toEqual({
+      date: '2027-01-02',
+      amount: '450',
+    });
   });
 });

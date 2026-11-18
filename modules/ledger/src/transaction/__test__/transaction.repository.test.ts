@@ -166,4 +166,30 @@ describe('TransactionRepository (real SQLite)', () => {
     expect(bundle?.settlements).toHaveLength(1);
     expect(bundle?.definition.stopDate).toBeNull();
   });
+
+  it('MB23 a failed series shift leaves the old series unchanged', () => {
+    const { definition } = newMonthly();
+    repository.replaceRevisionsFrom(definition.id, '2027-01-05', values({ amount: '25' }));
+    repository.insertSettlement({ transactionId: definition.id, occurrenceDate: '2026-11-05', ...values() });
+
+    // The new series' revision points at an unknown category: the insert fails inside the shift.
+    expect(() =>
+      repository.shiftSeries(definition.id, '2026-12-05', {
+        userId: 'alice',
+        startDate: '2026-12-20',
+        recurrence: 'monthly',
+        instalment: null,
+        values: values({ categoryId: 'missing' }),
+      }),
+    ).toThrow();
+
+    const bundle = repository.getBundle(definition.id);
+    expect(bundle?.definition.stopDate).toBeNull();
+    expect(bundle?.revisions.map((r) => [r.effectiveFrom, r.amount])).toEqual([
+      ['2026-11-05', '20'],
+      ['2027-01-05', '25'],
+    ]);
+    expect(bundle?.settlements).toHaveLength(1);
+    expect(count('transaction')).toBe(1);
+  });
 });

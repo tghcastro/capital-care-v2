@@ -144,7 +144,7 @@ Proof: run unit | ✓ C36 editing the first occurrence changes the whole series
 **C37** - PATCH of a one-off forecast changes the entry (AC S5.6)
 Proof: run unit | ✓ C37 editing a one-off changes the entry
 
-**C38** - A PATCH body with none of `description`, `categoryId`, `accountId`, `amount`, `type` returns `400` and changes nothing; `date`, `recurrence`, `instalment` in the body are ignored (AC S5.7)
+**C38** - A PATCH body with none of `description`, `categoryId`, `accountId`, `amount`, `type`, `date` returns `400` and changes nothing; `recurrence`, `instalment` in the body are ignored (AC S5.7); `date` moves the occurrence since the monthly-balance feature (its C16, C22)
 Proof: run unit | ✓ C38 an empty edit returns 400 and schedule fields are ignored
 
 **C39** - After an edit, instalment occurrences keep their numbers from the original start: `{ 97, 504 }` from `2026-11-15`, PATCH `2026-12-15`, `2027-01` still shows 99 (AC S5.8)

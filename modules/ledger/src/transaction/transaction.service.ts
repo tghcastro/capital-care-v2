@@ -1,3 +1,4 @@
+import { Decimal } from 'decimal.js';
 import type { AccountService } from '../account/account.service.js';
 import type { CategoryService } from '../category/category.service.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
@@ -19,6 +20,54 @@ import type {
   TransactionBundle,
   TransactionValues,
 } from './transaction.types.js';
+
+/**
+ * The filters of a month view. Empty means no filter; `null` selects occurrences with no category
+ * or no account. Within one list any id matches; the two lists combine with AND.
+ */
+export interface MonthFilters {
+  categoryIds: (string | null)[];
+  accountIds: (string | null)[];
+}
+
+export interface MonthBalance {
+  /** One entry per date with occurrences, ascending: the balance after that day. */
+  days: { date: string; balance: string }[];
+  /** Null while a category filter is active: only the selected month counts then. */
+  totals: { received: string; debits: string; net: string; finalBalance: string } | null;
+}
+
+const NO_FILTER: MonthFilters = { categoryIds: [], accountIds: [] };
+
+function matches(selected: (string | null)[], id: string | null): boolean {
+  return selected.length === 0 || selected.includes(id);
+}
+
+function matchesFilters(occurrence: Occurrence, filters: MonthFilters): boolean {
+  return (
+    matches(filters.categoryIds, occurrence.categoryId) &&
+    matches(filters.accountIds, occurrence.accountId)
+  );
+}
+
+function signed(occurrence: Occurrence): Decimal {
+  const amount = new Decimal(occurrence.amount);
+  return occurrence.type === 'receipt' ? amount : amount.negated();
+}
+
+/** `YYYY-MM` one month earlier. */
+function previousMonth(month: string): string {
+  const [y, m] = month.split('-').map(Number) as [number, number];
+  const index = y * 12 + (m - 1) - 1;
+  return `${String(Math.floor(index / 12)).padStart(4, '0')}-${String((index % 12) + 1).padStart(2, '0')}`;
+}
+
+/** Every `YYYY-MM` from `from` to `to`, both included. */
+function monthsBetween(from: string, to: string): string[] {
+  const months: string[] = [];
+  for (let month = to; month >= from; month = previousMonth(month)) months.unshift(month);
+  return months;
+}
 
 export class TransactionService {
   constructor(
@@ -62,15 +111,67 @@ export class TransactionService {
     };
   }
 
-  /** Every occurrence dated in `month` (`YYYY-MM`), ordered by date, description, then id. */
-  listMonth(userId: string, month: string): Occurrence[] {
+  /**
+   * The balance of `month` for the occurrences matching `filters`. Without a category filter the
+   * month opens with every matching occurrence dated before it and the totals are returned; with
+   * one it opens at 0 and the totals are not returned.
+   */
+  balance(userId: string, month: string, filters: MonthFilters): MonthBalance {
+    const byCategory = filters.categoryIds.length > 0;
+    let running = byCategory ? new Decimal(0) : this.openingBalance(userId, month, filters);
+    const opening = running;
+    let received = new Decimal(0);
+    let debits = new Decimal(0);
+    const days: MonthBalance['days'] = [];
+
+    for (const occurrence of this.listMonth(userId, month, filters)) {
+      if (occurrence.type === 'receipt') received = received.plus(occurrence.amount);
+      else debits = debits.plus(occurrence.amount);
+      running = running.plus(signed(occurrence));
+      const last = days[days.length - 1];
+      if (last && last.date === occurrence.date) last.balance = running.toFixed();
+      else days.push({ date: occurrence.date, balance: running.toFixed() });
+    }
+
+    const net = received.minus(debits);
+    return {
+      days,
+      totals: byCategory
+        ? null
+        : {
+            received: received.toFixed(),
+            debits: debits.toFixed(),
+            net: net.toFixed(),
+            finalBalance: opening.plus(net).toFixed(),
+          },
+    };
+  }
+
+  /** Every matching occurrence dated before `month`, settled or forecast: receipts minus debits. */
+  private openingBalance(userId: string, month: string, filters: MonthFilters): Decimal {
+    const lastMonth = previousMonth(month);
+    let total = new Decimal(0);
+    for (const bundle of this.repository.listBundlesInRange(userId, '0000-01-01', `${lastMonth}-31`)) {
+      for (const each of monthsBetween(bundle.definition.startDate.slice(0, 7), lastMonth)) {
+        for (const date of this.datesInMonth(bundle, each)) {
+          const occurrence = this.occurrenceOn(bundle, date);
+          if (matchesFilters(occurrence, filters)) total = total.plus(signed(occurrence));
+        }
+      }
+    }
+    return total;
+  }
+
+  /** Every occurrence dated in `month` (`YYYY-MM`) matching `filters`, ordered by date, description, then id. */
+  listMonth(userId: string, month: string, filters: MonthFilters = NO_FILTER): Occurrence[] {
     const from = `${month}-01`;
     const to = `${month}-31`;
     const occurrences: Occurrence[] = [];
 
     for (const bundle of this.repository.listBundlesInRange(userId, from, to)) {
       for (const date of this.datesInMonth(bundle, month)) {
-        occurrences.push(this.occurrenceOn(bundle, date));
+        const occurrence = this.occurrenceOn(bundle, date);
+        if (matchesFilters(occurrence, filters)) occurrences.push(occurrence);
       }
     }
 
@@ -84,7 +185,8 @@ export class TransactionService {
 
   /**
    * Changes one occurrence. A settled one changes alone; a forecast one changes from its date
-   * on, replacing any change planned for later dates.
+   * on, replacing any change planned for later dates. A new `date` moves a one-off, settlement
+   * included, or shifts a series from this occurrence on (see `shiftSeries`).
    */
   editOccurrence(
     userId: string,
@@ -96,6 +198,9 @@ export class TransactionService {
     if (patch.categoryId !== undefined || patch.accountId !== undefined) {
       this.requireOwnReferences(userId, patch.categoryId, patch.accountId);
     }
+
+    const moving = patch.date !== undefined && patch.date !== date;
+    if (moving && this.isSeries(bundle)) return this.shiftSeries(bundle, date, patch);
 
     const settlement = bundle.settlements.find((s) => s.occurrenceDate === date);
     const base: TransactionValues = settlement ?? this.valuesOn(bundle, date);
@@ -110,7 +215,55 @@ export class TransactionService {
     if (settlement) this.repository.updateSettlement(id, date, next);
     else this.repository.replaceRevisionsFrom(id, date, next);
 
+    if (moving && patch.date !== undefined) {
+      this.repository.moveOneOff(id, date, patch.date);
+      return this.occurrenceOn(this.requireBundle(userId, id), patch.date);
+    }
     return this.occurrenceOn(this.requireBundle(userId, id), date);
+  }
+
+  /**
+   * Moves a forecast occurrence of a series to `patch.date`: the series ends before it, keeping
+   * its earlier occurrences, and a new series with the same recurrence starts on the new date with
+   * the values in force on the old one (and the patch), instalment numbers continuing. Refused
+   * while that occurrence or a later one is settled, since ending the series would drop them.
+   */
+  private shiftSeries(
+    bundle: TransactionBundle,
+    date: string,
+    patch: UpdateTransactionInput,
+  ): Occurrence {
+    const { definition } = bundle;
+    if (bundle.settlements.some((s) => s.occurrenceDate === date)) {
+      throw new ConflictError('A settled occurrence of a recurring entry cannot be moved');
+    }
+    if (bundle.settlements.some((s) => s.occurrenceDate > date)) {
+      throw new ConflictError('A later occurrence of this entry is settled, so it cannot be moved');
+    }
+
+    const base = this.valuesOn(bundle, date);
+    const number = instalmentNumber(this.spec(bundle), date);
+    const next = this.repository.shiftSeries(definition.id, date, {
+      userId: definition.userId,
+      startDate: patch.date ?? date,
+      recurrence: definition.recurrence,
+      instalment:
+        definition.instalment && number !== null
+          ? { startNumber: number, total: definition.instalment.total }
+          : null,
+      values: {
+        description: patch.description ?? base.description,
+        categoryId: patch.categoryId ?? base.categoryId,
+        accountId: patch.accountId ?? base.accountId,
+        type: patch.type ?? base.type,
+        amount: patch.amount ?? base.amount,
+      },
+    });
+    return this.occurrenceOn(next, next.definition.startDate);
+  }
+
+  private isSeries(bundle: TransactionBundle): boolean {
+    return bundle.definition.recurrence !== null || bundle.definition.instalment !== null;
   }
 
   /** Removes the occurrence and every later one; earlier ones stay as they were. */

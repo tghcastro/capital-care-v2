@@ -16,6 +16,9 @@ import type {
   TransactionValues,
 } from './transaction.types.js';
 
+/** The database, or the transaction a multi-statement write runs in. */
+type Writer = Pick<BetterSQLite3Database, 'insert' | 'update' | 'delete' | 'select'>;
+
 export interface NewTransaction {
   userId: string;
   startDate: string;
@@ -39,6 +42,16 @@ export interface ITransactionRepository {
   /** Removes every occurrence from `date` on: its revisions, settlements, and ends the schedule. */
   stopFrom(id: string, date: string): void;
   deleteTransaction(id: string): void;
+  /**
+   * Moves a one-off transaction from `fromDate` to `toDate` as one unit: its start date, its
+   * revision and its settlement, if any. The transaction keeps its id.
+   */
+  moveOneOff(id: string, fromDate: string, toDate: string): void;
+  /**
+   * Ends the series at `fromDate` (as `stopFrom`, or deletes it when `fromDate` is its start date)
+   * and creates `next`, as one unit. Returns the new series.
+   */
+  shiftSeries(id: string, fromDate: string, next: NewTransaction): TransactionBundle;
   insertSettlement(input: { transactionId: string; occurrenceDate: string } & TransactionValues): void;
   updateSettlement(transactionId: string, occurrenceDate: string, values: TransactionValues): void;
   deleteSettlement(transactionId: string, occurrenceDate: string): void;
@@ -49,30 +62,31 @@ export class TransactionRepository implements ITransactionRepository {
 
   create(input: NewTransaction): TransactionBundle {
     const id = uuidv4();
-    const now = new Date();
-
-    this.db.transaction((tx) => {
-      tx.insert(transactionTable)
-        .values({
-          id,
-          userId: input.userId,
-          startDate: input.startDate,
-          frequency: input.recurrence,
-          instalmentStartNumber: input.instalment?.startNumber ?? null,
-          instalmentTotal: input.instalment?.total ?? null,
-          stopDate: null,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .run();
-      tx.insert(transactionRevisionTable)
-        .values({ transactionId: id, effectiveFrom: input.startDate, ...input.values })
-        .run();
-    });
+    this.db.transaction((tx) => this.insertTransaction(tx, id, input));
 
     const created = this.getBundle(id);
     if (!created) throw new Error('Failed to create transaction');
     return created;
+  }
+
+  private insertTransaction(tx: Writer, id: string, input: NewTransaction): void {
+    const now = new Date();
+    tx.insert(transactionTable)
+      .values({
+        id,
+        userId: input.userId,
+        startDate: input.startDate,
+        frequency: input.recurrence,
+        instalmentStartNumber: input.instalment?.startNumber ?? null,
+        instalmentTotal: input.instalment?.total ?? null,
+        stopDate: null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+    tx.insert(transactionRevisionTable)
+      .values({ transactionId: id, effectiveFrom: input.startDate, ...input.values })
+      .run();
   }
 
   getBundle(id: string): TransactionBundle | null {
@@ -148,28 +162,66 @@ export class TransactionRepository implements ITransactionRepository {
   }
 
   stopFrom(id: string, date: string): void {
+    this.db.transaction((tx) => this.stopWithin(tx, id, date));
+  }
+
+  private stopWithin(tx: Writer, id: string, date: string): void {
+    tx.delete(transactionRevisionTable)
+      .where(
+        and(
+          eq(transactionRevisionTable.transactionId, id),
+          gte(transactionRevisionTable.effectiveFrom, date),
+        ),
+      )
+      .run();
+    tx.delete(transactionSettlementTable)
+      .where(
+        and(
+          eq(transactionSettlementTable.transactionId, id),
+          gte(transactionSettlementTable.occurrenceDate, date),
+        ),
+      )
+      .run();
+    tx.update(transactionTable)
+      .set({ stopDate: date, updatedAt: new Date() })
+      .where(eq(transactionTable.id, id))
+      .run();
+  }
+
+  moveOneOff(id: string, fromDate: string, toDate: string): void {
     this.db.transaction((tx) => {
-      tx.delete(transactionRevisionTable)
-        .where(
-          and(
-            eq(transactionRevisionTable.transactionId, id),
-            gte(transactionRevisionTable.effectiveFrom, date),
-          ),
-        )
+      tx.update(transactionTable)
+        .set({ startDate: toDate, updatedAt: new Date() })
+        .where(eq(transactionTable.id, id))
         .run();
-      tx.delete(transactionSettlementTable)
+      tx.update(transactionRevisionTable)
+        .set({ effectiveFrom: toDate })
+        .where(eq(transactionRevisionTable.transactionId, id))
+        .run();
+      tx.update(transactionSettlementTable)
+        .set({ occurrenceDate: toDate })
         .where(
           and(
             eq(transactionSettlementTable.transactionId, id),
-            gte(transactionSettlementTable.occurrenceDate, date),
+            eq(transactionSettlementTable.occurrenceDate, fromDate),
           ),
         )
         .run();
-      tx.update(transactionTable)
-        .set({ stopDate: date, updatedAt: new Date() })
-        .where(eq(transactionTable.id, id))
-        .run();
     });
+  }
+
+  shiftSeries(id: string, fromDate: string, next: NewTransaction): TransactionBundle {
+    const nextId = uuidv4();
+    this.db.transaction((tx) => {
+      const row = tx.select().from(transactionTable).where(eq(transactionTable.id, id)).get();
+      if (row?.startDate === fromDate) tx.delete(transactionTable).where(eq(transactionTable.id, id)).run();
+      else this.stopWithin(tx, id, fromDate);
+      this.insertTransaction(tx, nextId, next);
+    });
+
+    const created = this.getBundle(nextId);
+    if (!created) throw new Error('Failed to shift the series');
+    return created;
   }
 
   deleteTransaction(id: string): void {
