@@ -85,9 +85,10 @@ export const updateTransactionSchema = z
     accountId: referenceSchema('accountId').optional(),
     amount: amountSchema.optional(),
     type: transactionTypeSchema.optional(),
+    date: dateSchema.optional(),
   })
   .refine((value) => Object.values(value).some((field) => field !== undefined), {
-    message: 'at least one of description, categoryId, accountId, amount, type is required',
+    message: 'at least one of description, categoryId, accountId, amount, type, date is required',
   });
 
 export const settleSchema = z.object({ amount: amountSchema.optional() });

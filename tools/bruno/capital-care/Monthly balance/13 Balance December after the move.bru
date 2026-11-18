@@ -1,0 +1,22 @@
+meta {
+  name: 13 Balance December after the move
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/transactions/balance?month=2026-12&account={{mbAccountId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("December no longer counts the keyboard", function() {
+    expect(res.body.days).to.eql([]);
+    expect(res.body.totals).to.eql({ received: "0", debits: "0", net: "0", finalBalance: "2771" });
+  });
+}

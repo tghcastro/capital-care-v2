@@ -98,6 +98,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: AC 2 (apps/api)
 - last seen: 2026-11-17T14:01:22Z
 
+### L-015 - When a rule rewrites a recurring schedule, give it an example on a stopped (finite) series as well as an open-ended one: a rebuilt schedule silently drops the old stop date.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `modules/ledger/transaction` · harmful: 0
+- features: monthly-balance
+- evidence: C27 / AC 12 (modules/ledger/transaction)
+- last seen: 2026-11-18T18:41:19Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

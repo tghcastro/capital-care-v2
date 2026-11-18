@@ -1,0 +1,22 @@
+meta {
+  name: 17 List March 2027 after the shift
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/transactions?month=2027-03&account={{mbAccountId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("March follows the shifted series on the 20th", function() {
+    const dates = res.body.occurrences.map(function(o) { return o.date; });
+    expect(dates).to.eql(["2027-03-20"]);
+  });
+}

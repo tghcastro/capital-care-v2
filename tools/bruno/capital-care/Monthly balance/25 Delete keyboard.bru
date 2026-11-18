@@ -1,0 +1,15 @@
+meta {
+  name: 25 Delete keyboard
+  type: http
+  seq: 25
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{mbKeyboardId}}/occurrences/2027-01-02
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

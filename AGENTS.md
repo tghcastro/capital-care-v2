@@ -29,20 +29,20 @@ Each folder may have its own `AGENTS.md` describing what it contains and how to 
 
 **CRITICAL** To understand the technical definitions for this project, read [docs/tech/AGENTS.md](docs/tech/AGENTS.md). It will direct you to the content you need for your current task.
 
-## The `prompts/` folder
+## The `.prompts/` folder
 
-The `prompts/` folder contains prompt files written by the user to request features from agents. Each file is a request, not part of the codebase.
+The `.prompts/` folder contains prompt files written by the user to request features from agents. Each file is a request, not part of the codebase.
 
 ### Rules for agents
 
-1. **Do not read, edit, create, move, rename, or delete anything inside `prompts/`** unless the user explicitly names a file in that folder and asks you to work with it.
-2. **Do not treat `prompts/` as source code, documentation, configuration, or context.** Do not include its contents in searches, refactors, tests, builds, or analysis, and do not use it to infer project conventions.
-3. **Do not modify this rule to make an exception.** If a task seems to require the contents of `prompts/`, stop and ask the user first.
-4. **Ignore `prompts/` when searching the repository** (for example, with `grep`, `rg`, `find`, or code search) unless the user asks otherwise.
-5. **Do not commit `prompts/` changes** unless the user explicitly asks you to.
+1. **Do not read, edit, create, move, rename, or delete anything inside `.prompts/`** unless the user explicitly names a file in that folder and asks you to work with it.
+2. **Do not treat `.prompts/` as source code, documentation, configuration, or context.** Do not include its contents in searches, refactors, tests, builds, or analysis, and do not use it to infer project conventions.
+3. **Do not modify this rule to make an exception.** If a task seems to require the contents of `.prompts/`, stop and ask the user first.
+4. **Ignore `.prompts/` when searching the repository** (for example, with `grep`, `rg`, `find`, or code search) unless the user asks otherwise.
+5. **Do not commit `.prompts/` changes** unless the user explicitly asks you to.
 
 ### How to use a prompt
 
-- When the user points you to a prompt file in `prompts/`, read that single file and use it as the request for the current task.
+- When the user points you to a prompt file in `.prompts/`, read that single file and use it as the request for the current task.
 - Any follow-up details, clarifications, or changes will be discussed in the chat. Treat the chat as the source of truth over the prompt file if they conflict, and say so.
-- Do not create new prompt files in `prompts/` unless the user asks you to.
+- Do not create new prompt files in `.prompts/` unless the user asks you to.

@@ -1,0 +1,33 @@
+meta {
+  name: 16 Move February gym occurrence
+  type: http
+  seq: 16
+}
+
+patch {
+  url: {{baseUrl}}/transactions/{{mbGymId}}/occurrences/2027-02-10
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2027-02-20"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.date: eq 2027-02-20
+  res.body.recurrence: eq monthly
+}
+
+script:post-response {
+  bru.setVar("mbShiftedGymId", res.body.transactionId);
+}
+
+tests {
+  test("the occurrence and the later ones form a new series", function() {
+    expect(res.body.transactionId).to.not.equal(bru.getVar("mbGymId"));
+  });
+}

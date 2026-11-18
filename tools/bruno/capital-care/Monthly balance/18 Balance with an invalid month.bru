@@ -1,0 +1,17 @@
+meta {
+  name: 18 Balance with an invalid month
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/transactions/balance?month=2026-13
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: contains month
+}

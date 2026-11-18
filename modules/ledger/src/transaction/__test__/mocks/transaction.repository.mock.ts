@@ -22,7 +22,7 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
       startDate: input.startDate,
       recurrence: input.recurrence,
       instalment: input.instalment,
-      stopDate: null,
+      stopDate: input.stopDate ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -87,6 +87,21 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
     this.settlements = this.settlements.filter(
       (s) => !(s.transactionId === transactionId && s.occurrenceDate === occurrenceDate),
     );
+  }
+
+  moveOneOff(id: string, fromDate: string, toDate: string): void {
+    const definition = this.definitions.get(id);
+    if (definition) definition.startDate = toDate;
+    this.revisions = this.revisions.map((r) => (r.transactionId === id ? { ...r, effectiveFrom: toDate } : r));
+    this.settlements = this.settlements.map((s) =>
+      s.transactionId === id && s.occurrenceDate === fromDate ? { ...s, occurrenceDate: toDate } : s,
+    );
+  }
+
+  shiftSeries(id: string, fromDate: string, next: NewTransaction): TransactionBundle {
+    if (this.definitions.get(id)?.startDate === fromDate) this.deleteTransaction(id);
+    else this.stopFrom(id, fromDate);
+    return this.create(next);
   }
 
   private bundle(definition: TransactionDefinition): TransactionBundle {

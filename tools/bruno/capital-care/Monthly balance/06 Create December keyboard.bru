@@ -1,0 +1,30 @@
+meta {
+  name: 06 Create December keyboard
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2026-12-10",
+    "description": "Keyboard {{$timestamp}}",
+    "categoryId": "{{mbShoppingCategoryId}}",
+    "accountId": "{{mbAccountId}}",
+    "amount": "110.00",
+    "type": "debit"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("mbKeyboardId", res.body.id);
+}

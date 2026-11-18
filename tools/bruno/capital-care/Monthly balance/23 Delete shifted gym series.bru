@@ -1,0 +1,15 @@
+meta {
+  name: 23 Delete shifted gym series
+  type: http
+  seq: 23
+}
+
+delete {
+  url: {{baseUrl}}/transactions/{{mbShiftedGymId}}/occurrences/2027-02-20
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

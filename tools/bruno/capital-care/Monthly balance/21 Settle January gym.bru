@@ -1,0 +1,20 @@
+meta {
+  name: 21 Settle January gym
+  type: http
+  seq: 21
+}
+
+put {
+  url: {{baseUrl}}/transactions/{{mbGymId}}/occurrences/2027-01-10/settlement
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq settled
+}

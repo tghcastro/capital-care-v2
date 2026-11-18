@@ -115,10 +115,10 @@ describe.each(kinds)('$panel', (k) => {
     const panel = await panelOf(k);
     const u = userEvent.setup();
     await u.click(await within(panel).findByRole('button', { name: k.filterTarget }));
+    await waitFor(() => expect(screen.queryByText(k.dropRow)).toBeNull());
     expect(screen.getByText(k.keepRow)).toBeInTheDocument();
-    expect(screen.queryByText(k.dropRow)).toBeNull();
     await u.click(within(panel).getByRole('button', { name: k.filterTarget }));
-    expect(screen.getByText(k.dropRow)).toBeInTheDocument();
+    expect(await screen.findByText(k.dropRow)).toBeInTheDocument();
   });
 
   it('Add posts a new item and lists it', async () => {

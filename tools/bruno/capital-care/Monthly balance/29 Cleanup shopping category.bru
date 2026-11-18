@@ -1,0 +1,15 @@
+meta {
+  name: 29 Cleanup shopping category
+  type: http
+  seq: 29
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{mbShoppingCategoryId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

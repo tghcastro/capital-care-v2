@@ -1,0 +1,15 @@
+meta {
+  name: 30 Cleanup income category
+  type: http
+  seq: 30
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{mbIncomeCategoryId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}

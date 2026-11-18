@@ -1,0 +1,29 @@
+meta {
+  name: 12 Move December keyboard to January
+  type: http
+  seq: 12
+}
+
+patch {
+  url: {{baseUrl}}/transactions/{{mbKeyboardId}}/occurrences/2026-12-10
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "date": "2027-01-02"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.transactionId: eq {{mbKeyboardId}}
+  res.body.date: eq 2027-01-02
+}
+
+tests {
+  test("the moved one-off keeps its amount", function() {
+    expect(res.body.amount).to.equal("110");
+  });
+}

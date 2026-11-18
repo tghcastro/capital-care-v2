@@ -5,7 +5,7 @@ import {
   settleSchema,
   updateTransactionSchema,
 } from './transaction.dto.js';
-import type { TransactionService } from './transaction.service.js';
+import type { MonthFilters, TransactionService } from './transaction.service.js';
 import type { Transaction } from './transaction.types.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 
@@ -32,7 +32,19 @@ export function createTransactionRouter(service: TransactionService): Router {
     if (!month.success) return sendValidationError(res, month.error.issues[0]?.message);
 
     return respond(res, () =>
-      res.status(200).json({ occurrences: service.listMonth(userId, month.data) }),
+      res.status(200).json({ occurrences: service.listMonth(userId, month.data, filtersOf(req)) }),
+    );
+  });
+
+  router.get('/balance', (req: Request, res: Response) => {
+    const userId = currentUserId(req, res);
+    if (!userId) return;
+
+    const month = monthSchema.safeParse(req.query.month);
+    if (!month.success) return sendValidationError(res, month.error.issues[0]?.message);
+
+    return respond(res, () =>
+      res.status(200).json(service.balance(userId, month.data, filtersOf(req))),
     );
   });
 
@@ -82,6 +94,15 @@ export function createTransactionRouter(service: TransactionService): Router {
   });
 
   return router;
+}
+
+/** `category` and `account`, each optional and repeatable; `none` means no category or account. */
+function filtersOf(req: Request): MonthFilters {
+  const ids = (value: unknown): (string | null)[] =>
+    (Array.isArray(value) ? value : value === undefined ? [] : [value])
+      .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      .map((id) => (id === 'none' ? null : id));
+  return { categoryIds: ids(req.query.category), accountIds: ids(req.query.account) };
 }
 
 function currentUserId(req: Request, res: Response): string | null {
