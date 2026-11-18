@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 15,
+  "next_id": 16,
   "lessons": [
     {
       "id": "L-001",
@@ -256,6 +256,24 @@
       ],
       "created": "2026-11-17T14:01:22Z",
       "last_seen": "2026-11-17T14:01:22Z"
+    },
+    {
+      "id": "L-015",
+      "key": "ac_gap::when a rule rewrites a recurring schedule give it an example on a stopped finite series as well as an open ended one a rebuilt schedule silently drops the old stop date",
+      "text": "When a rule rewrites a recurring schedule, give it an example on a stopped (finite) series as well as an open-ended one: a rebuilt schedule silently drops the old stop date.",
+      "signal": "ac_gap",
+      "scope": "modules/ledger/transaction",
+      "status": "candidate",
+      "features": [
+        "monthly-balance"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C27 / AC 12 (modules/ledger/transaction)"
+      ],
+      "created": "2026-11-18T18:41:19Z",
+      "last_seen": "2026-11-18T18:41:19Z"
     }
   ]
 }
