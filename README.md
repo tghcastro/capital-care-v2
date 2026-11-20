@@ -23,9 +23,8 @@ This is a learning project: the real goal is practicing agentic development work
 
 ### Setup
 
-1. **Install dependencies** (one time):
+1. **Install dependencies** (one time, from the repo root):
    ```bash
-   cd /Users/castrth/workspace/capital-care
    pnpm install
    ```
    
@@ -56,19 +55,22 @@ Health check: `curl http://localhost:3000/health`
 
 ## Running with Docker
 
-The API runs in a container with two Compose profiles. Both run pending migrations before the server starts.
+The app (API + web UI, one image, one origin) runs in a container defined in a single
+`docker-compose.yml`, with one Compose profile per environment. Both run pending
+migrations before the server starts, and both serve the web UI at the root URL.
 
-| Profile | Host port | Database | Command |
-|---------|-----------|----------|---------|
-| DEV (local tests) | `3000` | In memory (`tmpfs`). Discarded when the container stops or restarts. | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build` |
-| PRD | `8000` | Named volume `capital-care-data`. Survives restarts. | `docker compose -f docker-compose.yml -f docker-compose.prd.yml up -d --build` |
+| Profile | Service | Host port | Database | Command |
+|---------|---------|-----------|----------|---------|
+| `dev` (local work, builds the image from source) | `capital-care-dev` | `3000` | In memory (`tmpfs`). Discarded when the container stops or restarts — every run starts clean. | `docker compose --profile dev up --build` |
+| `prod` (pulls the published image) | `capital-care-prd` | `8000` | Named volume `capital-care-data`. Survives restarts. | `docker compose --profile prod up -d` |
 
-- The container always listens on port 3000 internally. The host port is set per profile and can be overridden with `API_PORT`.
-- DEV: `http://localhost:3000`. Health check: `curl http://localhost:3000/health`
-- PRD: `http://localhost:8000`. Health check: `curl http://localhost:8000/health`
-- DEV with the latest published image (pulled from GHCR, no local build, database in `tmpfs`) also uses host port 3000: `docker compose -f docker-compose.yml -f docker-compose.dev.yml up api-latest`. It cannot run at the same time as `api`; stop one before starting the other.
-- Stop DEV with `docker compose -f docker-compose.yml -f docker-compose.dev.yml down`. No data is kept.
-- Delete PRD data with `docker compose -f docker-compose.yml -f docker-compose.prd.yml down -v`. This is irreversible.
+- The container always listens on port 3000 internally; only the published host port
+  differs. Override it with `DEV_PORT` (dev) or `PRD_PORT` (prod) if needed.
+- **DEV**: web UI and API at `http://localhost:3000`. Health check: `curl http://localhost:3000/health`
+- **PRD**: web UI and API at `http://localhost:8000`. Health check: `curl http://localhost:8000/health`
+- Stop DEV with `docker compose --profile dev down`. No data is kept.
+- Stop PRD with `docker compose --profile prod down` (data is kept). Delete PRD data with
+  `docker compose --profile prod down -v`. This is irreversible.
 - PRD backups are not configured yet (see [database.md](docs/tech/definitions/database.md)).
 
 ### Published images
@@ -130,20 +132,17 @@ The API requests live in a [Bruno](https://www.usebruno.com) collection (open-so
 - **Transactions folder:** `Transactions/` creates its own category and account, then walks a monthly, a one-off and an instalment transaction through create, month view, edit, settle, undo settlement and stop, and removes everything it created. Its `Errors/` folder covers the 4xx responses (invalid fields, unknown category, another user's transaction, settling twice).
 - **Add requests:** create a `.bru` file in the matching folder (or use *New Request* in Bruno), then commit it with the code. Keep names unique per run (for example with `{{$timestamp}}`), and delete any data the request creates, because PRD data persists.
 
-### Category Management Endpoints
+### API Usage Example
 
-The category feature is fully implemented. Test it with the Bruno collection in [tools/bruno/capital-care](tools/bruno/capital-care) (see [API Collection (Bruno)](#api-collection-bruno)), or with `curl` or Postman:
-
-#### 1. **Create a category**
+The full API reference — every endpoint, request/response shapes, and error cases — lives
+in the Bruno collection above ([tools/bruno/capital-care](tools/bruno/capital-care)). Here
+is one example, creating a category, to get started:
 
 ```bash
 curl -X POST http://localhost:3000/categories \
   -H "Content-Type: application/json" \
   -H "X-User-Id: user-123" \
-  -d '{
-    "name": "Groceries",
-    "description": "Food and household items"
-  }'
+  -d '{"name": "Groceries", "description": "Food and household items"}'
 ```
 
 **Expected response** (201 Created):
@@ -157,136 +156,6 @@ curl -X POST http://localhost:3000/categories \
   "updatedAt": "2026-11-06T13:45:30.123Z"
 }
 ```
-
-#### 2. **List all categories**
-
-```bash
-curl http://localhost:3000/categories \
-  -H "X-User-Id: user-123"
-```
-
-**Expected response** (200 OK):
-```json
-{
-  "categories": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "userId": "user-123",
-      "name": "Groceries",
-      "description": "Food and household items",
-      "createdAt": "2026-11-06T13:45:30.123Z",
-      "updatedAt": "2026-11-06T13:45:30.123Z"
-    }
-  ]
-}
-```
-
-#### 3. **Sort categories descending**
-
-```bash
-curl http://localhost:3000/categories?sort=-name \
-  -H "X-User-Id: user-123"
-```
-
-#### 4. **Fetch a single category**
-
-```bash
-curl http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
-  -H "X-User-Id: user-123"
-```
-
-**Expected response** (200 OK): Category object
-
-#### 5. **Update a category**
-
-```bash
-curl -X PATCH http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
-  -H "Content-Type: application/json" \
-  -H "X-User-Id: user-123" \
-  -d '{
-    "description": "Food, household items, and groceries"
-  }'
-```
-
-**Expected response** (200 OK): Updated category
-
-#### 6. **Delete a category**
-
-```bash
-curl -X DELETE http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
-  -H "X-User-Id: user-123"
-```
-
-**Expected response** (204 No Content): Empty body, no JSON
-
----
-
-### Test Scenarios
-
-#### ✅ Create category without name → 400 ValidationError
-
-```bash
-curl -X POST http://localhost:3000/categories \
-  -H "Content-Type: application/json" \
-  -H "X-User-Id: user-123" \
-  -d '{"description": "oops"}'
-```
-
-Response: `400` with `{"type":"ValidationError","detail":"name is required"}`
-
-#### ✅ Create duplicate name for same user → 409 ConflictError
-
-```bash
-# Create first
-curl -X POST http://localhost:3000/categories \
-  -H "Content-Type: application/json" \
-  -H "X-User-Id: user-123" \
-  -d '{"name": "Groceries"}'
-
-# Try duplicate
-curl -X POST http://localhost:3000/categories \
-  -H "Content-Type: application/json" \
-  -H "X-User-Id: user-123" \
-  -d '{"name": "Groceries"}'
-```
-
-Response: `409` with `{"type":"ConflictError","detail":"..."}`
-
-#### ✅ Different user can create same name
-
-```bash
-curl -X POST http://localhost:3000/categories \
-  -H "Content-Type: application/json" \
-  -H "X-User-Id: user-456" \
-  -d '{"name": "Groceries"}'
-```
-
-Response: `201` — succeeds (different user)
-
-#### ✅ Missing X-User-Id header → 401 UnauthorizedError
-
-```bash
-curl http://localhost:3000/categories
-```
-
-Response: `401` with `{"type":"UnauthorizedError","detail":"User ID required"}`
-
-#### ✅ Fetch category owned by different user → 404 NotFoundError
-
-```bash
-# Create as user-123
-curl -X POST http://localhost:3000/categories \
-  -H "Content-Type: application/json" \
-  -H "X-User-Id: user-123" \
-  -d '{"name": "MyCategory"}' 
-# Returns id: "550e8400-e29b-41d4-a716-446655440000"
-
-# Try to fetch as user-456
-curl http://localhost:3000/categories/550e8400-e29b-41d4-a716-446655440000 \
-  -H "X-User-Id: user-456"
-```
-
-Response: `404` (not 403 — ownership check returns "not found" per design)
 
 ---
 

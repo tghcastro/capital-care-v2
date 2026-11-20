@@ -1,27 +1,65 @@
-# Base Compose definition for Capital Care. The single `api` service serves the API and the
-# built web app (one image, one origin, one port).
-# Environment-specific behavior, including the host port, lives in the overrides:
-#   DEV: docker-compose.dev.yml  (host port 3000; database exists only while the container runs)
-#   PRD: docker-compose.prd.yml  (host port 8000; database persists in a named volume)
-# The container always listens on 3000 internally. Host ports are set in the overrides
-# (not here) so that Compose does not merge duplicate port mappings.
+# Capital Care — single Compose file for both environments, selected with `--profile`.
+# Each service serves the API and the built web app (one image, one origin, one port).
+#
+# capital-care-dev (profile `dev`): builds the image locally from source. The database
+#   lives in tmpfs (RAM), so it is discarded whenever the container stops or restarts —
+#   every `up` starts from an empty database. Host port 3000.
+# capital-care-prd (profile `prod`): pulls the `latest` published image from GHCR instead
+#   of building locally. The database persists in the named volume `capital-care-data`,
+#   so it survives restarts. Host port 8000.
+#
+# The container always listens on 3000 internally; only the published host port differs
+# between the two services.
 #
 # Usage:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-#   docker compose -f docker-compose.yml -f docker-compose.prd.yml up -d --build
+#   docker compose --profile dev up --build     # DEV: build locally, clean DB every run
+#   docker compose --profile prod up -d         # PRD: pull latest, persistent DB
 
 services:
-  api:
+  capital-care-dev:
+    profiles:
+      - dev
     build:
       context: .
       target: runtime
-    image: capital-care-api:local
+    image: capital-care:local
     init: true
     env_file:
       - path: .env
         required: false
     environment:
-      # Container-internal values; override .env for these
+      NODE_ENV: development
       PORT: "3000"
       DB_PATH: /app/data/capital-care.db
+      ACCOUNT_LIMIT: "5"
+    ports:
+      - "${DEV_PORT:-3000}:3000"
+    # uid/gid match the non-root `node` user in the image (UID 1000) so it can create the
+    # database file. tmpfs means no leftover data between runs.
+    tmpfs:
+      - /app/data:uid=1000,gid=1000,mode=0755
     restart: "no"
+
+  capital-care-prd:
+    profiles:
+      - prod
+    image: ghcr.io/tghcastro/capital-care-v2:latest
+    pull_policy: always
+    init: true
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DB_PATH: /app/data/capital-care.db
+    ports:
+      - "${PRD_PORT:-8000}:3000"
+    restart: unless-stopped
+    volumes:
+      - capital-care-data:/app/data
+
+volumes:
+  # PRD only. Removing it (`docker compose --profile prod down -v`) deletes all data.
+  capital-care-data:
+    name: capital-care-data
