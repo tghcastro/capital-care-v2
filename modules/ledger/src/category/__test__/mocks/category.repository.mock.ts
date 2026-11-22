@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { ICategoryRepository } from '../category.repository.js';
-import type { Category } from '../category.types.js';
+import type { ICategoryRepository } from '../../category.repository.js';
+import type { Category } from '../../category.types.js';
 
 export class MockCategoryRepository implements ICategoryRepository {
   private categories: Map<string, Category> = new Map();

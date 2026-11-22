@@ -53,7 +53,7 @@ beforeEach(async () => {
     createTransactionRouter(new TransactionService(new TransactionRepository(db), accounts, categories)),
   );
   await new Promise<void>((resolve) => {
-    server = app.listen(0, '127.0.0.1', resolve);
+    server = app.listen(0, '127.0.0.1', () => resolve());
   });
   const address = server.address();
   base = `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`;
@@ -124,7 +124,7 @@ describe('transaction routes (HTTP)', () => {
     });
     expect(response.body?.id).toMatch(/^[0-9a-f-]{36}$/);
     for (const field of ['createdAt', 'updatedAt']) {
-      expect(new Date(response.body?.[field]).toISOString()).toBe(response.body?.[field]);
+      expect(new Date(response.body?.[field] as string).toISOString()).toBe(response.body?.[field]);
     }
 
     for (const [sent, stored] of [['229.00', '229'], ['0.5', '0.5'], ['20', '20']] as const) {
@@ -183,7 +183,7 @@ describe('transaction routes (HTTP)', () => {
     expect(created.status).toBe(201);
     expect(created.body?.id).not.toBe('chosen-by-caller');
     expect(created.body?.userId).toBe(ALICE);
-    expect(new Date(created.body?.createdAt).getTime()).toBeGreaterThanOrEqual(before);
+    expect(new Date(created.body?.createdAt as string).getTime()).toBeGreaterThanOrEqual(before);
     expect(await amountsIn('2026-12')).toEqual([['2026-12-05', '20', 'forecast']]);
     expect(await amountsIn('2026-11')).toEqual([['2026-11-05', '20', 'forecast']]);
   });

@@ -1,0 +1,10 @@
+{
+  // Type-check only, no emit. The build config excludes the tests (__test__),
+  // so this config adds them back.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true
+  },
+  "exclude": ["node_modules", "dist"]
+}

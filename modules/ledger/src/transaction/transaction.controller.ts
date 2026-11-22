@@ -9,6 +9,9 @@ import type { MonthFilters, TransactionService } from './transaction.service.js'
 import type { Transaction } from './transaction.types.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 
+// Named route params are always strings; Express 5 types only widen to string[] for wildcards.
+type OccurrenceRequest = Request<{ id: string; date: string }>;
+
 export function createTransactionRouter(service: TransactionService): Router {
   const router = Router();
 
@@ -48,7 +51,7 @@ export function createTransactionRouter(service: TransactionService): Router {
     );
   });
 
-  router.patch('/:id/occurrences/:date', (req: Request, res: Response) => {
+  router.patch('/:id/occurrences/:date', (req: OccurrenceRequest, res: Response) => {
     const userId = currentUserId(req, res);
     if (!userId) return;
 
@@ -62,7 +65,7 @@ export function createTransactionRouter(service: TransactionService): Router {
     );
   });
 
-  router.delete('/:id/occurrences/:date', (req: Request, res: Response) => {
+  router.delete('/:id/occurrences/:date', (req: OccurrenceRequest, res: Response) => {
     const userId = currentUserId(req, res);
     if (!userId) return;
 
@@ -72,7 +75,7 @@ export function createTransactionRouter(service: TransactionService): Router {
     });
   });
 
-  router.put('/:id/occurrences/:date/settlement', (req: Request, res: Response) => {
+  router.put('/:id/occurrences/:date/settlement', (req: OccurrenceRequest, res: Response) => {
     const userId = currentUserId(req, res);
     if (!userId) return;
 
@@ -84,7 +87,7 @@ export function createTransactionRouter(service: TransactionService): Router {
     );
   });
 
-  router.delete('/:id/occurrences/:date/settlement', (req: Request, res: Response) => {
+  router.delete('/:id/occurrences/:date/settlement', (req: OccurrenceRequest, res: Response) => {
     const userId = currentUserId(req, res);
     if (!userId) return;
 

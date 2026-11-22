@@ -4,6 +4,9 @@ import type { AccountService } from './account.service.js';
 import type { Account } from './account.types.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 
+// Named route params are always strings; Express 5 types only widen to string[] for wildcards.
+type IdRequest = Request<{ id: string }>;
+
 export function createAccountRouter(service: AccountService): Router {
   const router = Router();
 
@@ -26,7 +29,7 @@ export function createAccountRouter(service: AccountService): Router {
     );
   });
 
-  router.patch('/:id', (req: Request, res: Response) => {
+  router.patch('/:id', (req: IdRequest, res: Response) => {
     const userId = currentUserId(req, res);
     if (!userId) return;
 
@@ -38,7 +41,7 @@ export function createAccountRouter(service: AccountService): Router {
     );
   });
 
-  router.delete('/:id', (req: Request, res: Response) => {
+  router.delete('/:id', (req: IdRequest, res: Response) => {
     const userId = currentUserId(req, res);
     if (!userId) return;
 

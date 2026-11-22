@@ -2,7 +2,8 @@
   // Type-check only, no emit. With project references, tsc reads a referenced
   // project through its compiled declarations (dist), so it cannot check without
   // a build. This config drops the references and points the workspace packages
-  // at their source entry files, like the vitest alias does.
+  // at their source entry files, like the vitest alias does. It also covers the
+  // tests in test/, which the build config leaves out.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "composite": false,
@@ -14,5 +15,6 @@
       "@capital-care/shared": ["../../packages/shared/src/index.ts"]
     }
   },
+  "include": ["src", "test"],
   "references": []
 }
