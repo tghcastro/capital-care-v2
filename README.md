@@ -27,8 +27,6 @@ This is a learning project: the real goal is practicing agentic development work
    ```bash
    pnpm install
    ```
-   
-   If you hit a build approval prompt for `better-sqlite3`, approve it when asked.
 
 2. **Build the project**:
    ```bash
