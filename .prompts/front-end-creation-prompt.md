@@ -1,4 +1,6 @@
-# Front-End Layer
+# Front-End Layer 
+
+**STATUS**: Delivered
 
 Using **tlc-spec-lean**, let's start implementing the web pages for our API. This application should consume the **Category**, **Account**, and **Transactions** APIs. Below are the specifications for the initial page.
 

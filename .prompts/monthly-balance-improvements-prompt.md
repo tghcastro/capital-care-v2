@@ -1,6 +1,6 @@
 # Monthly Balance Improvements
 
-**STATUS**: TO-DO
+**STATUS**: Delivered
 
 ## Context
 
