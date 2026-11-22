@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "A lightweight personal finance tracker",
   "type": "module",
-  "packageManager": "pnpm@12.18.0",
+  "packageManager": "pnpm@12.21.0",
   "engines": {
     "node": "^24"
   },
