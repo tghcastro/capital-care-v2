@@ -13,7 +13,7 @@
     "build:watch": "tsc -b --watch",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "type-check": "tsc --noEmit && pnpm --filter @capital-care/web type-check",
+    "type-check": "pnpm -r type-check",
     "test": "vitest run",
     "db:migrate": "node apps/api/dist/migrate.js",
     "db:generate": "pnpm --filter @capital-care/ledger db:generate"

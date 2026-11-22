@@ -9,6 +9,7 @@
     "build": "tsc -b",
     "dev": "node dist/main.js",
     "lint": "eslint src/",
+    "type-check": "tsc -p tsconfig.typecheck.json",
     "migrate": "node dist/migrate.js",
     "start": "node dist/main.js"
   },

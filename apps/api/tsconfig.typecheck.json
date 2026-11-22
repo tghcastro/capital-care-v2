@@ -1,0 +1,18 @@
+{
+  // Type-check only, no emit. With project references, tsc reads a referenced
+  // project through its compiled declarations (dist), so it cannot check without
+  // a build. This config drops the references and points the workspace packages
+  // at their source entry files, like the vitest alias does.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    // ledger and shared sources join this program, so rootDir must cover them.
+    "rootDir": "../..",
+    "paths": {
+      "@capital-care/ledger": ["../../modules/ledger/src/index.ts"],
+      "@capital-care/shared": ["../../packages/shared/src/index.ts"]
+    }
+  },
+  "references": []
+}
