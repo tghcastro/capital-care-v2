@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@capital-care/shared": "workspace:*",
-    "better-sqlite3": "^12.11.1",
+    "better-sqlite3": "^13.2.0",
     "decimal.js": "^10.4.3",
     "drizzle-orm": "^0.45.4",
     "express": "^5.0.0",
