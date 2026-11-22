@@ -4,6 +4,9 @@ import type { CategoryService } from './category.service.js';
 import type { Category } from './category.types.js';
 import { ValidationError, ConflictError, NotFoundError } from '../shared/errors.js';
 
+// Named route params are always strings; Express 5 types only widen to string[] for wildcards.
+type IdRequest = Request<{ id: string }>;
+
 export function createCategoryRouter(service: CategoryService): Router {
   const router = Router();
 
@@ -52,7 +55,7 @@ export function createCategoryRouter(service: CategoryService): Router {
     return res.status(200).json({ categories: categories.map(serializeCategory) });
   });
 
-  router.get('/:id', (req: Request, res: Response) => {
+  router.get('/:id', (req: IdRequest, res: Response) => {
     try {
       const userIdHeader = req.headers['x-user-id'];
       if (typeof userIdHeader !== 'string') {
@@ -70,7 +73,7 @@ export function createCategoryRouter(service: CategoryService): Router {
     }
   });
 
-  router.patch('/:id', (req: Request, res: Response) => {
+  router.patch('/:id', (req: IdRequest, res: Response) => {
     try {
       const userIdHeader = req.headers['x-user-id'];
       if (typeof userIdHeader !== 'string') {
@@ -106,7 +109,7 @@ export function createCategoryRouter(service: CategoryService): Router {
     }
   });
 
-  router.delete('/:id', (req: Request, res: Response) => {
+  router.delete('/:id', (req: IdRequest, res: Response) => {
     try {
       const userIdHeader = req.headers['x-user-id'];
       if (typeof userIdHeader !== 'string') {
