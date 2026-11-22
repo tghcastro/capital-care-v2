@@ -32,7 +32,7 @@ beforeEach(async () => {
   app.use('/accounts', createAccountRouter(new AccountService(new AccountRepository(db), LIMIT)));
 
   await new Promise<void>((resolve) => {
-    server = app.listen(0, '127.0.0.1', resolve);
+    server = app.listen(0, '127.0.0.1', () => resolve());
   });
   const address = server.address();
   base = `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`;
@@ -50,7 +50,7 @@ interface ReplyBody {
   name: string;
   createdAt: string;
   updatedAt: string;
-  accounts: { name: string }[];
+  accounts: { id: string; name: string }[];
   type: string;
   detail: string;
 }

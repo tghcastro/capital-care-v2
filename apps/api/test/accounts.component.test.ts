@@ -38,7 +38,7 @@ describe('API app: accounts', () => {
   it('C32 the app mounts /accounts', async () => {
     const app = createApp();
     await new Promise<void>((resolve) => {
-      server = app.listen(0, '127.0.0.1', resolve);
+      server = app.listen(0, '127.0.0.1', () => resolve());
     });
     const address = server?.address();
     const port = typeof address === 'object' && address ? address.port : 0;
@@ -50,7 +50,7 @@ describe('API app: accounts', () => {
     });
 
     expect(response.status).toBe(201);
-    expect((await response.json()).name).toBe('Money');
+    expect(((await response.json()) as { name: string }).name).toBe('Money');
   });
 
   it('C25 the app fails to start with an invalid account limit', () => {

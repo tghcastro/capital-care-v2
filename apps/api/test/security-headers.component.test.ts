@@ -20,7 +20,7 @@ function restore(name: 'DB_PATH' | 'WEB_DIST_PATH'): void {
 async function start(): Promise<string> {
   const app = createApp();
   await new Promise<void>((resolve) => {
-    server = app.listen(0, '127.0.0.1', resolve);
+    server = app.listen(0, '127.0.0.1', () => resolve());
   });
   const address = server?.address();
   const port = typeof address === 'object' && address ? address.port : 0;

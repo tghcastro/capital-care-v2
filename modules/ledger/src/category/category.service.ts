@@ -1,10 +1,10 @@
-import type { CategoryRepository } from './category.repository.js';
+import type { ICategoryRepository } from './category.repository.js';
 import type { Category } from './category.types.js';
 import type { CreateCategoryInput, UpdateCategoryInput } from './category.dto.js';
 import { ConflictError, NotFoundError, ValidationError } from '../shared/errors.js';
 
 export class CategoryService {
-  constructor(private repository: CategoryRepository) {}
+  constructor(private repository: ICategoryRepository) {}
 
   createCategory(input: CreateCategoryInput & { userId: string }): Category {
     const { name, description, userId } = input;

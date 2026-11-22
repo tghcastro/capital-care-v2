@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc -b",
     "lint": "eslint src/",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc -p tsconfig.typecheck.json",
     "test": "vitest",
     "db:generate": "NODE_OPTIONS=\"--require ./scripts/drizzle-resolve.cjs\" drizzle-kit generate"
   },
