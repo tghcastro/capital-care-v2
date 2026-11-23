@@ -10,16 +10,16 @@ When this ships, a user signs in with email and password, stays signed in while 
 
 ## Shape
 
-This reuses the existing `user` aggregate, the RFC 7807 error body and `UnauthorizedError`, the shared API client in `packages/shared` (still the only place that sets the identity header) and the component-test harness in `apps/api/test/`. The rules that change an outcome - credential check, session renewal and expiry, rotation, revocation, password rules, audit events, test-user seeding - run in `UserService` in `modules/ledger/src/user/`, which the unit tests reach with in-memory doubles; the middleware in `apps/api` only verifies the token and hands the user id on.
+Identity becomes its own module, `modules/identity` (door 8), holding the `user` aggregate that moves out of `modules/ledger`; the ledger keeps only the `userId` text column it already has and never imports the identity module. This reuses the RFC 7807 error body and `UnauthorizedError`, the shared API client in `packages/shared` (still the only place that sets the identity header) and the component-test harness in `apps/api/test/`. The rules that change an outcome - credential check, session renewal and expiry, rotation, revocation, password rules, audit events, test-user seeding - run in `UserService` in `modules/identity/src/user/`, which the unit tests reach with in-memory doubles; the middleware in `apps/api` only verifies the token and hands the user id on.
 
-1. sign-in request -> `createUserRouter` (new) - validates the body, hands email, password and user agent to `UserService`
-2. `UserService` (new) - checks the password hash (door 3), on success writes a session row (door 2) holding the hash of a new refresh token, signs an access token (door 4), records an audit event (door 5); the router answers the token, its lifetime and the user and sets the refresh cookie (door 6)
+1. sign-in request -> `createUserRouter` (door 8) - validates the body, hands email, password and user agent to `UserService`
+2. `UserService` (door 8) - checks the password hash (door 3), on success writes a session row (door 2) holding the hash of a new refresh token, signs an access token (door 4), records an audit event (door 5); the router answers the token, its lifetime and the user and sets the refresh cookie (door 6)
 3. refresh request -> `UserService` - finds the session by the cookie's hash; while active, replaces the token hash and pushes the idle deadline forward (sliding), signs a new access token; otherwise `401` and the cookie is cleared
-4. any data request -> `requireUser` (new) - verifies the bearer token through the ledger's exported token check, puts the user id in `res.locals.userId`, or answers `401`
+4. any data request -> `requireUser` (new) - verifies the bearer token through the token check `modules/identity` exports from its `index.ts`, puts the user id in `res.locals.userId`, or answers `401`
 5. `LedgerRouters` (exists) - the category, account and transaction controllers read `res.locals.userId` instead of `X-User-Id`; services unchanged
 6. sign-out and password-change requests -> `UserService` - revoke the current session / change the hash and revoke every other session of the user
 7. `WebApp` (exists) - keeps the access token in memory, restores the session at load through refresh, retries once after a `401` through refresh and otherwise shows the sign-in page
-8. `SeedScript` (new) -> `UserService` - creates the five test users that do not exist yet
+8. `SeedScript` (new) -> `UserService` (door 8) - creates the five test users that do not exist yet
 
 ```mermaid
 sequenceDiagram
@@ -49,18 +49,19 @@ sequenceDiagram
 | Front | What changes |
 | --- | --- |
 | domain | "acting user" meant the `X-User-Id` value; now means the `sub` of a verified access token. Branching on it today: the three controllers (`currentUserId()` / inline header read) - all move to `res.locals.userId` |
-| stored data | `user` gains `email`, `password_hash`, `name`, `status`, `last_login_at`; new `user_session`. Nothing to backfill: the user table is empty and existing ledger rows are test data (user: "Currently I'm using only for tests"); rows owned by free-text ids such as `alice` stay in place and become unreachable |
+| modules | `modules/ledger/src/user/` moves to `modules/identity/src/user/`; `apps/api` mounts both modules' routers and runs both modules' migrations (`node dist/migrate.js`); `vitest.config.ts`, `tsconfig.json` references, the root `build` script (migrations copy) and the `Dockerfile` (`COPY modules/identity/package.json`) gain the new package; `docs/tech/definitions/architecture.md` describes the second module |
+| stored data | the ledger drops its empty `user` table in its migration `0003_*`; the identity module creates `user` with the new columns and `user_session` in its own migration `0000_*`; `user` gains `email`, `password_hash`, `name`, `status`, `last_login_at`; new `user_session`. Nothing to backfill: the user table is empty and existing ledger rows are test data (user: "Currently I'm using only for tests"); rows owned by free-text ids such as `alice` stay in place and become unreachable |
 | readers | the web app (every screen now needs a session); the Bruno collection in `tools/bruno` (every request sends `X-User-Id` today); `docs/tech/definitions/security.md`, `web.md`, `logging.md`, `ci-cd.md`; `.env.example`; the CI smoke test, which starts the image and now must pass `AUTH_JWT_SECRET` |
 | config | new: `AUTH_JWT_SECRET` (required), `AUTH_ACCESS_TOKEN_TTL_SECONDS` (default 900), `AUTH_SESSION_IDLE_TTL_SECONDS` (default 604800), `AUTH_COOKIE_SECURE` (default `true`), `TEST_USER_PASSWORD_PREFIX` (seed only) |
-| dependencies | `jose`, `@node-rs/argon2`, `pino` in `modules/ledger` |
+| dependencies | `jose`, `@node-rs/argon2`, `pino` in `modules/identity` |
 | web serving | `/sign-in` and `/settings/password` are served `index.html` by the API (door 7); the Vite dev proxy gains `/auth` |
 
 ```mermaid
 erDiagram
     user ||--o{ user_session : "signs in as"
-    user ||--o{ account : owns
-    user ||--o{ category : owns
-    user ||--o{ transaction : owns
+    user ||..o{ account : "owns (ledger, by userId text, no FK)"
+    user ||..o{ category : "owns (ledger, by userId text, no FK)"
+    user ||..o{ transaction : "owns (ledger, by userId text, no FK)"
 ```
 
 New: `user_session` and its relation to `user`; `email`, `password_hash`, `name`, `status`, `last_login_at` on `user`. One-way constraints: `user.email` unique (door 1); `user_session.token_hash` unique (door 2). Ledger tables keep their existing `userId` text column with no foreign key (unchanged).
@@ -91,12 +92,13 @@ stateDiagram-v2
 
 | One-way door | Literal shape | Alternative rejected |
 | --- | --- | --- |
-| 1. `user` columns | migration `0003_*`: `email text NOT NULL` with `CREATE UNIQUE INDEX user_email_unique ON user (email)`, stored trimmed and lower-case; `password_hash text NOT NULL`; `name text NOT NULL`; `status text NOT NULL DEFAULT 'active'` (`'active' \| 'deleted'`); `last_login_at integer` (epoch ms, nullable) | case-sensitive email: `Alice@x.io` and `alice@x.io` would be two accounts |
+| 1. `user` columns | identity migration `0000_*`: `email text NOT NULL` with `CREATE UNIQUE INDEX user_email_unique ON user (email)`, stored trimmed and lower-case; `password_hash text NOT NULL`; `name text NOT NULL`; `status text NOT NULL DEFAULT 'active'` (`'active' \| 'deleted'`); `last_login_at integer` (epoch ms, nullable) | case-sensitive email: `Alice@x.io` and `alice@x.io` would be two accounts |
 | 2. `user_session` table | `user_session(id text PK uuid, user_id text NOT NULL REFERENCES user(id), token_hash text NOT NULL UNIQUE, expires_at integer NOT NULL, revoked_at integer, user_agent text, created_at integer NOT NULL, updated_at integer NOT NULL)`; `token_hash` = SHA-256 hex of a 32-byte random base64url token; one row per signed-in device, rotation overwrites `token_hash` and `expires_at` | one row per issued token: more rows and a cleanup job for no behaviour the PRD needs |
 | 3. password hashing | `@node-rs/argon2` `hash`/`verify`, Argon2id with the library defaults; PHC string in `password_hash`. Unknown email still runs one `verify` against a fixed dummy hash | `argon2` (node-gyp): needs a build-script allowance in `.pnpmfile.cjs`; `@node-rs/argon2` ships prebuilt binaries with no install script |
 | 4. access token | `jose` `SignJWT`, `HS256`, secret `AUTH_JWT_SECRET` (at least 32 characters, app refuses to start otherwise), claims `sub` = user id, `iss` = `capital-care`, `iat`, `exp` = now + `AUTH_ACCESS_TOKEN_TTL_SECONDS`; sent as `Authorization: Bearer <token>`; kept in browser memory only | `jsonwebtoken`: CommonJS with more dependencies; checking the session on every request: the user chose pure JWT, accepting other devices keep access until their token expires |
-| 5. audit log | `pino` logger in `modules/ledger`, one JSON line per event: `{ "event": "auth.sign_in" \| "auth.sign_out" \| "auth.password_change", "outcome": "success" \| "failure", "reason"?: "unknown_email" \| "wrong_password" \| "user_deleted" \| "no_session" \| "wrong_current_password" \| "invalid_new_password", "userId"?: "<uuid>", "email"?: "<masked>" }`; masking keeps the first and last character of the local part (`u***1@capital-care.test`; one or two characters: first character + `***`) and the whole domain; never a password or token | `console.log` strings: `logging.md` decides on Pino and structured lines |
+| 5. audit log | `pino` logger in `modules/identity`, one JSON line per event: `{ "event": "auth.sign_in" \| "auth.sign_out" \| "auth.password_change", "outcome": "success" \| "failure", "reason"?: "unknown_email" \| "wrong_password" \| "user_deleted" \| "no_session" \| "wrong_current_password" \| "invalid_new_password", "userId"?: "<uuid>", "email"?: "<masked>" }`; masking keeps the first and last character of the local part (`u***1@capital-care.test`; one or two characters: first character + `***`) and the whole domain; never a password or token | `console.log` strings: `logging.md` decides on Pino and structured lines |
 | 6. refresh cookie | `cc_refresh=<token>; HttpOnly; SameSite=Strict; Path=/auth; Max-Age=<AUTH_SESSION_IDLE_TTL_SECONDS>`, plus `Secure` unless `AUTH_COOKIE_SECURE=false`; cleared with `Max-Age=0` | token in `localStorage`: readable by any script on the page |
+| 8. identity module | `modules/identity` (package `@capital-care/identity`) with the same layout as the ledger (`src/user/`, `src/shared/persistence/`, `src/shared/errors.ts`, `src/config.ts`, `src/index.ts`); `index.ts` exports `createIdentityRouters`, `verifyAccessToken`, `migrateIdentity`, `closeIdentityDatabase`, `seedTestUsers` and public types only; same SQLite file (`DB_PATH`), own migrations folder `modules/identity/src/shared/persistence/migrations` and own Drizzle migrations table `__drizzle_migrations_identity`; the ledger never imports it; `apps/api` composes both | `user` stays in `modules/ledger`: identity has its own language (credentials, sessions, tokens) and the next three PRDs change it and not the ledger; extracting it later means moving a populated table between two migration sets. A separate database file: two connections and no shared transaction for no gain today |
 | 7. SPA route fallback | after `express.static`, `GET /sign-in` and `GET /settings/password` answer `index.html` from `WEB_DIST_PATH` with `Cache-Control: no-cache`; client routes are listed explicitly, so no API path can be shadowed | catch-all fallback for every unknown `GET`: would answer `index.html` where a mistyped API path should `404` |
 
 - Nothing else in this change is hard to reverse
@@ -120,7 +122,7 @@ A test user signs in with email and password and the data routes answer only wit
    - user 1 creates an account; user 2 lists accounts → user 1's account is absent
 7. IF a request to `/categories`, `/accounts` or `/transactions` carries no token, a malformed token, a token signed with another secret, or an expired token THEN the system SHALL answer `401` with `type` `UnauthorizedError` and `detail` `Authentication required`
    - a valid `X-User-Id: alice` and no token → 401; token expired one second ago → 401
-8. The system SHALL not read `X-User-Id` anywhere in `apps/api`, `modules/ledger` or `packages/shared`
+8. The system SHALL not read `X-User-Id` anywhere in `apps/api`, `modules/ledger`, `modules/identity` or `packages/shared`
 9. IF `AUTH_JWT_SECRET` is missing or shorter than 32 characters THEN `createApp()` SHALL throw an error naming `AUTH_JWT_SECRET`
    - 31 characters → throws; 32 → starts
 10. IF `AUTH_ACCESS_TOKEN_TTL_SECONDS` or `AUTH_SESSION_IDLE_TTL_SECONDS` is set to anything but a whole number of at least 1 THEN `createApp()` SHALL throw an error naming the variable; WHEN unset THEN they SHALL be 900 and 604800
@@ -198,8 +200,10 @@ The screens have no binding capture; layout follows `docs/tech/definitions/desig
 
 42. The Bruno collection SHALL sign in as a test user in a first request, store the access token, send `Authorization: Bearer {{accessToken}}` instead of `X-User-Id` on every request, replace the `Missing X-User-Id` requests with missing-token requests, and add requests for wrong credentials (401) and refresh without a cookie (401)
 43. The CI smoke test SHALL start the image with an `AUTH_JWT_SECRET` and still pass
-44. The system SHALL update `docs/tech/definitions/security.md`, `web.md`, `logging.md` and `ci-cd.md`, `.env.example`, `tools/AGENTS.md` and `README.md` so they describe the bearer token, the refresh cookie, the new variables, the SPA routes, the audit log and the seed command; `X-User-Id` SHALL appear in none of them except as history
-45. WHEN `pnpm build`, `pnpm type-check` and `pnpm test` run THEN each SHALL exit 0
+44. The system SHALL update `docs/tech/definitions/security.md`, `web.md`, `logging.md`, `ci-cd.md`, `architecture.md` and `database.md`, `.env.example`, `tools/AGENTS.md` and `README.md` so they describe the bearer token, the refresh cookie, the new variables, the SPA routes, the audit log, the seed command and the `modules/identity` module with its own migrations; `X-User-Id` SHALL appear in none of them except as history
+45. WHEN the database is migrated from the ledger's migration `0002` THEN `node dist/migrate.js` SHALL apply the ledger's `0003` (drop of the empty `user` table) and the identity module's migrations in one run, and running it again SHALL change nothing
+46. The system SHALL keep `modules/ledger` free of imports from `@capital-care/identity` and `modules/identity` free of imports from `@capital-care/ledger`
+47. WHEN `pnpm build`, `pnpm type-check` and `pnpm test` run THEN each SHALL exit 0
 
 ## Out of scope
 
@@ -227,6 +231,7 @@ The screens have no binding capture; layout follows `docs/tech/definitions/desig
 | confirm field on change password | yes | user chose "Yes" | y |
 | Bruno collection | updated in this feature | user chose "Yes, update it" | y |
 | existing data | nothing migrated | user: "Currently I'm using only for tests. Consider that there is no transactions registered." | y |
+| identity module | `modules/identity`, separate from the ledger, same database file, own migrations | user asked whether auth should be a new module, then: "Atualiza o PRD (se for necessáiro) e a spec." after the recommendation of `modules/identity` | y |
 | solution | in-house, JWT kept for learning | user, in the PRD conversation | y |
 | test-user emails and names | `user<n>@capital-care.test`, `Test User <n>` | `.test` is reserved and never routable; the PRD fixes the count, not the names | n |
 | route names | `/auth/sign-in`, `/auth/refresh`, `/auth/sign-out`, `/auth/password` | a separate `/auth` prefix lets the cookie be scoped to `Path=/auth` | n |
