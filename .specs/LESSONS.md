@@ -104,6 +104,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: C27 / AC 12 (modules/ledger/transaction)
 - last seen: 2026-11-18T18:41:19Z
 
+### L-016 - When a rule trims only spaces, trim U+0020 explicitly; String.prototype.trim strips every Unicode whitespace and silently accepts characters the character rule refuses
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `validation` · harmful: 0
+- features: child-categories
+- evidence: verification.md finding 1 / C47 (validation)
+- last seen: 2026-11-25T17:49:19Z
+
+### L-017 - Prove a log or event rule also on the no-change case, asserting that nothing is written
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `observability` · harmful: 0
+- features: child-categories
+- evidence: verification.md finding 2 / C48 (observability)
+- last seen: 2026-11-25T17:49:19Z
+
+### L-018 - Give a service branch that expands its input through another service a unit test whose stub returns extra values, not an identity stub
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `service-layer` · harmful: 0
+- features: child-categories
+- evidence: verification.md finding 3 / C49 (service-layer)
+- last seen: 2026-11-25T17:49:19Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
