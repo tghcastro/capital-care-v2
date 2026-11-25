@@ -1,6 +1,6 @@
 # Base authentication
 
-**Approved**: <pending>
+**Approved**: 2026-11-25 - user: "PRD 1 aproved. Let's start planning the others PRDs before the implementation"
 
 ## Problem
 
