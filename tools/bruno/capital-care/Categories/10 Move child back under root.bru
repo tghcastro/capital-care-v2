@@ -1,0 +1,22 @@
+meta {
+  name: 10 Move child back under root
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/categories/{{childId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "parentId": "{{categoryId}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.parentId: eq {{categoryId}}
+}

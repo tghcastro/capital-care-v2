@@ -19,4 +19,5 @@ body:json {
 assert {
   res.status: eq 409
   res.body.type: eq ConflictError
+  res.body.detail: eq name is taken
 }

@@ -1,0 +1,22 @@
+meta {
+  name: 11 Setup tree grandchild
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "TreeLeaf {{$timestamp}}", "parentId": "{{treeChildId}}" }
+}
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("treeLeafId", res.body.id);
+}

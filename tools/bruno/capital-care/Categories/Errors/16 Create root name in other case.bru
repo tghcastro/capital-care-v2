@@ -1,0 +1,21 @@
+meta {
+  name: 16 Create root name in other case
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "{{treeRootNameUpper}}" }
+}
+assert {
+  res.status: eq 409
+  res.body.type: eq ConflictError
+  res.body.detail: eq name is taken
+}
+

@@ -19,18 +19,20 @@ import { createAccountRouter } from './account/account.controller.js';
 import { TransactionRepository } from './transaction/transaction.repository.js';
 import { TransactionService } from './transaction/transaction.service.js';
 import { createTransactionRouter } from './transaction/transaction.controller.js';
+import { silentLogger, type LedgerLogger } from './shared/logger.js';
 
 export { getLedgerConfig } from './config.js';
-export type { Category } from './category/category.types.js';
+export type { Category, CategoryNode } from './category/category.types.js';
+export type { LedgerLogger } from './shared/logger.js';
 export type { Account } from './account/account.types.js';
 export type { Transaction, Occurrence } from './transaction/transaction.types.js';
 
-export function createLedgerRouters() {
+export function createLedgerRouters(options: { logger?: LedgerLogger } = {}) {
   const config = getLedgerConfig();
   const db = getDatabase(config.dbPath);
 
   const categoryRepository = new CategoryRepository(db);
-  const categoryService = new CategoryService(categoryRepository);
+  const categoryService = new CategoryService(categoryRepository, options.logger ?? silentLogger);
   const categoryRouter = createCategoryRouter(categoryService);
 
   const accountRepository = new AccountRepository(db);

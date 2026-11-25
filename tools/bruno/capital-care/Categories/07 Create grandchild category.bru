@@ -1,0 +1,27 @@
+meta {
+  name: 07 Create grandchild category
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Fruit {{$timestamp}}",
+    "parentId": "{{childId}}"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.parentId: eq {{childId}}
+}
+
+script:post-response {
+  bru.setVar("grandchildId", res.body.id);
+}

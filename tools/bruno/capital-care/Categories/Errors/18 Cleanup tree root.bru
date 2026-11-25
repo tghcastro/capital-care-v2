@@ -1,0 +1,16 @@
+meta {
+  name: 18 Cleanup tree root
+  type: http
+  seq: 18
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{treeRootId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}
+

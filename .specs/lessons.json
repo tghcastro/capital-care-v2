@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 16,
+  "next_id": 19,
   "lessons": [
     {
       "id": "L-001",
@@ -274,6 +274,60 @@
       ],
       "created": "2026-11-18T18:41:19Z",
       "last_seen": "2026-11-18T18:41:19Z"
+    },
+    {
+      "id": "L-016",
+      "key": "ac_gap::when a rule trims only spaces trim u 0020 explicitly string prototype trim strips every unicode whitespace and silently accepts characters the character rule refuses",
+      "text": "When a rule trims only spaces, trim U+0020 explicitly; String.prototype.trim strips every Unicode whitespace and silently accepts characters the character rule refuses",
+      "signal": "ac_gap",
+      "scope": "validation",
+      "status": "candidate",
+      "features": [
+        "child-categories"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 1 / C47 (validation)"
+      ],
+      "created": "2026-11-25T17:49:19Z",
+      "last_seen": "2026-11-25T17:49:19Z"
+    },
+    {
+      "id": "L-017",
+      "key": "weak_test::prove a log or event rule also on the no change case asserting that nothing is written",
+      "text": "Prove a log or event rule also on the no-change case, asserting that nothing is written",
+      "signal": "weak_test",
+      "scope": "observability",
+      "status": "candidate",
+      "features": [
+        "child-categories"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 2 / C48 (observability)"
+      ],
+      "created": "2026-11-25T17:49:19Z",
+      "last_seen": "2026-11-25T17:49:19Z"
+    },
+    {
+      "id": "L-018",
+      "key": "weak_test::give a service branch that expands its input through another service a unit test whose stub returns extra values not an identity stub",
+      "text": "Give a service branch that expands its input through another service a unit test whose stub returns extra values, not an identity stub",
+      "signal": "weak_test",
+      "scope": "service-layer",
+      "status": "candidate",
+      "features": [
+        "child-categories"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 3 / C49 (service-layer)"
+      ],
+      "created": "2026-11-25T17:49:19Z",
+      "last_seen": "2026-11-25T17:49:19Z"
     }
   ]
 }

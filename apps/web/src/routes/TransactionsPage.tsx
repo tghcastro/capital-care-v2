@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Button, Card, compactInput } from '../components/ui';
+import { branchIds, flattenTree } from '../features/category/categoryTree';
 import { FilterPanel, type PanelValues } from '../features/ledger/FilterPanel';
 import { groupByDay, NONE } from '../features/transaction/ledgerView';
 import { QuickAdd } from '../features/transaction/QuickAdd';
@@ -72,7 +73,7 @@ export function TransactionsPage() {
   });
 
   const categoryNames = useMemo(
-    () => new Map((categories.data ?? []).map((c) => [c.id, c.name])),
+    () => new Map(flattenTree(categories.data ?? []).map(({ item }) => [item.id, item.name])),
     [categories.data]
   );
   const accountNames = useMemo(
@@ -200,15 +201,18 @@ export function TransactionsPage() {
               noun="category"
               noneLabel="Uncategorized"
               withDescription
+              tree
               items={categories.data ?? []}
               selected={categoryFilter}
               onToggle={(id) => setCategoryFilter(toggled(categoryFilter, id))}
               onSave={saveCategory}
               onDelete={async (id) => {
+                const node = flattenTree(categories.data ?? []).find((f) => f.item.id === id)?.item;
+                const removed = node ? branchIds(node) : [id];
                 await api.deleteCategory(id);
                 setCategoryFilter((s) => {
                   const next = new Set(s);
-                  next.delete(id);
+                  for (const each of removed) next.delete(each);
                   return next;
                 });
                 await queryClient.invalidateQueries({ queryKey: ['categories'] });

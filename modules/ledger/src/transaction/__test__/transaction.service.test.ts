@@ -26,8 +26,9 @@ function setup() {
     {
       getCategory(id: string, userId: string): Category {
         if (categoryOwners[id] !== userId) throw new NotFoundError('Category not found');
-        return { id, userId, name: id, description: null, createdAt: new Date(), updatedAt: new Date() };
+        return { id, userId, parentId: null, name: id, description: null, createdAt: new Date(), updatedAt: new Date() };
       },
+      descendantIds: (_userId: string, ids: readonly string[]) => [...ids],
     },
   );
   return { repository, service };

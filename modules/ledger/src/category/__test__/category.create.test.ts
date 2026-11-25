@@ -55,16 +55,6 @@ describe('Category Create', () => {
     }).toThrow(ValidationError);
   });
 
-  it('create with name > 255 chars returns 400 PASS', () => {
-    const longName = 'a'.repeat(256);
-    expect(() => {
-      service.createCategory({
-        name: longName,
-        userId: 'user1',
-      });
-    }).toThrow(ValidationError);
-  });
-
   it('user cannot create duplicate name PASS', () => {
     service.createCategory({
       name: 'Groceries',

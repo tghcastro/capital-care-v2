@@ -5,21 +5,22 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CategoryRepository } from '../category.repository.js';
+import { CategoryService } from '../category.service.js';
 
-// Real SQLite repository: the mock repository used elsewhere never runs the ORDER BY query.
+// The list order over the real SQLite repository: the mock repository used elsewhere never runs a query.
 const MIGRATIONS_FOLDER = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   '../../shared/persistence/migrations',
 );
 
 let sqlite: Database.Database;
-let repository: CategoryRepository;
+let service: CategoryService;
 
 beforeEach(() => {
   sqlite = new Database(':memory:');
   const db = drizzle(sqlite);
   migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-  repository = new CategoryRepository(db);
+  service = new CategoryService(new CategoryRepository(db));
 });
 
 afterEach(() => {
@@ -28,15 +29,15 @@ afterEach(() => {
 
 function seed(userId: string, names: string[]): void {
   for (const name of names) {
-    repository.create({ userId, name, description: null });
+    service.createCategory({ userId, name });
   }
 }
 
-describe('CategoryRepository.listByUser sort (real SQLite)', () => {
+describe('CategoryService.listCategories sort (real SQLite)', () => {
   it('sort=name returns the user categories ascending by name', () => {
     seed('user1', ['Mango', 'Zebra', 'Apple']);
 
-    const names = repository.listByUser('user1', 'name').map((c) => c.name);
+    const names = service.listCategories('user1', 'name').map((c) => c.name);
 
     expect(names).toEqual(['Apple', 'Mango', 'Zebra']);
   });
@@ -44,7 +45,7 @@ describe('CategoryRepository.listByUser sort (real SQLite)', () => {
   it('sort=-name returns the user categories descending by name', () => {
     seed('user1', ['Mango', 'Zebra', 'Apple']);
 
-    const names = repository.listByUser('user1', '-name').map((c) => c.name);
+    const names = service.listCategories('user1', '-name').map((c) => c.name);
 
     expect(names).toEqual(['Zebra', 'Mango', 'Apple']);
   });
@@ -53,7 +54,7 @@ describe('CategoryRepository.listByUser sort (real SQLite)', () => {
     seed('user1', ['Mango', 'Apple']);
     seed('user2', ['Zebra']);
 
-    const names = repository.listByUser('user1', '-name').map((c) => c.name);
+    const names = service.listCategories('user1', '-name').map((c) => c.name);
 
     expect(names).toEqual(['Mango', 'Apple']);
   });
@@ -61,6 +62,6 @@ describe('CategoryRepository.listByUser sort (real SQLite)', () => {
   it('sort=-name on a user with no categories returns an empty array', () => {
     seed('user2', ['Zebra']);
 
-    expect(repository.listByUser('user1', '-name')).toEqual([]);
+    expect(service.listCategories('user1', '-name')).toEqual([]);
   });
 });

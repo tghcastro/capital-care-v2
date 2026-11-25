@@ -44,6 +44,17 @@ export interface Category {
   id: string;
   name: string;
   description: string | null;
+  /** Null on a top-level category. */
+  parentId: string | null;
+  /** Sent by `GET /categories`, which nests the tree, alphabetical at each level. */
+  children?: Category[];
+}
+
+/** What creating or editing a category sends; `parentId: null` moves it to the top level. */
+export interface CategoryInput {
+  name: string;
+  description?: string | null;
+  parentId?: string | null;
 }
 
 export interface Account {
@@ -114,9 +125,8 @@ export function createApiClient({ baseUrl, userId }: ApiClientOptions) {
     async listCategories(): Promise<Category[]> {
       return (await request<{ categories: Category[] }>('GET', '/categories')).categories;
     },
-    createCategory: (input: { name: string; description?: string | null }) =>
-      request<Category>('POST', '/categories', input),
-    updateCategory: (id: string, input: { name: string; description?: string | null }) =>
+    createCategory: (input: CategoryInput) => request<Category>('POST', '/categories', input),
+    updateCategory: (id: string, input: CategoryInput) =>
       request<Category>('PATCH', `/categories/${encodeURIComponent(id)}`, input),
     deleteCategory: (id: string) => request<undefined>('DELETE', `/categories/${encodeURIComponent(id)}`),
     async listAccounts(): Promise<Account[]> {

@@ -1,0 +1,21 @@
+meta {
+  name: 14 Create with a symbol in the name
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "Food & Drinks" }
+}
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: eq name may contain only letters, digits and spaces
+}
+

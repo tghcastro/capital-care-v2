@@ -1,4 +1,5 @@
 import { createTransactionSchema, type Account, type Category } from '@capital-care/shared';
+import { flattenTree, indented } from '../category/categoryTree';
 import { useState } from 'react';
 import { useForm, useWatch, type FieldErrors, type Resolver } from 'react-hook-form';
 import { Button, Card, Field, compactInput as inputClass } from '../../components/ui';
@@ -63,6 +64,7 @@ const resolver: Resolver<FormValues> = (values) => {
 };
 
 interface Props {
+  /** The category tree as the API returns it. */
   categories: Category[];
   accounts: Account[];
   defaultDate: string;
@@ -124,9 +126,9 @@ export function QuickAdd({ categories, accounts, defaultDate, onCreated }: Props
           <Field label="Category" error={errors.categoryId?.message}>
             <select className={inputClass} {...register('categoryId')}>
               <option value="">Select…</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+              {flattenTree(categories).map((row) => (
+                <option key={row.item.id} value={row.item.id}>
+                  {indented(row)}
                 </option>
               ))}
             </select>
