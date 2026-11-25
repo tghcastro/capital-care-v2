@@ -1,0 +1,22 @@
+meta {
+  name: 09 Setup tree root
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "TreeRoot {{$timestamp}}" }
+}
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("treeRootId", res.body.id); bru.setVar("treeRootNameUpper", res.body.name.toUpperCase());
+}

@@ -21,8 +21,8 @@ tests {
     expect(ids).to.include(bru.getVar("categoryId"));
   });
 
-  test("is sorted by name ascending by default", function() {
+  test("top-level categories are sorted by name ascending by default", function() {
     const names = res.body.categories.map(function(c) { return c.name; });
-    expect(names).to.deep.equal([...names].sort());
+    expect(names).to.deep.equal([...names].sort(function(a, b) { return a.localeCompare(b, 'en', { sensitivity: 'base' }); }));
   });
 }

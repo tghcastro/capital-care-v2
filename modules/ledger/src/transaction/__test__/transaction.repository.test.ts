@@ -53,7 +53,7 @@ function count(table: string): number {
 function seedCategoryAndAccount(): void {
   sqlite
     .prepare(
-      `INSERT INTO category (id, userId, name, description, createdAt, updatedAt) VALUES ('cat-1', 'alice', 'Housing', NULL, 0, 0)`,
+      `INSERT INTO category (id, userId, name, nameKey, description, createdAt, updatedAt) VALUES ('cat-1', 'alice', 'Housing', 'housing', NULL, 0, 0)`,
     )
     .run();
   sqlite

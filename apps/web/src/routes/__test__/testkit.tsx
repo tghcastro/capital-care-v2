@@ -21,9 +21,10 @@ export function occ(over: Partial<Occurrence> = {}): Occurrence {
   };
 }
 
+/** As GET /categories answers: a tree, alphabetical at each level. */
 export const categories: Category[] = [
-  { id: 'c2', name: 'Salary', description: null },
-  { id: 'c1', name: 'Food', description: null },
+  { id: 'c1', name: 'Food', description: null, parentId: null, children: [] },
+  { id: 'c2', name: 'Salary', description: null, parentId: null, children: [] },
 ];
 export const accounts: Account[] = [
   { id: 'a2', name: 'Savings' },

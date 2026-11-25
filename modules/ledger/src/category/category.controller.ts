@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { createCategorySchema, updateCategorySchema } from './category.dto.js';
 import type { CategoryService } from './category.service.js';
-import type { Category } from './category.types.js';
+import type { Category, CategoryNode } from './category.types.js';
 import { ValidationError, ConflictError, NotFoundError } from '../shared/errors.js';
 
 // Named route params are always strings; Express 5 types only widen to string[] for wildcards.
@@ -32,6 +32,9 @@ export function createCategoryRouter(service: CategoryService): Router {
 
       return res.status(201).json(serializeCategory(category));
     } catch (err) {
+      if (err instanceof NotFoundError) {
+        return res.status(404).json({ type: 'NotFoundError', detail: err.message });
+      }
       if (err instanceof ConflictError) {
         return res.status(409).json({ type: 'ConflictError', detail: err.message });
       }
@@ -52,7 +55,7 @@ export function createCategoryRouter(service: CategoryService): Router {
     const sort = (req.query.sort as string) || 'name';
     const categories = service.listCategories(userId, sort);
 
-    return res.status(200).json({ categories: categories.map(serializeCategory) });
+    return res.status(200).json({ categories: categories.map(serializeNode) });
   });
 
   router.get('/:id', (req: IdRequest, res: Response) => {
@@ -123,9 +126,6 @@ export function createCategoryRouter(service: CategoryService): Router {
       if (err instanceof NotFoundError) {
         return res.status(404).json({ type: 'NotFoundError', detail: err.message });
       }
-      if (err instanceof ConflictError) {
-        return res.status(409).json({ type: 'ConflictError', detail: err.message });
-      }
       throw err;
     }
   });
@@ -137,9 +137,16 @@ function serializeCategory(category: Category) {
   return {
     id: category.id,
     userId: category.userId,
+    parentId: category.parentId,
     name: category.name,
     description: category.description,
     createdAt: category.createdAt.toISOString(),
     updatedAt: category.updatedAt.toISOString(),
   };
+}
+
+function serializeNode(node: CategoryNode): ReturnType<typeof serializeCategory> & {
+  children: unknown[];
+} {
+  return { ...serializeCategory(node), children: node.children.map(serializeNode) };
 }

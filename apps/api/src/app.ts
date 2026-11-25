@@ -8,9 +8,12 @@
 import path from 'node:path';
 import express from 'express';
 import helmet from 'helmet';
-import { createLedgerRouters } from '@capital-care/ledger';
+import { pino } from 'pino';
+import { createLedgerRouters, type LedgerLogger } from '@capital-care/ledger';
 
-export function createApp(): express.Express {
+export function createApp(options: { logger?: LedgerLogger } = {}): express.Express {
+  // Structured JSON logs on stdout (docs/tech/definitions/logging.md). Tests pass their own logger.
+  const logger = options.logger ?? pino();
   const app = express();
 
   // Middleware
@@ -25,7 +28,7 @@ export function createApp(): express.Express {
   });
 
   // Mount routers from modules/ledger
-  const { categoryRouter, accountRouter, transactionRouter } = createLedgerRouters();
+  const { categoryRouter, accountRouter, transactionRouter } = createLedgerRouters({ logger });
   app.use('/categories', categoryRouter);
   app.use('/accounts', accountRouter);
   app.use('/transactions', transactionRouter);

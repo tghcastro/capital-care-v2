@@ -83,7 +83,7 @@ export class TransactionService {
   constructor(
     private repository: ITransactionRepository,
     private accounts: Pick<AccountService, 'getAccount'>,
-    private categories: Pick<CategoryService, 'getCategory'>,
+    private categories: Pick<CategoryService, 'getCategory' | 'descendantIds'>,
   ) {}
 
   createTransaction(userId: string, input: CreateTransactionInput): Transaction {
@@ -126,7 +126,8 @@ export class TransactionService {
    * month opens with every matching occurrence dated before it and the totals are returned; with
    * one it opens at 0 and the totals are not returned.
    */
-  balance(userId: string, month: string, filters: MonthFilters): MonthBalance {
+  balance(userId: string, month: string, requested: MonthFilters): MonthBalance {
+    const filters = this.withDescendants(userId, requested);
     const byCategory = filters.categoryIds.length > 0;
     let running = byCategory ? new Decimal(0) : this.openingBalance(userId, month, filters);
     const opening = running;
@@ -172,8 +173,17 @@ export class TransactionService {
     return total;
   }
 
+  /** A category filter selects the category and all its descendants (AD-013); `null` stays. */
+  private withDescendants(userId: string, filters: MonthFilters): MonthFilters {
+    const ids = filters.categoryIds.filter((id): id is string => id !== null);
+    if (ids.length === 0) return filters;
+    const none = filters.categoryIds.includes(null) ? [null] : [];
+    return { ...filters, categoryIds: [...none, ...this.categories.descendantIds(userId, ids)] };
+  }
+
   /** Every occurrence dated in `month` (`YYYY-MM`) matching `filters`, ordered by date, description, then id. */
-  listMonth(userId: string, month: string, filters: MonthFilters = NO_FILTER): Occurrence[] {
+  listMonth(userId: string, month: string, requested: MonthFilters = NO_FILTER): Occurrence[] {
+    const filters = this.withDescendants(userId, requested);
     const from = `${month}-01`;
     const to = `${month}-31`;
     const occurrences: Occurrence[] = [];

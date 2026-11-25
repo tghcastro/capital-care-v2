@@ -1,0 +1,22 @@
+meta {
+  name: 10 Setup tree child
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "TreeChild {{$timestamp}}", "parentId": "{{treeRootId}}" }
+}
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  bru.setVar("treeChildId", res.body.id);
+}

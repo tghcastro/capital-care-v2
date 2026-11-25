@@ -1,0 +1,31 @@
+meta {
+  name: 08 List categories as a tree
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/categories
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("nests the child under the root and the grandchild under the child", function() {
+    const root = res.body.categories.find(function(c) { return c.id === bru.getVar("categoryId"); });
+    expect(root.parentId).to.equal(null);
+    expect(root.children.map(function(c) { return c.id; })).to.deep.equal([bru.getVar("childId")]);
+    expect(root.children[0].children.map(function(c) { return c.id; })).to.deep.equal([bru.getVar("grandchildId")]);
+    expect(root.children[0].children[0].children).to.deep.equal([]);
+  });
+
+  test("lists only top-level categories at the first level", function() {
+    const ids = res.body.categories.map(function(c) { return c.id; });
+    expect(ids).to.not.include(bru.getVar("childId"));
+    expect(ids).to.not.include(bru.getVar("grandchildId"));
+  });
+}

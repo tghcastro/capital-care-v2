@@ -1,0 +1,21 @@
+meta {
+  name: 12 Create under a grandchild
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "TooDeep {{$timestamp}}", "parentId": "{{treeLeafId}}" }
+}
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: eq maximum depth is 3 tiers
+}
+

@@ -1,0 +1,21 @@
+meta {
+  name: 17 Move to a missing parent
+  type: http
+  seq: 17
+}
+
+patch {
+  url: {{baseUrl}}/categories/{{treeChildId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  { "parentId": "00000000-0000-0000-0000-000000000000" }
+}
+assert {
+  res.status: eq 404
+  res.body.type: eq NotFoundError
+  res.body.detail: eq Parent category not found
+}
+

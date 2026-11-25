@@ -68,7 +68,7 @@ describe('categories panel description', () => {
   it('Edit sends null when the description is cleared', async () => {
     const api = mockApi({
       occurrences: rows(),
-      categories: [{ id: 'c1', name: 'Food', description: 'Meals' }],
+      categories: [{ id: 'c1', name: 'Food', description: 'Meals', parentId: null, children: [] }],
     });
     server.use(
       http.patch('/categories/c1', async ({ request }) => {

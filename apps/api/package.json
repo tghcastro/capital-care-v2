@@ -14,10 +14,11 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
-    "express": "^5.0.0",
     "@capital-care/ledger": "workspace:*",
     "@capital-care/shared": "workspace:*",
-    "helmet": "^8.3.0"
+    "express": "^5.0.0",
+    "helmet": "^8.3.0",
+    "pino": "^10.4.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

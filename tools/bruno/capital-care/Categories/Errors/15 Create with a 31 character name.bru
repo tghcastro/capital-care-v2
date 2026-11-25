@@ -1,0 +1,21 @@
+meta {
+  name: 15 Create with a 31 character name
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "abcdefghijklmnopqrstuvwxyzabcde" }
+}
+assert {
+  res.status: eq 400
+  res.body.type: eq ValidationError
+  res.body.detail: eq name must be at most 30 characters
+}
+

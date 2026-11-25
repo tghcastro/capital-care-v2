@@ -1,0 +1,22 @@
+meta {
+  name: 09 Move child to top level
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/categories/{{childId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "parentId": null
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.parentId: isNull
+}

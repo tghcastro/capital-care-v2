@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { flattenTree, indented, type Flat } from '../category/categoryTree';
 import { NONE } from '../transaction/ledgerView';
 import { Button, Card, Dialog, Field, inputClass } from '../../components/ui';
 
@@ -6,19 +7,34 @@ export interface PanelItem {
   id: string;
   name: string;
   description?: string | null | undefined;
+  /** Tree mode: null on a top-level item. */
+  parentId?: string | null | undefined;
+  /** Tree mode: the items nested under this one, in the API's order. */
+  children?: PanelItem[] | undefined;
 }
 
 export interface PanelValues {
   name: string;
   /** On edit an empty description is sent as null so it can be cleared. */
   description?: string | null;
+  /** Tree mode: sent only when it differs from today; null moves to the top level. */
+  parentId?: string | null;
 }
+
+type Row = Flat<PanelItem>;
+
+const INDENT = ['', 'pl-6', 'pl-12'];
 
 interface Props {
   title: string; // "Categories"
   noun: string; // "category"
   noneLabel: string; // "Uncategorized"
   withDescription: boolean;
+  /**
+   * Items nest through `children` and arrive ordered: roots start expanded, deeper items
+   * collapsed; the dialogs offer a Parent and the delete confirmation counts the branch.
+   */
+  tree?: boolean;
   items: PanelItem[];
   selected: ReadonlySet<string>;
   onToggle: (id: string) => void;
@@ -34,12 +50,30 @@ function message(error: unknown): string {
 }
 
 export function FilterPanel(props: Props) {
-  const { title, noun, noneLabel, items, selected, onToggle } = props;
+  const { title, noun, noneLabel, items, selected, onToggle, tree = false } = props;
   const [dialogue, setDialogue] = useState<Dialogue>(null);
-  const sorted = [...items].sort((a, b) =>
-    a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
-  );
-  const entries: PanelItem[] = [{ id: NONE, name: noneLabel }, ...sorted];
+  // Expanded state the user chose; otherwise top-level items are expanded and others collapsed.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const ordered = tree
+    ? items
+    : [...items].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+  const isExpanded = (row: Row) => expanded[row.item.id] ?? row.depth === 1;
+  const expand = (id: string, open: boolean) => setExpanded((e) => ({ ...e, [id]: open }));
+
+  const rows: Row[] = [{ item: { id: NONE, name: noneLabel }, depth: 1 }];
+  const visit = (level: readonly PanelItem[], depth: number) => {
+    for (const item of level) {
+      const row = { item, depth };
+      rows.push(row);
+      if (tree && isExpanded(row)) visit(item.children ?? [], depth + 1);
+    }
+  };
+  visit(ordered, 1);
+
+  const onSave = async (id: string | null, values: PanelValues) => {
+    await props.onSave(id, values);
+    if (values.parentId) expand(values.parentId, true);
+  };
 
   return (
     <Card className="min-w-0">
@@ -55,16 +89,37 @@ export function FilterPanel(props: Props) {
           </Button>
         </div>
         <ul className="space-y-1">
-          {entries.map((item) => {
+          {rows.map((row) => {
+            const { item, depth } = row;
             const real = item.id !== NONE;
             const on = selected.has(item.id);
+            const hasChildren = (item.children ?? []).length > 0;
+            const open = isExpanded(row);
             return (
-              <li key={item.id} className="flex items-center gap-1">
+              <li
+                key={item.id}
+                className={`flex items-center gap-1 ${tree ? (INDENT[depth - 1] ?? '') : ''}`}
+              >
+                {tree && real ? (
+                  hasChildren ? (
+                    <button
+                      type="button"
+                      aria-label={`${open ? 'Collapse' : 'Expand'} ${item.name}`}
+                      aria-expanded={open}
+                      onClick={() => expand(item.id, !open)}
+                      className="w-6 shrink-0 rounded-full text-muted hover:bg-mint-50"
+                    >
+                      <span aria-hidden="true">{open ? '▾' : '▸'}</span>
+                    </button>
+                  ) : (
+                    <span aria-hidden="true" className="w-6 shrink-0" />
+                  )
+                ) : null}
                 <button
                   type="button"
                   aria-pressed={on}
                   onClick={() => onToggle(item.id)}
-                  className={`flex-1 rounded-control px-3 py-2 text-left text-sm font-medium ${
+                  className={`min-w-0 flex-1 truncate rounded-control px-3 py-2 text-left text-sm font-medium ${
                     on ? 'bg-mint-100 font-bold text-primary-deep' : 'hover:bg-mint-50'
                   }`}
                 >
@@ -98,6 +153,8 @@ export function FilterPanel(props: Props) {
       {dialogue?.kind === 'add' || dialogue?.kind === 'edit' ? (
         <SaveDialog
           {...props}
+          tree={tree}
+          onSave={onSave}
           item={dialogue.kind === 'edit' ? dialogue.item : null}
           onClose={() => setDialogue(null)}
         />
@@ -105,6 +162,7 @@ export function FilterPanel(props: Props) {
       {dialogue?.kind === 'delete' ? (
         <DeleteDialog
           item={dialogue.item}
+          tree={tree}
           onDelete={props.onDelete}
           onClose={() => setDialogue(null)}
         />
@@ -116,11 +174,15 @@ export function FilterPanel(props: Props) {
 function SaveDialog({
   noun,
   withDescription,
+  tree,
+  items,
   item,
   onSave,
   onClose,
 }: Props & { item: PanelItem | null; onClose: () => void }) {
   const [name, setName] = useState(item?.name ?? '');
+  const [parent, setParent] = useState(item?.parentId ?? '');
+  const parents = flattenTree(items).filter((row) => row.item.id !== item?.id);
   const [description, setDescription] = useState(item?.description ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -139,6 +201,10 @@ function SaveDialog({
         const text = description.trim();
         if (text) values.description = text;
         else if (item) values.description = null;
+      }
+      if (tree) {
+        const parentId = parent === '' ? null : parent;
+        if (parentId !== (item?.parentId ?? null)) values.parentId = parentId;
       }
       await onSave(item?.id ?? null, values);
       onClose();
@@ -163,6 +229,22 @@ function SaveDialog({
             />
           </Field>
         ) : null}
+        {tree ? (
+          <Field label="Parent">
+            <select
+              className={inputClass}
+              value={parent}
+              onChange={(e) => setParent(e.target.value)}
+            >
+              <option value="">None (top level)</option>
+              {parents.map((row) => (
+                <option key={row.item.id} value={row.item.id}>
+                  {indented(row)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        ) : null}
         {error ? (
           <p role="alert" className="text-sm text-error">
             {error}
@@ -183,10 +265,12 @@ function SaveDialog({
 
 function DeleteDialog({
   item,
+  tree,
   onDelete,
   onClose,
 }: {
   item: PanelItem;
+  tree: boolean;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
 }) {
@@ -205,6 +289,7 @@ function DeleteDialog({
   }
   return (
     <Dialog title={`Delete ${item.name}?`}>
+      {tree ? <p className="mb-4 text-sm">{deleteWarning(item)}</p> : null}
       {error ? (
         <p role="alert" className="mb-4 text-sm text-error">
           {error}
@@ -220,4 +305,12 @@ function DeleteDialog({
       </div>
     </Dialog>
   );
+}
+
+/** What a delete removes: the item and its whole branch, permanently. */
+function deleteWarning(item: PanelItem): string {
+  const count = flattenTree([item]).length;
+  return count === 1
+    ? 'This permanently removes this category. Its transactions become uncategorized.'
+    : `This permanently removes ${count} categories: ${item.name} and its ${count - 1} subcategories. Their transactions become uncategorized.`;
 }
