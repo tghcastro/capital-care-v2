@@ -5,6 +5,8 @@
 
 A lightweight personal finance tracker for recording expenses (transactions), each classified by a category and paid from an account.
 
+![Capital Care transactions page: a month of transactions with running balances, and the monthly summary with the final available balance](docs/images/transactions-summary.png)
+
 Example transaction:
 
 | Date | Description | Amount | Category | Account |

@@ -54,7 +54,7 @@ The [`tlc-spec-lean`](../.claude/skills/tlc-spec-lean/) skill turns the PRD into
 - **`checks.md`**: for every criterion, the test or step that proves it, written *before* the code.
 - **`verification.md`**: written after the build by a verifier that did not write the code. It reports which criteria pass, which fail, and why.
 
-Decisions taken along the way are recorded in [`.specs/STATE.md`](../.specs/STATE.md) with the question asked, the option chosen, and the owner's words. Stack-level decisions live in [`docs/tech/definitions/`](tech/definitions/).
+Decisions taken along the way are recorded in [`.specs/STATE.md`](../.specs/STATE.md) with the question asked, the option chosen, and the owner's words. Stack-level decisions live in [`docs/tech/definitions/`](tech/definitions/), and the most significant ones are written up as [Architecture Decision Records](adr/README.md).
 
 ### 4. Build, review, ship
 
@@ -75,6 +75,10 @@ The first transactions page reset every balance to 0.00 at the start of each mon
 | Scope control | [`.specs/STATE.md`](../.specs/STATE.md) | A proposed change to how settling recurring transactions works (**AD-007**) was **withdrawn** and deferred to its own future PRD, which kept the feature small. |
 | Checks and verification | [`checks.md`](../.specs/features/monthly-balance/checks.md), [`verification.md`](../.specs/features/monthly-balance/verification.md) | Each criterion has a proof, and an independent pass verified it. |
 | Ship | [PR #31](https://github.com/tghcastro/capital-care-v2/pull/31) `feat: carry monthly balances over between months` | Squash-merged, CI green, image published. |
+
+The result, with the balance carried over from October into November:
+
+![Transactions page for November 2026 with running balances per day](images/transactions-desktop.png)
 
 ## The Agent Harness
 
