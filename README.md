@@ -30,6 +30,7 @@ flowchart LR
 - **Linear** tracks the work, **Claude Code** plans and builds it, **GitHub Actions** tests and ships it, **Slack** gets the updates.
 - Every feature has a PRD ([`.prd/`](.prd/)), a reviewed plan with proof-backed checks ([`.specs/features/`](.specs/features/)), and a decision log ([`.specs/STATE.md`](.specs/STATE.md)).
 - Agents get context through [`AGENTS.md`](AGENTS.md) files and reusable [skills](.claude/skills/).
+- *Planned:* black-box acceptance tests in a separate repository, in a different language and toolset, run against each published image. See [docs/workflow.md](docs/workflow.md#acceptance-tests-planned).
 
 The full process, with one feature followed end to end, is in **[docs/workflow.md](docs/workflow.md)**.
 

@@ -64,6 +64,18 @@ The agent works on a branch named after the issue, follows [Conventional Commits
 
 Verification findings become **lessons** in [`.specs/LESSONS.md`](../.specs/LESSONS.md), maintained by a script. A lesson starts as a *candidate* and is promoted to guidance for future plans only after it shows up in two different features, so one-off mistakes do not turn into rules.
 
+## Acceptance Tests (Planned)
+
+> **Status: planned.** The repository does not exist yet. This section will link to it once it does.
+
+The tests in this repository (unit, integration, component, E2E) know the code. Acceptance tests will not: they will live in a **separate repository**, written in a **different language with different tools**, and treat Capital Care as a product someone else built.
+
+- **What they test:** the released product, i.e. the published container image from GHCR, through its HTTP API and the web UI. No access to the source code or the database.
+- **Where the test cases come from:** the EARS acceptance criteria in each feature's `plan.md`. The same criteria are then proven twice: from the inside by the tests here, and from the outside by the acceptance suite.
+- **Why a separate repository:** it keeps the tests honest (they can only use public interfaces), and it is room to learn another stack on a real product, which is one of this project's goals.
+
+The test levels kept in this repository are defined in [`testing.md`](tech/definitions/testing.md#test-levels-test-pyramid).
+
 ## Worked Example: Monthly Balance
 
 The first transactions page reset every balance to 0.00 at the start of each month, so the "Final available balance" was really just that month's net total.
