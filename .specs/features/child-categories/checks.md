@@ -234,8 +234,8 @@ Proof: run node | ✓ apps/api/test/categories.component.test.ts > API app: GET 
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** none yet
-- **Boundary:** C1-C46 closed at `6fed6ea`-amended feature commit
+- **Dispatched:** Verifier at `c23dc7b` (diff `0ea6063..c23dc7b`)
+- **Boundary:** C1-C46 closed at `0df27c1`
 - **Abandoned:** drizzle-kit's generated `0003` (an `ALTER TABLE ADD` that drops `ON DELETE CASCADE` and adds `nameKey NOT NULL` with no default, which SQLite refuses) - replaced by a hand-written table rebuild
 - **Walked:** built app on a scratch database (`node apps/api/dist/main.js`, `WEB_DIST_PATH=apps/web/dist`), Chromium at 1280x900, as `alice`. Added `Food`, `Groceries` under Food, `Fruit` under Groceries (Groceries opened to show it), `Home`, `Saúde`: the panel showed Food > Groceries > Fruit indented, then Home, Saúde. `SAÚDE` showed `name is taken`, `Apples` under Fruit showed `maximum depth is 3 tiers`, `Food & Drinks` showed `name may contain only letters, digits and spaces`, each in the open dialog. The quick-add Category select listed Food, Groceries, Fruit indented, Home, Saúde; a transaction `Bananas` on Fruit showed under the `Food` filter. Edit Groceries > Parent `Home` moved Groceries with Fruit under Home. Delete Home showed `This permanently removes 3 categories: Home and its 2 subcategories. Their transactions become uncategorized.`; after Delete the panel held Food, Saúde and `Bananas` showed under `Uncategorized`. The server printed pino records `category.created` ×5, `category.moved`, `category.deleted` ×3 with userId, categoryId and categoryName. The user reaches every state from the transactions page's Categories panel and quick-add form
 - **Not run here:** the Bruno `Categories` folder was updated for the tree, the name rules and the new errors, but not run: building the app and fetching the Bruno CLI were refused by the session's permission check
