@@ -157,7 +157,7 @@ The screens have no binding capture; layout follows `docs/tech/definitions/desig
 | --- | --- |
 | email verification | there is no email server (user, 2026-11-25) |
 | administrator, roles, deactivating other people's accounts | single kind of user for now |
-| default categories or accounts | user: "começar vazio" |
+| default categories or accounts | the account starts empty (PRD) |
 | exporting data before deletion | PRD boundary |
 | rate limiting and anti-bot on registration | rate limiting PRD; accepted while local |
 | immediate cut-off of a deleted user's other devices | user chose "Accept the gap": another device keeps its access token until it expires (default 15 min); data it creates in that window stays orphaned and unreachable |
@@ -167,7 +167,7 @@ The screens have no binding capture; layout follows `docs/tech/definitions/desig
 
 | Assumption | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| confirm field on registration | yes, `Confirm password` | user: "Ok então precisamos disso" | y |
+| confirm field on registration | yes, `Confirm password` | Approved by tghcastro | y |
 | a deleted user's other devices | keep access until their access token expires | user chose "Accept the gap" | y |
 | deletion removes data | permanently, transactions, accounts and categories | PRD, confirmed by user | y |
 | duplicate email message | `This email is already registered`, revealing the email has an account | PRD open question, default accepted while local | y |

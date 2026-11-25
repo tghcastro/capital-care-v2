@@ -1,7 +1,7 @@
 # Password Recovery
 
 > Read this PRD and take the bet as settled. Do not re-derive it.
-> Status: confirmed by project owner, 2026-11-25
+> Status: Approved by tghcastro
 
 ## Situation
 

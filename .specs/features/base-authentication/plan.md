@@ -1,6 +1,6 @@
 # Base authentication
 
-**Approved**: 2026-11-25 - user: "PRD 1 aproved. Let's start planning the others PRDs before the implementation"
+**Approved**: 2026-11-25 - user: "Approved by tghcastro"
 
 ## Problem
 
@@ -50,7 +50,7 @@ sequenceDiagram
 | --- | --- |
 | domain | "acting user" meant the `X-User-Id` value; now means the `sub` of a verified access token. Branching on it today: the three controllers (`currentUserId()` / inline header read) - all move to `res.locals.userId` |
 | modules | `modules/ledger/src/user/` moves to `modules/identity/src/user/`; `apps/api` mounts both modules' routers and runs both modules' migrations (`node dist/migrate.js`); `vitest.config.ts`, `tsconfig.json` references, the root `build` script (migrations copy) and the `Dockerfile` (`COPY modules/identity/package.json`) gain the new package; `docs/tech/definitions/architecture.md` describes the second module |
-| stored data | the ledger drops its empty `user` table in its migration `0003_*`; the identity module creates `user` with the new columns and `user_session` in its own migration `0000_*`; `user` gains `email`, `password_hash`, `name`, `status`, `last_login_at`; new `user_session`. Nothing to backfill: the user table is empty and existing ledger rows are test data (user: "Currently I'm using only for tests"); rows owned by free-text ids such as `alice` stay in place and become unreachable |
+| stored data | the ledger drops its empty `user` table in its migration `0003_*`; the identity module creates `user` with the new columns and `user_session` in its own migration `0000_*`; `user` gains `email`, `password_hash`, `name`, `status`, `last_login_at`; new `user_session`. Nothing to backfill: the user table is empty and existing ledger rows are test data (confirmed by tghcastro); rows owned by free-text ids such as `alice` stay in place and become unreachable |
 | readers | the web app (every screen now needs a session); the Bruno collection in `tools/bruno` (every request sends `X-User-Id` today); `docs/tech/definitions/security.md`, `web.md`, `logging.md`, `ci-cd.md`; `.env.example`; the CI smoke test, which starts the image and now must pass `AUTH_JWT_SECRET` |
 | config | new: `AUTH_JWT_SECRET` (required), `AUTH_ACCESS_TOKEN_TTL_SECONDS` (default 900), `AUTH_SESSION_IDLE_TTL_SECONDS` (default 604800), `AUTH_COOKIE_SECURE` (default `true`), `TEST_USER_PASSWORD_PREFIX` (seed only) |
 | dependencies | `jose`, `@node-rs/argon2`, `pino` in `modules/identity` |
@@ -230,8 +230,8 @@ The screens have no binding capture; layout follows `docs/tech/definitions/desig
 | revocation on other devices | within the access token lifetime | user chose "Accept up to the access token lifetime" | y |
 | confirm field on change password | yes | user chose "Yes" | y |
 | Bruno collection | updated in this feature | user chose "Yes, update it" | y |
-| existing data | nothing migrated | user: "Currently I'm using only for tests. Consider that there is no transactions registered." | y |
-| identity module | `modules/identity`, separate from the ledger, same database file, own migrations | user asked whether auth should be a new module, then: "Atualiza o PRD (se for necessáiro) e a spec." after the recommendation of `modules/identity` | y |
+| existing data | nothing migrated | existing data is test data only - confirmed by tghcastro | y |
+| identity module | `modules/identity`, separate from the ledger, same database file, own migrations | recommended in the conversation - Approved by tghcastro | y |
 | solution | in-house, JWT kept for learning | user, in the PRD conversation | y |
 | test-user emails and names | `user<n>@capital-care.test`, `Test User <n>` | `.test` is reserved and never routable; the PRD fixes the count, not the names | n |
 | route names | `/auth/sign-in`, `/auth/refresh`, `/auth/sign-out`, `/auth/password` | a separate `/auth` prefix lets the cookie be scoped to `Path=/auth` | n |
