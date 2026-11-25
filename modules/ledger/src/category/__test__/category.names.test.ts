@@ -39,6 +39,19 @@ describe('category names', () => {
     expect(service.createCategory({ name: decomposed, userId: 'alice' }).name).toBe('Saúde');
   });
 
+  it('AC9 a name of tens of thousands of spaces is normalised in linear time', () => {
+    const started = Date.now();
+    expect(createError(`a${' '.repeat(100_000)}b`)).toBeNull();
+    expect(createError(`${' '.repeat(100_000)}c${' '.repeat(100_000)}`)).toBeNull();
+    expect(Date.now() - started).toBeLessThan(500);
+    expect(
+      repository
+        .listByUser('alice')
+        .map((c) => c.name)
+        .sort()
+    ).toEqual(['a b', 'c']);
+  });
+
   it('AC10 a missing, non-string or blank name on create answers name is required', () => {
     for (const name of [undefined, null, 42, '', '    ']) {
       expectRefused(createError(name), ValidationError, 'name is required');

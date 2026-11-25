@@ -21,8 +21,13 @@ const collator = new Intl.Collator('en', { sensitivity: 'base' });
 /** NFC, spaces trimmed, inner runs of spaces collapsed to one. */
 function normaliseName(raw: unknown): string {
   if (typeof raw !== 'string') throw new ValidationError(NAME_REQUIRED);
-  // Only plain spaces are trimmed; a tab or other whitespace is left for the character rule.
-  const name = raw.normalize('NFC').replace(/^ +| +$/g, '').replace(/ {2,}/g, ' ');
+  // Only plain spaces are trimmed and collapsed; a tab or other whitespace is left for the
+  // character rule. Split and join is linear, where a trailing ` +$` regex is quadratic.
+  const name = raw
+    .normalize('NFC')
+    .split(' ')
+    .filter((part) => part.length > 0)
+    .join(' ');
   if (name.length === 0) throw new ValidationError(NAME_REQUIRED);
   if ([...name].length > MAX_NAME_LENGTH) throw new ValidationError(NAME_TOO_LONG);
   if (!ALLOWED.test(name)) throw new ValidationError(NAME_CHARACTERS);

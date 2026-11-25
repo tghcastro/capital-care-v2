@@ -5,7 +5,7 @@ Run node: `pnpm exec vitest run --project node modules/ledger/src/category modul
 Run web: `pnpm exec vitest run --project web apps/web/src/routes/__test__/categoryTree.test.tsx --reporter=verbose 2>&1`
 Plan: `.specs/features/child-categories/plan.md`
 
-49 checks in 11 slices · 5 one-way doors · 0 open
+50 checks in 11 slices · 5 one-way doors · 0 open
 
 ## Checks
 
@@ -211,6 +211,9 @@ Proof: run node | ✓ modules/ledger/src/transaction/__test__/transaction.filter
 Proof: run node | ✓ modules/ledger/src/transaction/__test__/transaction.filter.test.ts > TransactionService category filter > AC32 balance counts the category and every descendant
 Proof: run node | ✓ modules/ledger/src/transaction/__test__/transaction.filter.test.ts > TransactionService category filter > AC33 none stays selected beside expanded ids and alone asks for no descendants
 
+**C50** - Normalising a name is linear: `a` + 100,000 spaces + `b` and a name padded by 100,000 spaces on each side are stored as `a b` and `c` within 500 ms (AC 9; CodeQL "polynomial regular expression" on PR #46)
+Proof: run node | ✓ modules/ledger/src/category/__test__/category.names.test.ts > category names > AC9 a name of tens of thousands of spaces is normalised in linear time
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |
@@ -249,6 +252,7 @@ Proof: run node | ✓ modules/ledger/src/transaction/__test__/transaction.filter
 - **Settled mid-build:** none
 - **Dispatched:** Verifier at `c23dc7b` (diff `0ea6063..c23dc7b`) - returned, FAIL with 3 findings; C47-C49 appended for them, fixed in `0f87e1a`; Verifier resumed to judge C47-C49 at `0f87e1a` - returned, PASS
 - **Boundary:** C1-C46 closed at `0df27c1`
+- **CodeQL on PR #46:** `/^ +| +$/` in `normaliseName` took 854 ms on 50,000 inner spaces; replaced by split and join, C50 appended
 - **Abandoned:** drizzle-kit's generated `0003` (an `ALTER TABLE ADD` that drops `ON DELETE CASCADE` and adds `nameKey NOT NULL` with no default, which SQLite refuses) - replaced by a hand-written table rebuild
 - **Walked:** built app on a scratch database (`node apps/api/dist/main.js`, `WEB_DIST_PATH=apps/web/dist`), Chromium at 1280x900, as `alice`. Added `Food`, `Groceries` under Food, `Fruit` under Groceries (Groceries opened to show it), `Home`, `Saúde`: the panel showed Food > Groceries > Fruit indented, then Home, Saúde. `SAÚDE` showed `name is taken`, `Apples` under Fruit showed `maximum depth is 3 tiers`, `Food & Drinks` showed `name may contain only letters, digits and spaces`, each in the open dialog. The quick-add Category select listed Food, Groceries, Fruit indented, Home, Saúde; a transaction `Bananas` on Fruit showed under the `Food` filter. Edit Groceries > Parent `Home` moved Groceries with Fruit under Home. Delete Home showed `This permanently removes 3 categories: Home and its 2 subcategories. Their transactions become uncategorized.`; after Delete the panel held Food, Saúde and `Bananas` showed under `Uncategorized`. The server printed pino records `category.created` ×5, `category.moved`, `category.deleted` ×3 with userId, categoryId and categoryName. The user reaches every state from the transactions page's Categories panel and quick-add form
 - **Not run here:** the Bruno `Categories` folder was updated for the tree, the name rules and the new errors, but not run: building the app and fetching the Bruno CLI were refused by the session's permission check
