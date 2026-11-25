@@ -18,10 +18,11 @@ const PARENT_NOT_FOUND = 'Parent category not found';
 const ALLOWED = /^[\p{L}\p{Nd} ]+$/u;
 const collator = new Intl.Collator('en', { sensitivity: 'base' });
 
-/** NFC, trimmed, inner runs of spaces collapsed to one. */
+/** NFC, spaces trimmed, inner runs of spaces collapsed to one. */
 function normaliseName(raw: unknown): string {
   if (typeof raw !== 'string') throw new ValidationError(NAME_REQUIRED);
-  const name = raw.normalize('NFC').trim().replace(/ {2,}/g, ' ');
+  // Only plain spaces are trimmed; a tab or other whitespace is left for the character rule.
+  const name = raw.normalize('NFC').replace(/^ +| +$/g, '').replace(/ {2,}/g, ' ');
   if (name.length === 0) throw new ValidationError(NAME_REQUIRED);
   if ([...name].length > MAX_NAME_LENGTH) throw new ValidationError(NAME_TOO_LONG);
   if (!ALLOWED.test(name)) throw new ValidationError(NAME_CHARACTERS);
@@ -205,6 +206,7 @@ export class CategoryService {
 
     const renamed = patch.name !== undefined && patch.name !== category.name;
     const moved = patch.parentId !== undefined;
+    const described = patch.description !== undefined && patch.description !== category.description;
     const base = { userId, categoryId: id, categoryName: updated.name };
     if (renamed) {
       this.logger.info(
@@ -223,7 +225,7 @@ export class CategoryService {
         'category moved',
       );
     }
-    if (!renamed && !moved) {
+    if (!renamed && !moved && described) {
       this.logger.info({ event: 'category.updated', ...base }, 'category updated');
     }
 

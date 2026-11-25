@@ -373,6 +373,18 @@ describe('category tree: log records', () => {
     ]);
   });
 
+  it('AC29 AC31 a patch that changes nothing writes no record', () => {
+    const food = add('Food');
+    const groceries = add('Groceries', food.id);
+    service.updateCategory(food.id, { description: 'Meals', userId: ALICE });
+    records.length = 0;
+    service.updateCategory(food.id, { userId: ALICE });
+    service.updateCategory(food.id, { name: 'Food', userId: ALICE });
+    service.updateCategory(food.id, { description: 'Meals', userId: ALICE });
+    service.updateCategory(groceries.id, { parentId: food.id, userId: ALICE });
+    expect(records).toEqual([]);
+  });
+
   it('AC30 deleting a branch writes one category.deleted record per category removed', () => {
     const food = add('Food');
     const groceries = add('Groceries', food.id);

@@ -1,11 +1,11 @@
 # Child Categories checks
 
 Build: `pnpm build`; `pnpm type-check`; `pnpm lint`
-Run node: `pnpm exec vitest run --project node modules/ledger/src/category apps/api/test/categories.component.test.ts --reporter=verbose 2>&1`
+Run node: `pnpm exec vitest run --project node modules/ledger/src/category modules/ledger/src/transaction/__test__/transaction.filter.test.ts apps/api/test/categories.component.test.ts --reporter=verbose 2>&1`
 Run web: `pnpm exec vitest run --project web apps/web/src/routes/__test__/categoryTree.test.tsx --reporter=verbose 2>&1`
 Plan: `.specs/features/child-categories/plan.md`
 
-46 checks in 10 slices · 5 one-way doors · 0 open
+49 checks in 11 slices · 5 one-way doors · 0 open
 
 ## Checks
 
@@ -198,6 +198,19 @@ Proof: run node | ✓ modules/ledger/src/category/__test__/category.migration.te
 **C46** - `GET /categories/:id` answers `200` with `parentId`, `404` for another user's category and `401` without `X-User-Id` (Surface)
 Proof: run node | ✓ apps/api/test/categories.component.test.ts > API app: GET /categories/:id > answers 200 with parentId, 404 for another user and 401 without a user
 
+### S11 - Found by the Verifier
+
+**C47** - A tab, newline or no-break space at either end of a name is refused with `400` `name may contain only letters, digits and spaces`, not trimmed: `Food\t`, `\nFood`, `\u00a0Food` (AC 9, AC 12)
+Proof: run node | ✓ modules/ledger/src/category/__test__/category.names.test.ts > category names > AC9 AC12 a tab, newline or no-break space at either end is refused, not trimmed
+
+**C48** - A patch that changes nothing (`{}`, the same name, the same description, the current parent) writes no `category.*` record (AC 29, AC 31)
+Proof: run node | ✓ modules/ledger/src/category/__test__/category.tree.test.ts > category tree: log records > AC29 AC31 a patch that changes nothing writes no record
+
+**C49** - `TransactionService.listMonth` and `balance` filter by the ids `descendantIds` returns, and keep `none` beside them (AC 32, AC 33)
+Proof: run node | ✓ modules/ledger/src/transaction/__test__/transaction.filter.test.ts > TransactionService category filter > AC32 listMonth selects the category and every descendant the category service returns
+Proof: run node | ✓ modules/ledger/src/transaction/__test__/transaction.filter.test.ts > TransactionService category filter > AC32 balance counts the category and every descendant
+Proof: run node | ✓ modules/ledger/src/transaction/__test__/transaction.filter.test.ts > TransactionService category filter > AC33 none stays selected beside expanded ids and alone asks for no descendants
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |
@@ -234,7 +247,7 @@ Proof: run node | ✓ apps/api/test/categories.component.test.ts > API app: GET 
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** Verifier at `c23dc7b` (diff `0ea6063..c23dc7b`)
+- **Dispatched:** Verifier at `c23dc7b` (diff `0ea6063..c23dc7b`) - returned, FAIL with 3 findings; C47-C49 appended for them
 - **Boundary:** C1-C46 closed at `0df27c1`
 - **Abandoned:** drizzle-kit's generated `0003` (an `ALTER TABLE ADD` that drops `ON DELETE CASCADE` and adds `nameKey NOT NULL` with no default, which SQLite refuses) - replaced by a hand-written table rebuild
 - **Walked:** built app on a scratch database (`node apps/api/dist/main.js`, `WEB_DIST_PATH=apps/web/dist`), Chromium at 1280x900, as `alice`. Added `Food`, `Groceries` under Food, `Fruit` under Groceries (Groceries opened to show it), `Home`, `Saúde`: the panel showed Food > Groceries > Fruit indented, then Home, Saúde. `SAÚDE` showed `name is taken`, `Apples` under Fruit showed `maximum depth is 3 tiers`, `Food & Drinks` showed `name may contain only letters, digits and spaces`, each in the open dialog. The quick-add Category select listed Food, Groceries, Fruit indented, Home, Saúde; a transaction `Bananas` on Fruit showed under the `Food` filter. Edit Groceries > Parent `Home` moved Groceries with Fruit under Home. Delete Home showed `This permanently removes 3 categories: Home and its 2 subcategories. Their transactions become uncategorized.`; after Delete the panel held Food, Saúde and `Bananas` showed under `Uncategorized`. The server printed pino records `category.created` ×5, `category.moved`, `category.deleted` ×3 with userId, categoryId and categoryName. The user reaches every state from the transactions page's Categories panel and quick-add form

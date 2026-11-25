@@ -98,6 +98,17 @@ describe('category names', () => {
     }
   });
 
+  it('AC9 AC12 a tab, newline or no-break space at either end is refused, not trimmed', () => {
+    for (const name of ['Food\t', '\nFood', '\u00a0Food', 'Food\u00a0', 'Food\r\n']) {
+      expectRefused(
+        createError(name),
+        ValidationError,
+        'name may contain only letters, digits and spaces'
+      );
+    }
+    expect(repository.listByUser('alice')).toEqual([]);
+  });
+
   it('AC12 the character rule applies to a rename', () => {
     const food = service.createCategory({ name: 'Food', userId: 'alice' });
     expect(() => service.updateCategory(food.id, { name: 'Food!', userId: 'alice' })).toThrow(
