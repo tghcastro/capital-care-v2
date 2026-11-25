@@ -1,6 +1,6 @@
 # Password recovery
 
-**Approved**: <pending>
+**Approved**: 2026-11-25 - user: "Approved by tghcastro"
 
 ## Problem
 
