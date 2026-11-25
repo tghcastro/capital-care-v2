@@ -1,5 +1,8 @@
 # Capital Care
 
+[![CI/CD](https://github.com/tghcastro/capital-care-v2/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/tghcastro/capital-care-v2/actions/workflows/ci-cd.yml)
+[![CodeQL](https://github.com/tghcastro/capital-care-v2/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/tghcastro/capital-care-v2/actions/workflows/codeql.yml)
+
 A lightweight personal finance tracker for recording expenses (transactions), each classified by a category and paid from an account.
 
 Example transaction:
@@ -11,6 +14,22 @@ Example transaction:
 ## About This Project
 
 This is a learning project: the real goal is practicing agentic development workflows, with the finance tracker itself as the vehicle.
+
+### How it is built
+
+One developer and AI agents (Claude Code), working through a spec-driven flow where the human makes every product decision and the agents plan, build and verify:
+
+```mermaid
+flowchart LR
+    A[Linear issue] --> B[PRD] --> C[Plan + checks<br/>reviewed by owner] --> D[Build] --> E[PR + CI] --> F[Release]
+    D -.-> G[Independent verification] -.-> E
+```
+
+- **Linear** tracks the work, **Claude Code** plans and builds it, **GitHub Actions** tests and ships it, **Slack** gets the updates.
+- Every feature has a PRD ([`.prd/`](.prd/)), a reviewed plan with proof-backed checks ([`.specs/features/`](.specs/features/)), and a decision log ([`.specs/STATE.md`](.specs/STATE.md)).
+- Agents get context through [`AGENTS.md`](AGENTS.md) files and reusable [skills](.claude/skills/).
+
+The full process, with one feature followed end to end, is in **[docs/workflow.md](docs/workflow.md)**.
 
 ---
 
