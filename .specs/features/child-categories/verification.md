@@ -1,7 +1,7 @@
 # Child Categories verification
 
 **Verdict**: PASS
-**Proofs**: `proofs.md` at 0f87e1a
+**Proofs**: `proofs.md` at d7be693
 **Verifier**: independent sub-agent (author != verifier)
 
 ## Checks
@@ -57,6 +57,7 @@
 | C47 | `category.names.test.ts` `AC9 AC12 a tab, newline or no-break space at either end is refused, not trimmed` | yes - `Food\t`, `\nFood`, a no-break space at the start and at the end, and `Food\r\n` each must answer the character-rule detail and nothing is saved; with the old `trim()` all five were accepted, so the test fails if the claim is false |
 | C48 | `category.tree.test.ts` `AC29 AC31 a patch that changes nothing writes no record` | yes - `{}`, the same name, the same description and the current parent each wrote `category.updated` before the fix, and the test asserts no record at all; `AC29 a description-only patch writes category.updated` still holds the real-change case |
 | C49 | `transaction.filter.test.ts` `AC32 listMonth selects the category and every descendant the category service returns`; `AC32 balance counts the category and every descendant`; `AC33 none stays selected beside expanded ids and alone asks for no descendants` | yes - the `descendantIds` stub returns extra ids, so dropping the expansion from `listMonth` (`food` would give only `Lunch`) or `balance` (`-1`, not `-7`) fails, dropping `null` beside ids loses `Loose`, and `asked` proves `none` alone makes no call; unit level, as `testing.md` puts service branches |
+| C50 | `category.names.test.ts` `AC9 a name of tens of thousands of spaces is normalised in linear time` | yes - the 500 ms bound fails on the old `/^ +\| +$/` (`a` + 100,000 spaces + `b` took 3,372 ms in a throwaway run, the split and join 3 ms), and the stored names `a b` and `c` hold the trim and collapse; the new `normaliseName` gives the same output as the old one on `  Food   Out `, `Food\t`, `\nFood`, a no-break space at either end, `Food\r\n` and `Tab\tName`, so AC 9 and AC 12 still hold (C47 green at d7be693) |
 
 ## Findings
 
