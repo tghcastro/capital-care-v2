@@ -88,7 +88,7 @@ What keeps agents consistent is a small set of files, not a long prompt:
 - [`docs/tech/AGENTS.md`](tech/AGENTS.md): an index that tells agents which technical definition to read for which task (an API endpoint, a web feature, a PR...).
 - [`.claude/skills/`](../.claude/skills/): reusable skills for PRDs, specs, ADRs, RFCs and auditing the harness itself (`harness-eval`).
 
-The spec and PRD skills are adapted from [Tech Leads Club](https://github.com/tech-leads-club).
+All five skills (`tlc-prd`, `tlc-spec-lean`, `create-adr`, `create-rfc`, `harness-eval`) are used as published by [Tech Leads Club](https://github.com/tech-leads-club), under the CC-BY-4.0 license. This project uses them unchanged; the work here is in how they are combined into a workflow.
 
 ## What I Learned
 
