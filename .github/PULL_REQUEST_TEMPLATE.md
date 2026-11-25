@@ -1,3 +1,7 @@
+## Issue
+
+<!-- Linear issue: "Closes CAP-123" (closes it on merge) or "Refs CAP-123" (links only). "N/A" if there is none. -->
+
 ## Summary
 
 <!-- One or two sentences: what does this PR do and why. -->

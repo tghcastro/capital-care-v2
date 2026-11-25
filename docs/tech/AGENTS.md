@@ -17,7 +17,7 @@ Decisions live in [docs/tech/definitions/](./definitions/), one file per topic:
 - [definitions/web.md](./definitions/web.md) — web client (`apps/web`): stack, API client, module resolution, same-origin serving, lint additions, folder layout.
 - [definitions/logging.md](./definitions/logging.md) — logging library and request-context convention.
 - [definitions/testing.md](./definitions/testing.md) — test runner, test levels, test database strategy, web test tooling.
-- [definitions/git.md](./definitions/git.md) — branching and merge strategy, branch names, commit message pattern, pull request template.
+- [definitions/git.md](./definitions/git.md) — branching and merge strategy, branch names, commit message pattern, pull request template, Linear issue linking.
 - [definitions/ci-cd.md](./definitions/ci-cd.md) — CI/CD pipeline stages and triggers, GHCR image tags and releases, audit gate, action pinning, permissions, Dependabot and CodeQL.
 - [definitions/design.md](./definitions/design.md) — Web pages design based on "[NerdWallet](https://www.nerdwallet.com/)". This design should be used for the Capital Care front-end.
 

@@ -14,6 +14,7 @@ This is the entrypoint for any AI Agent to understand the project and get contex
 Each folder may have its own `AGENTS.md` describing what it contains and how to work within it. Read the one relevant to your task instead of relying on this file for details.
 
 - [docs/tech/AGENTS.md](docs/tech/AGENTS.md) — technical definitions (architecture, database, API, security, logging, testing).
+- [docs/adr/](docs/adr/README.md) — Architecture Decision Records: why major decisions were made. Read one only when your task revisits that decision.
 
 ## Conventions for Agents
 
@@ -24,6 +25,17 @@ Each folder may have its own `AGENTS.md` describing what it contains and how to 
   - `AGENTS.md` (root): base directions, rules, and paths for all agents.
   - `docs/tech/AGENTS.md`: what is inside `docs/tech/` (files and folders).
 - Read only what makes sense for your current task.
+
+## Work Tracking
+
+Work is tracked in Linear, team `capital-care` (issue key `CAP`). Linear is the source of truth for what to build and its status.
+
+- Start non-trivial work from a Linear issue. If none exists, ask the user before creating one.
+- Read the issue before starting: its description holds the problem, scope and key behaviors, and its "Agent notes" section (if present) holds implementation details for agents.
+- Put the issue code (e.g. `CAP-8`) in the branch name, the commit footer and the PR description. The exact format is in [docs/tech/definitions/git.md](docs/tech/definitions/git.md#task-tracker-linear).
+- Do not change an issue's status by hand. The Linear GitHub integration moves it when the linked PR opens and merges.
+- Labels: each issue gets one `Type` label (`Feature`, `Bug`, `Improvement`, `Docs`, `Chore`, matching the commit type) and one `Area` label (`Ledger`, `Identity`, `Platform`).
+- Updates (issues, PRs, the weekly summary) go to the Slack channel `#capital-care`. Do not post there unless the user asks.
 
 ## Project Conventions and Definitions
 

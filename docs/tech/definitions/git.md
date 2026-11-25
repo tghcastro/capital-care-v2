@@ -12,7 +12,7 @@ Applies to humans and AI agents alike.
 
 - Format: `<type>/<short-description>` in lowercase kebab-case, e.g. `feat/transaction-categories`, `docs/git-definition`.
 - `<type>` uses the same values as [commit types](#commit-messages).
-- If the work comes from a task tracker (Jira, Linear), include the task code: `<type>/<TASK-CODE>-<short-description>`, e.g. `feat/CC-42-transaction-categories`.
+- If the work comes from a Linear issue, include its code: `<type>/<ISSUE-CODE>-<short-description>`, e.g. `feat/CAP-8-child-categories`. Use this format instead of the branch name Linear suggests (`tghcastro/cap-8-...`); Linear still links the branch because it finds the code anywhere in the name.
 - The name must describe the change. Avoid names like `fix`, `test`, `my-branch`.
 
 ## Commit Messages
@@ -36,7 +36,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
   - `chore` — tooling, config, dependencies
 - **Subject:** imperative mood ("add", not "added"), lowercase, no trailing period, 72 characters or fewer.
 - **Body (optional):** explain *why*, not *what*; wrap at 72 characters.
-- **Task code:** when applicable, reference it in the footer, e.g. `Refs: CC-42`.
+- **Issue code:** when the work comes from a Linear issue, reference it in the footer, e.g. `Refs: CAP-8`. See [Task Tracker (Linear)](#task-tracker-linear).
 - **Breaking changes:** add `!` after the type/scope (`feat(api)!: ...`) and a `BREAKING CHANGE:` footer.
 - Keep each commit a single logical change.
 - **AI-assisted commits:** commits authored with assistance from an AI tool must include an appropriate `Co-authored-by` trailer at the end of the message, identifying the actual tool or agent author. Do not use a provider-specific trailer when another tool authored the change. For example:
@@ -50,6 +50,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 The template is [.github/PULL_REQUEST_TEMPLATE.md](../../../.github/PULL_REQUEST_TEMPLATE.md). Fill in every section.
 
 - **Title:** follows the commit pattern above (it becomes the squash commit subject).
+- **Issue:** the Linear issue with a closing keyword, e.g. `Closes CAP-8`, or `Refs CAP-8` when the PR is only part of the issue. Write "N/A" when there is no issue.
 - **Summary:** one or two sentences on what the PR does and why.
 - **Changes:** a bullet per file or area touched, specific enough that a reviewer doesn't need to open every file to know what changed.
 - **Why:** the motivation or decision behind the change, if it isn't obvious from the Summary. Write "N/A" if nothing to add.
@@ -57,3 +58,17 @@ The template is [.github/PULL_REQUEST_TEMPLATE.md](../../../.github/PULL_REQUEST
 - **Testing:** how the change was verified (tests added or updated, manual steps). For documentation-only changes write "N/A — documentation-only change".
 - Keep PRs small and focused on one concern.
 - Delete the branch after merging.
+
+## Task Tracker (Linear)
+
+Work is tracked in Linear (team `capital-care`, issue key `CAP`). The Linear GitHub integration links branches, commits and PRs to issues by their code and updates the issue status:
+
+| Where | Format | Effect in Linear |
+|---|---|---|
+| Branch name | `feat/CAP-8-child-categories` | Branch linked to the issue |
+| Commit footer | `Refs: CAP-8` | Commit linked to the issue |
+| PR description, Issue section | `Closes CAP-8` (also `Fixes`, `Resolves`) | Issue moves to In Progress when the PR opens and to Done when it merges |
+| PR description, Issue section | `Refs CAP-8` (also `Part of`, `Related to`) | PR linked without closing the issue; use it when one issue needs several PRs |
+
+- The PR title does not need the issue code. With squash merge it becomes the commit subject and must stay within the 72-character limit.
+- One PR closes at most one issue. Split large issues into sub-issues in Linear rather than one large PR.
