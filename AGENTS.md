@@ -14,6 +14,7 @@ This is the entrypoint for any AI Agent to understand the project and get contex
 Each folder may have its own `AGENTS.md` describing what it contains and how to work within it. Read the one relevant to your task instead of relying on this file for details.
 
 - [docs/tech/AGENTS.md](docs/tech/AGENTS.md) — technical definitions (architecture, database, API, security, logging, testing).
+- [docs/adr/](docs/adr/README.md) — Architecture Decision Records: why major decisions were made. Read one only when your task revisits that decision.
 
 ## Conventions for Agents
 
