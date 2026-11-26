@@ -1,6 +1,6 @@
 # CI/CD pipeline: test, security scan, build, and publish to GHCR.
 #
-# test -> security -> build -> publish
+# test -> security -> build (smoke test + Bruno API tests) -> publish
 # publish runs only for pushes to main and version tags, never for pull requests.
 #
 # Every third-party action is pinned to a full commit SHA; the version is kept
@@ -126,6 +126,42 @@ jobs:
         run: |
           docker logs smoke || true
           docker rm -f smoke || true
+      # API tests: the whole Bruno collection runs against the same image, in a new
+      # container with no volume, so every run starts from an empty database.
+      - name: Start image for API tests
+        run: |
+          docker run -d --name api-tests -p 3000:3000 "$LOCAL_IMAGE"
+          for i in $(seq 1 30); do
+            body=$(curl -fsS http://127.0.0.1:3000/health || true)
+            [ "$body" = '{"status":"ok"}' ] && exit 0
+            sleep 1
+          done
+          echo "::error::API tests container did not become healthy within 30 seconds"
+          exit 1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Run Bruno collection
+        working-directory: tools/bruno/capital-care
+        run: |
+          mkdir -p "$RUNNER_TEMP/bruno-results"
+          npx --yes @usebruno/cli@4.3.0 run --env CI -r \
+            --reporter-junit "$RUNNER_TEMP/bruno-results/results.xml" \
+            --reporter-json "$RUNNER_TEMP/bruno-results/results.json" \
+            --reporter-html "$RUNNER_TEMP/bruno-results/results.html"
+      - name: API tests container logs and cleanup
+        if: always()
+        run: |
+          docker logs api-tests || true
+          docker rm -f api-tests || true
+      - name: Upload Bruno results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bruno-results
+          path: ${{ runner.temp }}/bruno-results
+          if-no-files-found: warn
+          retention-days: 14
       # The tar is passed to the publish job. It is kept for one day only.
       - name: Upload image artifact
         if: github.event_name == 'push'
