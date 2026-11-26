@@ -1,0 +1,50 @@
+# Spec-lean gates on pull requests: feature folders verified, commit messages and the PR title
+# following the commit pattern, and code changes tied to a feature spec. See
+# docs/tech/definitions/ci-cd.md and scripts/spec_gates.py.
+
+name: Spec gates
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+# No .pyc files: a bytecode write would leave the tree dirty, and check_proofs.py refuses that.
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  spec-gates:
+    name: spec-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # The PR head, not the merge commit: the commits and proofs are the PR branch's own.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      # The proofs check_proofs.py runs are the project's own build and test commands.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Test the gate script
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
+      - name: Run the spec gates
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: python3 scripts/spec_gates.py --base "$BASE_SHA" --head "$HEAD_SHA" --title "$PR_TITLE" --author "$PR_AUTHOR"

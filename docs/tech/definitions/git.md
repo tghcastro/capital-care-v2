@@ -14,6 +14,7 @@ Applies to humans and AI agents alike.
 - `<type>` uses the same values as [commit types](#commit-messages).
 - If the work comes from a Linear issue, include its code: `<type>/<ISSUE-CODE>-<short-description>`, e.g. `feat/CAP-8-child-categories`. Use this format instead of the branch name Linear suggests (`tghcastro/cap-8-...`); Linear still links the branch because it finds the code anywhere in the name.
 - The name must describe the change. Avoid names like `fix`, `test`, `my-branch`.
+- **Tool-named branches:** some tools choose the branch name themselves and cannot push anywhere else: `claude/...` for Claude Code cloud sessions and `dependabot/...` for Dependabot. Those names are accepted as they are. The issue code then goes in every commit footer (`Refs: CAP-8`) and in the PR's Issue section (`Closes CAP-8`). The `spec-gates` CI job enforces the commit footers. Linear does not link such a branch to the issue, but it still links the commits and the PR, and the PR still moves the issue's status.
 
 ## Commit Messages
 
@@ -36,9 +37,10 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
   - `chore` — tooling, config, dependencies
 - **Subject:** imperative mood ("add", not "added"), lowercase, no trailing period, 72 characters or fewer.
 - **Body (optional):** explain *why*, not *what*; wrap at 72 characters.
-- **Issue code:** when the work comes from a Linear issue, reference it in the footer, e.g. `Refs: CAP-8`. See [Task Tracker (Linear)](#task-tracker-linear).
+- **Issue code:** every commit in a PR references its Linear issue in the footer, e.g. `Refs: CAP-8` (the `spec-gates` CI job requires it). See [Task Tracker (Linear)](#task-tracker-linear).
 - **Breaking changes:** add `!` after the type/scope (`feat(api)!: ...`) and a `BREAKING CHANGE:` footer.
 - Keep each commit a single logical change.
+- **CI check:** the `spec-gates` job checks every commit in a PR and the PR title against this pattern, and requires the `Refs: CAP-<n>` footer on every commit. See [ci-cd.md](./ci-cd.md#spec-gates).
 - **AI-assisted commits:** commits authored with assistance from an AI tool must include an appropriate `Co-authored-by` trailer at the end of the message, identifying the actual tool or agent author. Do not use a provider-specific trailer when another tool authored the change. For example:
 
   ```
@@ -55,6 +57,7 @@ The template is [.github/PULL_REQUEST_TEMPLATE.md](../../../.github/PULL_REQUEST
 - **Changes:** a bullet per file or area touched, specific enough that a reviewer doesn't need to open every file to know what changed.
 - **Why:** the motivation or decision behind the change, if it isn't obvious from the Summary. Write "N/A" if nothing to add.
 - **Type of change:** tick the matching box(es): Documentation / specs only, Feature, Bug fix, Refactor (no behavior change), Chore (tooling, config, dependencies). These map to the commit types `docs`, `feat`, `fix`, `refactor`, `chore`.
+- **Verification:** a link to the feature's `.specs/features/<feature>/verification.md`. Write "N/A" for a `docs` or `chore` PR with no feature folder.
 - **Testing:** how the change was verified (tests added or updated, manual steps). For documentation-only changes write "N/A — documentation-only change".
 - Keep PRs small and focused on one concern.
 - Delete the branch after merging.
@@ -65,7 +68,7 @@ Work is tracked in Linear (team `capital-care`, issue key `CAP`). The Linear Git
 
 | Where | Format | Effect in Linear |
 |---|---|---|
-| Branch name | `feat/CAP-8-child-categories` | Branch linked to the issue |
+| Branch name | `feat/CAP-8-child-categories` | Branch linked to the issue (not for [tool-named branches](#branch-names) such as `claude/...`) |
 | Commit footer | `Refs: CAP-8` | Commit linked to the issue |
 | PR description, Issue section | `Closes CAP-8` (also `Fixes`, `Resolves`) | Issue moves to In Progress when the PR opens and to Done when it merges |
 | PR description, Issue section | `Refs CAP-8` (also `Part of`, `Related to`) | PR linked without closing the issue; use it when one issue needs several PRs |
