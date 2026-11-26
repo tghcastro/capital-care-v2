@@ -33,6 +33,7 @@ Work is tracked in Linear, team `capital-care` (issue key `CAP`). Linear is the 
 - Start non-trivial work from a Linear issue. If none exists, ask the user before creating one.
 - Read the issue before starting: its description holds the problem, scope and key behaviors, and its "Agent notes" section (if present) holds implementation details for agents.
 - Put the issue code (e.g. `CAP-8`) in the branch name, the commit footer and the PR description. The exact format is in [docs/tech/definitions/git.md](docs/tech/definitions/git.md#task-tracker-linear). When your tool assigns the branch name (e.g. `claude/...` in a cloud session), keep it as is; the issue code then goes only in the commit footers and the PR description (see [Branch Names](docs/tech/definitions/git.md#branch-names)).
+- When the user asks you to work on an issue or task (e.g. "work on CAP-31"), open a pull request when the work is finished. The user does not need to ask for it each time. Follow [docs/tech/definitions/git.md](docs/tech/definitions/git.md#pull-requests) and the PR template.
 - Do not change an issue's status by hand. The Linear GitHub integration moves it when the linked PR opens and merges.
 - Labels: each issue gets one `Type` label (`Feature`, `Bug`, `Improvement`, `Docs`, `Chore`, matching the commit type) and one `Area` label (`Ledger`, `Identity`, `Platform`).
 - Updates (issues, PRs, the weekly summary) go to the Slack channel `#capital-care`. Do not post there unless the user asks.
