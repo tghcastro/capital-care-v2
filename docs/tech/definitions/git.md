@@ -36,7 +36,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
   - `chore` — tooling, config, dependencies
 - **Subject:** imperative mood ("add", not "added"), lowercase, no trailing period, 72 characters or fewer.
 - **Body (optional):** explain *why*, not *what*; wrap at 72 characters.
-- **Issue code:** when the work comes from a Linear issue, reference it in the footer, e.g. `Refs: CAP-8`. See [Task Tracker (Linear)](#task-tracker-linear).
+- **Issue code:** every commit in a PR references its Linear issue in the footer, e.g. `Refs: CAP-8` (the `spec-gates` CI job requires it). See [Task Tracker (Linear)](#task-tracker-linear).
 - **Breaking changes:** add `!` after the type/scope (`feat(api)!: ...`) and a `BREAKING CHANGE:` footer.
 - Keep each commit a single logical change.
 - **CI check:** the `spec-gates` job checks every commit in a PR and the PR title against this pattern, and requires the `Refs: CAP-<n>` footer on every commit. See [ci-cd.md](./ci-cd.md#spec-gates).

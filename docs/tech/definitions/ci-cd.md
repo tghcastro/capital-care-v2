@@ -17,14 +17,14 @@ test ──► security ──► build ──► publish
 
 Defined in [.github/workflows/spec-gates.yml](../../../.github/workflows/spec-gates.yml). One job, `spec-gates`, runs on every pull request to `main`, also when the PR title or description is edited. It checks out the PR head commit (not the merge commit) with full history, installs the dependencies with the frozen lockfile (the proofs are the project's own build and test commands), runs the unit tests of the gate script, then runs [scripts/spec_gates.py](../../../scripts/spec_gates.py). The job fails when any of these fails:
 
-- **Feature folders:** for every folder under `.specs/features/` that the PR changes, the job runs the tlc-spec-lean `check_proofs.py` at the PR head (every proof in `checks.md` must pass; `proofs.md` is never committed, so the job writes it), then `validate_verification.py` (a `verification.md` with every check judged and every finding closed). A folder the PR deletes is skipped.
+- **Feature folders:** for every folder under `.specs/features/` that the PR changes, the job runs the tlc-spec-lean `check_proofs.py` at the PR head (every proof in `checks.md` must pass; `proofs.md` is never committed, so the job writes it), then `validate_verification.py` (a `verification.md` with every check judged and every finding closed). A folder the PR deletes is skipped, and so is a folder with no `checks.md` yet (a plan merged for review on its own); such a folder does not count as the feature folder of a code PR.
 - **Commits:** every non-merge commit in the PR must pass `check_commit.py` (Conventional Commits) and carry a `Refs: CAP-<n>` footer ([git.md](./git.md#commit-messages)).
 - **PR title:** must pass `check_commit.py`, because it becomes the squash commit on `main`.
 - **Code without a feature:** a PR that changes code (any path outside `docs/`, `.specs/`, `.prd/`, `.prompts/` that is not a `*.md` file) and no gated feature folder fails unless its title type is `docs` or `chore`.
 
 Pull requests opened by `dependabot[bot]` skip the commit and title checks, because Dependabot writes `chore(deps): Bump ...`. Their type is `chore`, so the code check passes.
 
-**Exempt folders:** [.github/spec-gates-exempt.txt](../../../.github/spec-gates-exempt.txt) lists the feature folders that predate the job and do not pass yet. The job skips them, and they do not count as the feature folder of a code PR. Remove a folder from the list once it passes.
+**Exempt folders:** [.github/spec-gates-exempt.txt](../../../.github/spec-gates-exempt.txt) lists the feature folders that predate the job and do not pass yet. The job reads the list at the PR's base commit, so a PR can remove an entry but cannot exempt its own folder. The job skips them, and they do not count as the feature folder of a code PR. Remove a folder from the list once it passes.
 
 **Blocking merges:** the job blocks a merge only when `spec-gates` is a required status check in the branch protection rule (or ruleset) for `main`. That is a repository setting, not a file in this repository.
 

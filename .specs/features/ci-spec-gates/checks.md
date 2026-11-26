@@ -18,7 +18,7 @@ that predate the job and do not pass yet are listed in `.github/spec-gates-exemp
 skipped, and they do not count as the feature folder of a code PR. The PR template gains a
 `## Verification` field that links the feature's `verification.md`.
 
-13 checks in 3 slices · 0 one-way doors · 0 open
+17 checks in 4 slices · 0 one-way doors · 0 open
 
 ## Checks
 
@@ -69,18 +69,34 @@ Proof: run gates | test_workflow_wiring (test_spec_gates.Workflow.test_workflow_
 **C13** - `docs/tech/definitions/ci-cd.md` describes the `spec-gates` job and the exempt list, and the PR template has a `## Verification` field that asks for the `verification.md` link.
 Proof: `grep -q 'spec-gates' docs/tech/definitions/ci-cd.md && grep -q 'spec-gates-exempt.txt' docs/tech/definitions/ci-cd.md && grep -q '^## Verification' .github/PULL_REQUEST_TEMPLATE.md && grep -q 'verification.md' .github/PULL_REQUEST_TEMPLATE.md`
 
+### S4 - Verifier findings
+
+**C14** - A PR that adds its own red folder to `.github/spec-gates-exempt.txt` still fails on that folder, because the list is read at the base commit; a PR that removes an entry gets that folder gated.
+Proof: run gates | test_pr_cannot_exempt_its_own_folder (test_spec_gates.FeatureFolderGate.test_pr_cannot_exempt_its_own_folder) ... ok
+Proof: run gates | test_removed_exempt_entry_is_gated (test_spec_gates.FeatureFolderGate.test_removed_exempt_entry_is_gated) ... ok
+
+**C15** - Non-ASCII paths are read raw: `docs/naïve.md` is not code, and a red folder `.specs/features/café` is gated and fails.
+Proof: run gates | test_non_ascii_paths (test_spec_gates.FeatureFolderGate.test_non_ascii_paths) ... ok
+
+**C16** - A feature folder with no `checks.md` yet (a plan-only `docs(specs)` PR) is skipped with `no checks.md yet` and exits 0, and it does not count as the feature folder of a code PR.
+Proof: run gates | test_folder_without_checks_is_skipped (test_spec_gates.FeatureFolderGate.test_folder_without_checks_is_skipped) ... ok
+
+**C17** - `docs/tech/definitions/git.md` states the `Refs: CAP-<n>` footer is required on every commit in a PR, not only when the work comes from a Linear issue.
+Proof: `grep -q 'every commit in a PR references its Linear issue' docs/tech/definitions/git.md && ! grep -q 'when the work comes from a Linear issue, reference it' docs/tech/definitions/git.md`
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |
 | --- | --- | --- |
-| feature folder states (4) | red C1 · green C2 · exempt C3 · deleted C4 | - |
+| feature folder states (7) | red C1 · green C2 · exempt C3 · deleted C4 · self-exempted C14 · un-exempted C14 · no checks.md C16 | - |
+| path encodings (2) | ASCII C11 · non-ASCII C15 | - |
 | gated folder outcomes (3) | proof red C5 · proofs green, verification red C1 · both green C2 | - |
 | commit message faults (3) | bad header C6 · no footer C7 · merge commit C8 | - |
 | PR title type x code change (10 types) | C11, table-driven over all 10 of `check_commit.py`'s types | - |
 | non-code path kinds (4) | `docs/` C11 · `.specs/` outside a feature C11 · `.prd/` C11 · `*.md` C11 | - |
 | PR authors (2) | human C6 · `dependabot[bot]` C10 | - |
 | workflow wiring (7) | trigger C12 · head sha C12 · fetch depth C12 · credentials C12 · timeout C12 · toolchain install C12 · env-passed inputs C12 | - |
-| docs (2) | ci-cd.md C13 · PR template C13 | - |
+| docs (3) | ci-cd.md C13 · PR template C13 · git.md C17 | - |
 
 ## Swept
 
@@ -102,6 +118,6 @@ Proof: `grep -q 'spec-gates' docs/tech/definitions/ci-cd.md && grep -q 'spec-gat
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** Verifier at `10dcfe3`
+- **Dispatched:** Verifier at `10dcfe3` - returned, 4 findings
 - **Boundary:** C1-C13 closed at `10dcfe3`
 - **Abandoned:** letting validate_verification.py accept a committed proofs.md at an earlier commit when only `.specs/` changed - `.gitignore` keeps proofs.md out of git, so CI runs check_proofs.py at the PR head instead and the skill scripts stay unchanged

@@ -168,15 +168,61 @@ class FeatureFolderGate(RepoTest):
         self.assertIn("pass   billing: check_proofs.py and validate_verification.py", out)
 
     def test_exempt_folder_is_skipped_and_does_not_count(self):
+        self.repo.git("checkout", "-q", "main")
         self.repo.write(".github/spec-gates-exempt.txt", "# legacy\nlegacy  # no proofs.md yet\n")
+        self.repo.base = self.repo.commit("chore: exempt legacy\n\n" + GOOD)
+        self.repo.git("checkout", "-q", "-B", "pr")
         self.repo.write(".specs/features/legacy/checks.md", "# Legacy checks\n")
         self.repo.write("src/app.ts", "export const a = 1\n")
         self.repo.commit("feat(app): touch legacy\n\n" + GOOD)
         code, out = self.repo.gates()
         self.assertEqual(code, 1, out)
-        self.assertIn("skip   legacy: listed in", out)
+        self.assertIn("skip   legacy: listed in .github/spec-gates-exempt.txt at the base commit", out)
         self.assertNotIn("feature folder `legacy` fails", out)
         self.assertIn("no gated feature folder", out)
+
+    def test_pr_cannot_exempt_its_own_folder(self):
+        self.repo.feature("green")
+        self.repo.feature("red", verification=False)
+        self.repo.write(".github/spec-gates-exempt.txt", "red\n")
+        self.repo.write("src/app.ts", "export const a = 1\n")
+        self.repo.commit("feat(app): exempt myself\n\n" + GOOD)
+        code, out = self.repo.gates()
+        self.assertEqual(code, 1, out)
+        self.assertIn("::error::feature folder `red` fails validate_verification.py", out)
+
+    def test_removed_exempt_entry_is_gated(self):
+        self.repo.git("checkout", "-q", "main")
+        self.repo.write(".github/spec-gates-exempt.txt", "red\n")
+        self.repo.base = self.repo.commit("chore: exempt red\n\n" + GOOD)
+        self.repo.git("checkout", "-q", "-B", "pr")
+        self.repo.write(".github/spec-gates-exempt.txt", "")
+        self.repo.feature("red", verification=False)
+        self.repo.commit("docs(specs): red\n\n" + GOOD)
+        code, out = self.repo.gates(title="docs(specs): red")
+        self.assertEqual(code, 1, out)
+        self.assertIn("::error::feature folder `red` fails validate_verification.py", out)
+
+    def test_folder_without_checks_is_skipped(self):
+        self.repo.write(".specs/features/new/plan.md", "# New plan\n")
+        self.repo.commit("docs(specs): plan new\n\n" + GOOD)
+        code, out = self.repo.gates(title="docs(specs): plan new")
+        self.assertEqual(code, 0, out)
+        self.assertIn("skip   new: no checks.md yet, so nothing to prove", out)
+        self.repo.write("src/app.ts", "export const a = 1\n")
+        self.repo.commit("feat(app): code with a plan only\n\n" + GOOD)
+        code, out = self.repo.gates(title="feat(app): code with a plan only")
+        self.assertEqual(code, 1, out)
+        self.assertIn("no gated feature folder", out)
+
+    def test_non_ascii_paths(self):
+        self.repo.write("docs/naïve.md", "x\n")
+        self.repo.feature("café", verification=False)
+        self.repo.commit("docs(specs): café\n\n" + GOOD)
+        code, out = self.repo.gates(title="docs(specs): café")
+        self.assertEqual(code, 1, out)
+        self.assertIn("::error::feature folder `café` fails validate_verification.py", out)
+        self.assertNotIn("changes code", out)
 
     def test_deleted_feature_folder_is_skipped(self):
         self.repo.git("checkout", "-q", "main")

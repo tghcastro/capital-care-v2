@@ -4,7 +4,8 @@ spec_gates.py - the spec-lean gates a pull request must pass (CI job `spec-gates
 
   1. Every feature folder the PR changes under `.specs/features/` passes `check_proofs.py` (run
      here, at the PR head, because proofs.md is never committed) and then
-     `validate_verification.py`, unless `.github/spec-gates-exempt.txt` lists it.
+     `validate_verification.py`, unless `.github/spec-gates-exempt.txt` lists it at the base commit
+     or the folder has no `checks.md` yet.
   2. Every non-merge commit in the PR passes `check_commit.py` and has a `Refs: CAP-<n>` footer.
   3. The PR title passes `check_commit.py` (it becomes the squash commit on `main`).
   4. A PR that changes code with no gated feature folder has the title type `docs` or `chore`.
@@ -59,12 +60,22 @@ def feature_of(path):
     return rest[0] if len(rest) > 1 else None
 
 
-def read_exempt(root):
+def parse_exempt(text):
+    return {ln.split("#", 1)[0].strip() for ln in text.splitlines()} - {""}
+
+
+def read_exempt(root, base):
+    """Folders exempt at the base commit and still listed at the head: a PR can remove an entry,
+    never add one, so it cannot exempt its own folder."""
+    try:
+        at_base = parse_exempt(git(root, "show", f"{base}:{EXEMPT_FILE.replace(os.sep, '/')}"))
+    except GitError:
+        return set()
     path = os.path.join(root, EXEMPT_FILE)
     if not os.path.isfile(path):
         return set()
     with open(path, encoding="utf-8") as f:
-        return {ln.split("#", 1)[0].strip() for ln in f} - {""}
+        return at_base & parse_exempt(f.read())
 
 
 def title_type(title):
@@ -89,16 +100,20 @@ def check_message(root, message):
     return errors
 
 
-def feature_gate(root, changed):
+def feature_gate(root, changed, base):
     """(errors, gated folder names) for the feature folders the PR changes."""
-    exempt = read_exempt(root)
+    exempt = read_exempt(root, base)
     errors, gated = [], []
     for name in sorted({f for f in map(feature_of, changed) if f}):
         if not os.path.isdir(os.path.join(root, FEATURES_PREFIX, name)):
             print(f"skip   {name}: deleted by this PR")
             continue
         if name in exempt:
-            print(f"skip   {name}: listed in {EXEMPT_FILE}")
+            print(f"skip   {name}: listed in {EXEMPT_FILE} at the base commit")
+            continue
+        if not os.path.isfile(os.path.join(root, FEATURES_PREFIX, name, "checks.md")):
+            # A plan reviewed on its own merges before the checks exist; it gates nothing yet.
+            print(f"skip   {name}: no checks.md yet, so nothing to prove")
             continue
         gated.append(name)
         # proofs.md is never committed (it names the exact HEAD), so the job writes it here.
@@ -158,8 +173,9 @@ def main(argv=None):
 
     errors = []
     try:
-        changed = [ln for ln in git(root, "diff", "--name-only", f"{args.base}...{args.head}").splitlines() if ln]
-        feature_errors, gated = feature_gate(root, changed)
+        # -z prints paths raw: without it git quotes non-ASCII paths and they misclassify.
+        changed = [p for p in git(root, "diff", "--name-only", "-z", f"{args.base}...{args.head}").split("\0") if p]
+        feature_errors, gated = feature_gate(root, changed, args.base)
         errors += feature_errors
         if args.author in BOT_AUTHORS:
             print(f"skip   commit and title checks: PR opened by {args.author}")
