@@ -23,12 +23,17 @@ CRITERION_RE = re.compile(r"^\s*\d+\.\s+(.*)$")
 APPROVED_RE = re.compile(
     r"^\**\s*Approved\s*\**\s*:\s*\**\s*\d{4}-\d{2}-\d{2}\b.*\buser\s*:\s*[\"“][^\"”]*\S[^\"”]*[\"”]",
     re.IGNORECASE)
+# FORK (CAP-31, ADR-004): a plan may also be approved by policy, never in the owner's words.
+POLICY_APPROVED_RE = re.compile(
+    r"^\**\s*Approved\s*\**\s*:\s*\**\s*\d{4}-\d{2}-\d{2}\s+-\s+policy\s*:\s*AP-\d+\b.*\S",
+    re.IGNORECASE)
 
 
 def plan_approved(plan_lines):
     """True when plan.md carries `**Approved**: <date> - user: "<their words>"`. The approval is the
     user's, so it carries their words; the chat that held it does not survive a compaction."""
-    return any(APPROVED_RE.match(s.strip()) for s in plan_lines)
+    return any(APPROVED_RE.match(s.strip()) or POLICY_APPROVED_RE.match(s.strip())
+               for s in plan_lines)
 
 
 def read_runs(lines):
