@@ -14,6 +14,7 @@ Applies to humans and AI agents alike.
 - `<type>` uses the same values as [commit types](#commit-messages).
 - If the work comes from a Linear issue, include its code: `<type>/<ISSUE-CODE>-<short-description>`, e.g. `feat/CAP-8-child-categories`. Use this format instead of the branch name Linear suggests (`tghcastro/cap-8-...`); Linear still links the branch because it finds the code anywhere in the name.
 - The name must describe the change. Avoid names like `fix`, `test`, `my-branch`.
+- **Tool-named branches:** some tools choose the branch name themselves and cannot push anywhere else: `claude/...` for Claude Code cloud sessions and `dependabot/...` for Dependabot. Those names are accepted as they are. The issue code then goes in every commit footer (`Refs: CAP-8`) and in the PR's Issue section (`Closes CAP-8`). The `spec-gates` CI job enforces the commit footers. Linear does not link such a branch to the issue, but it still links the commits and the PR, and the PR still moves the issue's status.
 
 ## Commit Messages
 
@@ -67,7 +68,7 @@ Work is tracked in Linear (team `capital-care`, issue key `CAP`). The Linear Git
 
 | Where | Format | Effect in Linear |
 |---|---|---|
-| Branch name | `feat/CAP-8-child-categories` | Branch linked to the issue |
+| Branch name | `feat/CAP-8-child-categories` | Branch linked to the issue (not for [tool-named branches](#branch-names) such as `claude/...`) |
 | Commit footer | `Refs: CAP-8` | Commit linked to the issue |
 | PR description, Issue section | `Closes CAP-8` (also `Fixes`, `Resolves`) | Issue moves to In Progress when the PR opens and to Done when it merges |
 | PR description, Issue section | `Refs CAP-8` (also `Part of`, `Related to`) | PR linked without closing the issue; use it when one issue needs several PRs |
