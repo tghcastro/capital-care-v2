@@ -56,6 +56,25 @@ The [`tlc-spec-lean`](../.claude/skills/tlc-spec-lean/) skill turns the PRD into
 
 Decisions taken along the way are recorded in [`.specs/STATE.md`](../.specs/STATE.md) with the question asked, the option chosen, and the owner's words. Stack-level decisions live in [`docs/tech/definitions/`](tech/definitions/), and the most significant ones are written up as [Architecture Decision Records](adr/README.md).
 
+### Approval policy
+
+Decided in [ADR-004](adr/004-plan-auto-approval-policy.md). The agent approves a plan itself only under **AP-1**; in every other case it stops and notifies the owner.
+
+**AP-1: auto-approve a plan** when all of these hold:
+
+1. The PRD it implements is confirmed by the owner.
+2. The plan has no one-way door.
+3. The plan has no open question.
+4. The plan does not differ from the PRD: no scope added or removed, no new decision for `.specs/STATE.md`, no entry in `## Differences from the source`.
+
+**Stop and notify the owner** if any condition fails, or if the agent is unsure. Doubt counts as failure.
+
+**Record.** An auto-approval is written in `plan.md` as `**Approved**: <date> - policy: AP-1 - <which conditions were checked>`, never as the owner's words. The owner's own approval keeps `user: "<their words>"`.
+
+**What the PRD approval authorizes.** Local edits and commits, pushing the feature branch, opening the pull request, and merging it once every required check and the independent verifier pass. It never authorizes a release, a deploy or a production data change: those need an explicit go-ahead for that action.
+
+The skill change is a documented fork, see [`FORK.md`](../.claude/skills/tlc-spec-lean/FORK.md).
+
 ### 4. Build, review, ship
 
 The agent works on a branch named after the issue, follows [Conventional Commits](https://www.conventionalcommits.org/) and opens a PR from the [template](../.github/PULL_REQUEST_TEMPLATE.md) with `Closes CAP-n`. The Linear GitHub integration moves the issue as the PR opens and merges. CI runs tests, a dependency audit and CodeQL, builds the Docker image, and publishes it to GHCR. Conventions are in [`git.md`](tech/definitions/git.md) and [`ci-cd.md`](tech/definitions/ci-cd.md).
@@ -101,7 +120,7 @@ What keeps agents consistent is a small set of files, not a long prompt:
 - [`docs/tech/AGENTS.md`](tech/AGENTS.md): an index that tells agents which technical definition to read for which task (an API endpoint, a web feature, a PR...).
 - [`.claude/skills/`](../.claude/skills/): reusable skills for PRDs, specs, ADRs, RFCs and auditing the harness itself (`harness-eval`).
 
-All five skills (`tlc-prd`, `tlc-spec-lean`, `create-adr`, `create-rfc`, `harness-eval`) are used as published by [Tech Leads Club](https://github.com/tech-leads-club), under the CC-BY-4.0 license. This project uses them unchanged; the work here is in how they are combined into a workflow.
+All five skills (`tlc-prd`, `tlc-spec-lean`, `create-adr`, `create-rfc`, `harness-eval`) are used as published by [Tech Leads Club](https://github.com/tech-leads-club), under the CC-BY-4.0 license. The only change is a small, documented fork of `tlc-spec-lean` for the [approval policy](#approval-policy); the work here is in how they are combined into a workflow.
 
 ## What I Learned
 

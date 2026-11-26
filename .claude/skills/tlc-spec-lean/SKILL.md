@@ -56,7 +56,9 @@ These hold even if no reference file is read. Each one lives here; the reference
 7. The completion gate is a script: `validate_verification.py` exits 0. The final report opens
    with its last line; a red gate is said first, never left for the reader to find.
 8. An approved spec authorizes local edits and local commits. `git push`, deploy and production
-   data changes need an explicit go-ahead for that action.
+   data changes need an explicit go-ahead for that action. FORK: in this repository the go-ahead
+   can come from the owner's approval of the PRD, within the limits of
+   [docs/workflow.md](../../../docs/workflow.md#approval-policy) (ADR-004).
 9. **A state a capture draws is one picture.** The author reaches that state and saves
    `<capture>.running.png` beside the capture from a browser window at the capture's size - its
    pixel size over its scale: a wider window lays the page out differently, and resizing the image
@@ -71,7 +73,8 @@ These hold even if no reference file is read. Each one lives here; the reference
     the plan's `## Differences from the source` with `Confirmed: y - AD-NNN`.
 11. **The files hold the run; the chat does not survive a compaction.** The user's approval is
     written in plan.md as `**Approved**: <date> - user: "<their words>"` - never one the user did
-    not give. Each answer goes into its file in the turn it arrives. Each sub-agent goes on the
+    not give. FORK: when policy AP-1 applies, write `**Approved**: <date> - policy: AP-1 - <why it
+    applied>` instead, and never put words in the user's mouth; otherwise stop and wait. Each answer goes into its file in the turn it arrives. Each sub-agent goes on the
     `**Dispatched:**` line of `checks.md` `## Handoff` before it is sent. After a compaction or in a
     new session, re-read this file and the current phase's reference, then resume from the files
     ([memory.md](references/memory.md)).

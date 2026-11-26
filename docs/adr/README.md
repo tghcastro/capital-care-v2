@@ -9,5 +9,6 @@ Smaller decisions are logged in [`.specs/STATE.md`](../../.specs/STATE.md) as th
 | [001](001-keep-business-rules-in-the-api.md) | Keep business rules in the API | Accepted | 2026-11-18 |
 | [002](002-identity-as-a-separate-module.md) | Identity as a separate module | Accepted, not yet implemented | 2026-11-23 |
 | [003](003-jwt-access-token-with-rotating-refresh-cookie.md) | JWT access token with a rotating refresh cookie | Accepted, not yet implemented | 2026-11-23 |
+| [004](004-plan-auto-approval-policy.md) | Plan auto-approval policy | Proposed | 2026-11-26 |
 
 New ADRs: use the `create-adr` skill, MADR format, file name `NNN-kebab-case-title.md`.
