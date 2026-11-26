@@ -102,6 +102,6 @@ Proof: `grep -q 'spec-gates' docs/tech/definitions/ci-cd.md && grep -q 'spec-gat
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** none
-- **Boundary:** none yet
-- **Abandoned:** none
+- **Dispatched:** Verifier at `10dcfe3`
+- **Boundary:** C1-C13 closed at `10dcfe3`
+- **Abandoned:** letting validate_verification.py accept a committed proofs.md at an earlier commit when only `.specs/` changed - `.gitignore` keeps proofs.md out of git, so CI runs check_proofs.py at the PR head instead and the skill scripts stay unchanged
