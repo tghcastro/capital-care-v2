@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 19,
+  "next_id": 23,
   "lessons": [
     {
       "id": "L-001",
@@ -328,6 +328,78 @@
       ],
       "created": "2026-11-25T17:49:19Z",
       "last_seen": "2026-11-25T17:49:19Z"
+    },
+    {
+      "id": "L-019",
+      "key": "ac_gap::read a gate s allow list or exemption file at the pr base commit never at the head the pr controls",
+      "text": "Read a gate's allow-list or exemption file at the PR base commit, never at the head the PR controls",
+      "signal": "ac_gap",
+      "scope": "ci",
+      "status": "candidate",
+      "features": [
+        "ci-spec-gates"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "scripts/spec_gates.py read_exempt (verification.md finding 1) (ci)"
+      ],
+      "created": "2026-11-26T17:19:55Z",
+      "last_seen": "2026-11-26T17:19:55Z"
+    },
+    {
+      "id": "L-020",
+      "key": "ac_gap::read git path lists with z so non ascii paths are not quoted and misclassified",
+      "text": "Read git path lists with -z so non-ASCII paths are not quoted and misclassified",
+      "signal": "ac_gap",
+      "scope": "ci",
+      "status": "candidate",
+      "features": [
+        "ci-spec-gates"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "scripts/spec_gates.py main git diff (verification.md finding 2) (ci)"
+      ],
+      "created": "2026-11-26T17:19:55Z",
+      "last_seen": "2026-11-26T17:19:55Z"
+    },
+    {
+      "id": "L-021",
+      "key": "spec_precision_gap::decide how a gate treats a feature folder that holds only a plan before writing its checks",
+      "text": "Decide how a gate treats a feature folder that holds only a plan before writing its checks",
+      "signal": "spec_precision_gap",
+      "scope": "ci",
+      "status": "candidate",
+      "features": [
+        "ci-spec-gates"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 3 (ci)"
+      ],
+      "created": "2026-11-26T17:19:55Z",
+      "last_seen": "2026-11-26T17:19:55Z"
+    },
+    {
+      "id": "L-022",
+      "key": "spec_deviation::when a ci rule tightens a documented convention update every sentence that states the old rule",
+      "text": "When a CI rule tightens a documented convention, update every sentence that states the old rule",
+      "signal": "spec_deviation",
+      "scope": "docs",
+      "status": "candidate",
+      "features": [
+        "ci-spec-gates"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "docs/tech/definitions/git.md:39 (verification.md finding 4) (docs)"
+      ],
+      "created": "2026-11-26T17:19:55Z",
+      "last_seen": "2026-11-26T17:19:55Z"
     }
   ]
 }

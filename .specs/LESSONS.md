@@ -122,6 +122,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: verification.md finding 3 / C49 (service-layer)
 - last seen: 2026-11-25T17:49:19Z
 
+### L-019 - Read a gate's allow-list or exemption file at the PR base commit, never at the head the PR controls
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `ci` · harmful: 0
+- features: ci-spec-gates
+- evidence: scripts/spec_gates.py read_exempt (verification.md finding 1) (ci)
+- last seen: 2026-11-26T17:19:55Z
+
+### L-020 - Read git path lists with -z so non-ASCII paths are not quoted and misclassified
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `ci` · harmful: 0
+- features: ci-spec-gates
+- evidence: scripts/spec_gates.py main git diff (verification.md finding 2) (ci)
+- last seen: 2026-11-26T17:19:55Z
+
+### L-021 - Decide how a gate treats a feature folder that holds only a plan before writing its checks
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `ci` · harmful: 0
+- features: ci-spec-gates
+- evidence: verification.md finding 3 (ci)
+- last seen: 2026-11-26T17:19:55Z
+
+### L-022 - When a CI rule tightens a documented convention, update every sentence that states the old rule
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `docs` · harmful: 0
+- features: ci-spec-gates
+- evidence: docs/tech/definitions/git.md:39 (verification.md finding 4) (docs)
+- last seen: 2026-11-26T17:19:55Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
