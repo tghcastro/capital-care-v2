@@ -8,6 +8,16 @@ Applies to humans and AI agents alike.
 - Work on short-lived branches created from `main`, and merge through a pull request (PR).
 - PRs are merged with **squash merge**, so each PR becomes one commit on `main`. The PR title becomes the commit subject and must follow the [commit pattern](#commit-messages).
 
+## Branch Protection
+
+`main` is protected by a GitHub ruleset. The rules apply to everyone, including the agent's identity: there is no bypass actor.
+
+- **No direct push:** a push straight to `main` is rejected. Force pushes and branch deletion are blocked.
+- **Pull request required:** every change reaches `main` through a PR. Squash merge is the only allowed merge method.
+- **Required status checks:** all of these must be green before a merge: `test`, `security`, `build` (workflow [CI/CD](./ci-cd.md)), `Analyze` (workflow CodeQL, shown as `CodeQL / Analyze`) and `spec-gates` (workflow Spec gates). Add each new gate to this list in the ruleset and here when it arrives.
+- **Up to date:** the PR branch must be up to date with `main` before merging (strict status checks).
+- A check that is skipped or missing does not count as passing.
+
 ## Branch Names
 
 - Format: `<type>/<short-description>` in lowercase kebab-case, e.g. `feat/transaction-categories`, `docs/git-definition`.
