@@ -18,7 +18,7 @@ that predate the job and do not pass yet are listed in `.github/spec-gates-exemp
 skipped, and they do not count as the feature folder of a code PR. The PR template gains a
 `## Verification` field that links the feature's `verification.md`.
 
-17 checks in 4 slices · 0 one-way doors · 0 open
+18 checks in 4 slices · 0 one-way doors · 0 open
 
 ## Checks
 
@@ -84,6 +84,10 @@ Proof: run gates | test_folder_without_checks_is_skipped (test_spec_gates.Featur
 **C17** - `docs/tech/definitions/git.md` states the `Refs: CAP-<n>` footer is required on every commit in a PR, not only when the work comes from a Linear issue.
 Proof: `grep -q 'every commit in a PR references its Linear issue' docs/tech/definitions/git.md && ! grep -q 'when the work comes from a Linear issue, reference it' docs/tech/definitions/git.md`
 
+**C18** - A CI run leaves the tree clean: git tracks no `__pycache__` file, and the workflow sets `PYTHONDONTWRITEBYTECODE: '1'` (found when the first GitHub run failed with `Tree: dirty - .claude/skills/tlc-spec-lean/scripts/__pycache__/lean_config.cpython-314.pyc`).
+Proof: `test -z "$(git ls-files '*__pycache__*')"`
+Proof: run gates | test_workflow_wiring (test_spec_gates.Workflow.test_workflow_wiring) ... ok
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |
@@ -96,6 +100,7 @@ Proof: `grep -q 'every commit in a PR references its Linear issue' docs/tech/def
 | non-code path kinds (4) | `docs/` C11 · `.specs/` outside a feature C11 · `.prd/` C11 · `*.md` C11 | - |
 | PR authors (2) | human C6 · `dependabot[bot]` C10 | - |
 | workflow wiring (7) | trigger C12 · head sha C12 · fetch depth C12 · credentials C12 · timeout C12 · toolchain install C12 · env-passed inputs C12 | - |
+| clean tree in CI (2) | no tracked bytecode C18 · no bytecode written C18 | - |
 | docs (3) | ci-cd.md C13 · PR template C13 · git.md C17 | - |
 
 ## Swept
@@ -119,5 +124,5 @@ Proof: `grep -q 'every commit in a PR references its Linear issue' docs/tech/def
 
 - **Settled mid-build:** none
 - **Dispatched:** Verifier at `10dcfe3` - returned, 4 findings
-- **Boundary:** C1-C13 closed at `10dcfe3`; C14-C17 (Verifier findings) closed at `2bca82d`
+- **Boundary:** C1-C13 closed at `10dcfe3`; C14-C17 (Verifier findings) closed at `2bca82d`; C18 (first GitHub run) closed after it
 - **Abandoned:** letting validate_verification.py accept a committed proofs.md at an earlier commit when only `.specs/` changed - `.gitignore` keeps proofs.md out of git, so CI runs check_proofs.py at the PR head instead and the skill scripts stay unchanged

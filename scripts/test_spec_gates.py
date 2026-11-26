@@ -338,6 +338,7 @@ class Workflow(unittest.TestCase):
                                r"    types: \[opened, synchronize, reopened, edited\]")
         self.assertIn("ref: ${{ github.event.pull_request.head.sha }}", text)
         self.assertIn("fetch-depth: 0", text)
+        self.assertRegex(text, r"(?m)^env:\n  PYTHONDONTWRITEBYTECODE: '1'")
         self.assertIn("persist-credentials: false", text)
         self.assertRegex(text, r"timeout-minutes: \d+")
         # The proofs are the project's own test commands, so the job installs the toolchain first.

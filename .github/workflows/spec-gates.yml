@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+# No .pyc files: a bytecode write would leave the tree dirty, and check_proofs.py refuses that.
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
