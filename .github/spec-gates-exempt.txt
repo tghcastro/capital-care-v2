@@ -1,0 +1,14 @@
+# Feature folders under .specs/features/ that predate the spec-gates CI job (CAP-28) and do not
+# pass validate_verification.py yet. The job skips them, and they do not count as the feature
+# folder of a code PR. Remove a line once that feature has a passing proofs.md and verification.md.
+account-management
+base-authentication
+category-management
+category-sort-desc-fix
+child-categories
+monthly-balance
+password-recovery
+security-headers-and-hardening
+transactions
+user-management
+web-transactions-page

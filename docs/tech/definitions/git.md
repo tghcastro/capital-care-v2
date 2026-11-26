@@ -39,6 +39,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - **Issue code:** when the work comes from a Linear issue, reference it in the footer, e.g. `Refs: CAP-8`. See [Task Tracker (Linear)](#task-tracker-linear).
 - **Breaking changes:** add `!` after the type/scope (`feat(api)!: ...`) and a `BREAKING CHANGE:` footer.
 - Keep each commit a single logical change.
+- **CI check:** the `spec-gates` job checks every commit in a PR and the PR title against this pattern, and requires the `Refs: CAP-<n>` footer on every commit. See [ci-cd.md](./ci-cd.md#spec-gates).
 - **AI-assisted commits:** commits authored with assistance from an AI tool must include an appropriate `Co-authored-by` trailer at the end of the message, identifying the actual tool or agent author. Do not use a provider-specific trailer when another tool authored the change. For example:
 
   ```
@@ -55,6 +56,7 @@ The template is [.github/PULL_REQUEST_TEMPLATE.md](../../../.github/PULL_REQUEST
 - **Changes:** a bullet per file or area touched, specific enough that a reviewer doesn't need to open every file to know what changed.
 - **Why:** the motivation or decision behind the change, if it isn't obvious from the Summary. Write "N/A" if nothing to add.
 - **Type of change:** tick the matching box(es): Documentation / specs only, Feature, Bug fix, Refactor (no behavior change), Chore (tooling, config, dependencies). These map to the commit types `docs`, `feat`, `fix`, `refactor`, `chore`.
+- **Verification:** a link to the feature's `.specs/features/<feature>/verification.md`. Write "N/A" for a `docs` or `chore` PR with no feature folder.
 - **Testing:** how the change was verified (tests added or updated, manual steps). For documentation-only changes write "N/A — documentation-only change".
 - Keep PRs small and focused on one concern.
 - Delete the branch after merging.

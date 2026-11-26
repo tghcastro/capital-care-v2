@@ -22,6 +22,10 @@
 - [ ] Refactor (no behavior change)
 - [ ] Chore (tooling, config, dependencies)
 
+## Verification
+
+<!-- Link the feature's verification.md, e.g. `.specs/features/<feature>/verification.md`. "N/A" for a `docs` or `chore` PR with no feature folder. The spec-gates CI job requires it to pass validate_verification.py. -->
+
 ## Testing
 
 <!-- How was this verified? e.g. unit tests added/updated, manual steps, or "N/A — documentation-only change". -->
