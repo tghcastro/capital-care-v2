@@ -25,6 +25,7 @@
 | C15 | `test_spec_gates.py` `test_non_ascii_paths` | appended in the fix pass for finding 2; green in `proofs.md` at 2bca82d, not judged by this Verifier |
 | C16 | `test_spec_gates.py` `test_folder_without_checks_is_skipped` | appended in the fix pass for finding 3; green in `proofs.md` at 2bca82d, not judged by this Verifier |
 | C17 | lone proof `grep -q 'every commit in a PR references its Linear issue' docs/tech/definitions/git.md && ...` | appended in the fix pass for finding 4; green in `proofs.md` at 2bca82d, not judged by this Verifier |
+| C18 | lone proof `test -z "$(git ls-files '*__pycache__*')"`, `test_spec_gates.py` `test_workflow_wiring` | appended after the first GitHub run failed on a dirty tree; green in `proofs.md` at c9f0967, not judged by this Verifier |
 
 ## Findings
 
