@@ -119,5 +119,5 @@ Proof: `grep -q 'every commit in a PR references its Linear issue' docs/tech/def
 
 - **Settled mid-build:** none
 - **Dispatched:** Verifier at `10dcfe3` - returned, 4 findings
-- **Boundary:** C1-C13 closed at `10dcfe3`
+- **Boundary:** C1-C13 closed at `10dcfe3`; C14-C17 (Verifier findings) closed at `2bca82d`
 - **Abandoned:** letting validate_verification.py accept a committed proofs.md at an earlier commit when only `.specs/` changed - `.gitignore` keeps proofs.md out of git, so CI runs check_proofs.py at the PR head instead and the skill scripts stay unchanged
