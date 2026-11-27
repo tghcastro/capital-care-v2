@@ -282,6 +282,10 @@ class TestQualityGates(Base):
         self.repo.commit({"notes.md": "Never use eslint-disable.\n"})
         self.assertEqual(self.repo.rules(), [])
 
+    def test_eslint_disable_in_python_passes(self):
+        self.repo.commit({"scripts/check.py": 'PATTERN = "eslint-disable"\n'})
+        self.assertEqual(self.repo.rules(), [])
+
     def test_skipped_test_is_gated(self):
         self.repo.commit({"src/a.test.ts": "it.skip('works', () => {});\n"})
         self.assertEqual(self.repo.rules(), ["test-skipped"])

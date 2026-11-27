@@ -192,7 +192,8 @@ def fmt(values):
 
 
 def rule_lint_disabled(path, old, new):
-    if path.endswith(".md"):
+    """ESLint only lints JavaScript and TypeScript, so only those files can disable it."""
+    if not re.search(r"\.[cm]?[jt]sx?$", path):
         return []
     added = added_lines(old, new)
     out = [f"`{line.strip()}`" for line in added if ESLINT_DISABLE_RE.search(line)]
