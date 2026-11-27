@@ -15,11 +15,13 @@
     "format": "prettier --write .",
     "type-check": "pnpm -r type-check",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "db:migrate": "node apps/api/dist/migrate.js",
     "db:generate": "pnpm --filter @capital-care/ledger db:generate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^5.1.1",
     "eslint": "^10.15.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.1.1",
