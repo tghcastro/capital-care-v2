@@ -1,0 +1,64 @@
+# Human approval gate: a PR that touches a protected path or makes a protected change (new library,
+# base image, lowered coverage, ...) waits for the owner's `owner-approved` label. See
+# docs/operations/code-review.md, docs/tech/definitions/ci-cd.md and scripts/human_approval.py.
+#
+# pull_request_target: the workflow, the script and its rules come from the BASE branch, so a PR
+# cannot weaken the gate that judges it. The PR head is fetched as data only: no code from the PR
+# is checked out as the working tree or executed.
+
+name: Human approval
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  human-approval:
+    name: human-approval
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write # remove the approval label after a new push
+    steps:
+      # The base branch: the trusted copy of the script and its rules.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch the PR head as data
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: git fetch --no-tags origin "refs/pull/${PR_NUMBER}/head"
+      - name: Evaluate protected changes
+        id: gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          EVENT_ACTION: ${{ github.event.action }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set +e
+          python3 scripts/human_approval.py --base "$BASE_SHA" --head "$HEAD_SHA" --labels "$LABELS" --event "$EVENT_ACTION"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      # Approval covers one commit: a new push to a gated PR removes the label.
+      - name: Remove the approval label after a new push
+        if: steps.gate.outputs.remove_label == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api -X DELETE "repos/${REPO}/issues/${PR_NUMBER}/labels/owner-approved" || true
+      - name: Verdict
+        env:
+          CODE: ${{ steps.gate.outputs.code }}
+        run: exit "${CODE:-1}"

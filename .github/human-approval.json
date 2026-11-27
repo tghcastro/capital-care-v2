@@ -1,0 +1,22 @@
+{
+  "label": "owner-approved",
+  "paths": [
+    { "glob": "docs/tech/**", "reason": "Tech definitions" },
+    { "glob": "docs/adr/**", "reason": "Architecture Decision Records" },
+    { "glob": "docs/workflow.md", "reason": "Agent workflow and policies" },
+    { "glob": "**/AGENTS.md", "reason": "Agent instructions" },
+    { "glob": ".github/workflows/**", "reason": "CI workflows (guardrail)" },
+    { "glob": ".github/dependabot.yml", "reason": "Dependency update automation (guardrail)" },
+    { "glob": ".github/spec-gates-exempt.txt", "reason": "Spec gates exemptions (guardrail)" },
+    { "glob": ".github/human-approval.json", "reason": "Human approval rules (guardrail)" },
+    { "glob": "scripts/spec_gates.py", "reason": "Spec gates script (guardrail)" },
+    { "glob": "scripts/human_approval.py", "reason": "Human approval script (guardrail)" },
+    { "glob": "scripts/code_review_report.py", "reason": "Code review gate script (guardrail)" },
+    { "glob": ".claude/settings.json", "reason": "Claude Code permissions (guardrail)" },
+    { "glob": ".claude/skills/**", "reason": "Agent skills, including the reviewer (guardrail)" },
+    { "glob": ".githooks/**", "reason": "Local git hooks (guardrail)" },
+    { "glob": ".nvmrc", "reason": "Node version" },
+    { "glob": ".npmrc", "reason": "Package manager configuration" },
+    { "glob": ".pnpmfile.cjs", "reason": "Package manager hooks" }
+  ]
+}

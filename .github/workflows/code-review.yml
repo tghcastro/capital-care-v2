@@ -1,0 +1,169 @@
+# Automated code review: the `pr-review` skill (run by claude-code-action) reviews the PR against
+# docs/tech/definitions/ and the accepted ADRs. Open blocking findings fail the `code-review` check.
+# See docs/operations/code-review.md and docs/tech/definitions/ci-cd.md.
+#
+# Switch: the repository variable AUTO_REVIEW. Unset or `on` runs the review; `off` skips it and the
+# check waits for a human (the owner reviews and adds `review-override`). A review that does not
+# finish also waits for a human: nothing passes without a result.
+#
+# claude-code-action restores `.claude/` from the base branch on PR events, so a PR cannot change
+# the reviewer that judges it.
+
+name: Code review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+# Label changes re-judge the last result in their own group, so they never cancel a running review.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-${{ (github.event.action == 'labeled' || github.event.action == 'unlabeled') && 'labels' || 'review' }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  code-review:
+    name: code-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write # inline comments, the summary comment, removing the override label
+      id-token: write # claude-code-action authenticates its GitHub App with OIDC
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Decide what to run
+        id: mode
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          EVENT_ACTION: ${{ github.event.action }}
+          AUTO_REVIEW: ${{ vars.AUTO_REVIEW }}
+        run: |
+          switch="$(echo "${AUTO_REVIEW:-on}" | tr '[:upper:]' '[:lower:]')"
+          if [ "$AUTHOR" = "dependabot[bot]" ]; then mode=dependabot
+          elif [ "$switch" = "off" ]; then mode=disabled
+          elif [ "$EVENT_ACTION" = "labeled" ] || [ "$EVENT_ACTION" = "unlabeled" ]; then mode=labels
+          else mode=review
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "AUTO_REVIEW=${switch} -> mode ${mode}"
+
+      - name: Read the previous summary comment
+        id: previous
+        if: steps.mode.outputs.mode != 'dependabot'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          gh api --paginate "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --jq '.[] | select(.body | contains("<!-- pr-review:v1 ")) | {id, body}' \
+            | jq -s 'last // {}' > "$RUNNER_TEMP/previous-comment.json"
+          echo "comment_id=$(jq -r '.id // empty' "$RUNNER_TEMP/previous-comment.json")" >> "$GITHUB_OUTPUT"
+          jq -r '.body // ""' "$RUNNER_TEMP/previous-comment.json" > "$RUNNER_TEMP/previous-comment.md"
+          python3 scripts/code_review_report.py state --comment-file "$RUNNER_TEMP/previous-comment.md" \
+            --out "$RUNNER_TEMP/previous.json" | tee -a "$GITHUB_OUTPUT"
+          # Incremental only when the last reviewed commit is still in the branch history.
+          last_sha="$(jq -r '.reviewed_sha // empty' "$RUNNER_TEMP/previous.json")"
+          last_status="$(jq -r '.status // empty' "$RUNNER_TEMP/previous.json")"
+          if [ "$last_status" = "reviewed" ] && [ -n "$last_sha" ] && [ "$last_sha" != "$HEAD_SHA" ] \
+            && git merge-base --is-ancestor "$last_sha" "$HEAD_SHA" 2>/dev/null; then
+            echo "review_mode=incremental" >> "$GITHUB_OUTPUT"
+          else
+            echo "review_mode=full" >> "$GITHUB_OUTPUT"
+          fi
+
+      # An override covers one commit: a new push removes it.
+      - name: Remove the override label after a new push
+        if: github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'review-override')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api -X DELETE "repos/${REPO}/issues/${PR_NUMBER}/labels/review-override" || true
+
+      - name: Load the output schema
+        id: schema
+        if: steps.mode.outputs.mode == 'review'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          schema_file=.claude/skills/pr-review/references/output-schema.json
+          # The base branch's copy, like the skill itself (the PR's copy only on the PR that adds it).
+          if git cat-file -e "${BASE_SHA}:${schema_file}" 2>/dev/null; then
+            git show "${BASE_SHA}:${schema_file}" > "$RUNNER_TEMP/schema.json"
+          else
+            cp "$schema_file" "$RUNNER_TEMP/schema.json"
+          fi
+          echo "json=$(jq -c . "$RUNNER_TEMP/schema.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Review with the pr-review skill
+        id: claude
+        if: steps.mode.outputs.mode == 'review'
+        continue-on-error: true # the report step turns a failed review into "waiting for human review"
+        uses: anthropics/claude-code-action@4411a9e9b0283becf4b924f7bce360fd7756c78c # v1.0.290
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Use the pr-review skill (.claude/skills/pr-review/SKILL.md) to review a pull request.
+
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            HEAD SHA: ${{ github.event.pull_request.head.sha }}
+            BASE SHA: ${{ github.event.pull_request.base.sha }}
+            MODE: ${{ steps.previous.outputs.review_mode }}
+            LAST REVIEWED SHA: ${{ steps.previous.outputs.last_sha }}
+            PREVIOUS STATE FILE: ${{ runner.temp }}/previous.json
+
+            The PR branch is checked out in the working directory.
+            Post inline comments with mcp__github_inline_comment__create_inline_comment (confirmed: true).
+            Do not post any other comment: the workflow writes the summary from your structured output.
+            Return the review result as your structured output.
+          claude_args: |
+            --model sonnet
+            --max-turns 30
+            --permission-mode default
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Read,Grep,Glob"
+            --json-schema '${{ steps.schema.outputs.json }}'
+
+      - name: Verdict and summary comment
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MODE: ${{ steps.mode.outputs.mode }}
+          COMMENT_ID: ${{ steps.previous.outputs.comment_id }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          EVENT_ACTION: ${{ github.event.action }}
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          printf '%s' "$RESULT" > "$RUNNER_TEMP/result.json"
+          set +e
+          python3 scripts/code_review_report.py report --mode "$MODE" --labels "$LABELS" --event "$EVENT_ACTION" \
+            --head-sha "$HEAD_SHA" --output-file "$RUNNER_TEMP/result.json" \
+            --previous-file "$RUNNER_TEMP/previous.json" --body-out "$RUNNER_TEMP/body.md"
+          code=$?
+          set -e
+          if [ "$MODE" != "dependabot" ]; then
+            if [ -n "$COMMENT_ID" ]; then
+              gh api -X PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" -F "body=@$RUNNER_TEMP/body.md" > /dev/null
+            else
+              gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -F "body=@$RUNNER_TEMP/body.md" > /dev/null
+            fi
+          fi
+          cat "$RUNNER_TEMP/body.md" >> "$GITHUB_STEP_SUMMARY"
+          exit "$code"

@@ -28,6 +28,25 @@ Pull requests opened by `dependabot[bot]` skip the commit and title checks, beca
 
 **Blocking merges:** the job blocks a merge only when `spec-gates` is a required status check in the branch protection rule (or ruleset) for `main`. That is a repository setting, not a file in this repository.
 
+## Code Review
+
+Defined in [.github/workflows/code-review.yml](../../../.github/workflows/code-review.yml). One job, `code-review`, runs on every pull request to `main` (opened, synchronize, reopened, ready_for_review, labeled, unlabeled). It runs the [`pr-review`](../../../.claude/skills/pr-review/SKILL.md) skill with `anthropics/claude-code-action` (model `sonnet`, at most 30 turns, tools limited to reading the repository, `gh pr diff/view`, read-only git and inline comments). The skill returns its findings as JSON (`--json-schema`); [scripts/code_review_report.py](../../../scripts/code_review_report.py) writes the one summary comment from it and decides the result. How the owner uses it: [operations/code-review.md](../../operations/code-review.md). Decision: [ADR-006](../../adr/006-human-approval-and-review-gates.md).
+
+- **Fails** when a blocking finding is open, unless the PR has the `review-override` label. A new push removes that label.
+- **Fails closed:** a review that crashes, times out or returns no result waits for a human, the same as a disabled review.
+- **Re-reviews:** when the last reviewed commit is still in the branch, the next run re-checks the open findings and reviews only the new commits. A previous open blocking finding missing from the new result is carried over as open.
+- **Label changes** re-judge the last result without a new review, in their own concurrency group, so they never cancel a running review.
+- **Dependabot** pull requests pass without a review.
+- **Switch:** the repository variable `AUTO_REVIEW`. Unset or `on` runs the review; `off` skips it and the check fails with "waiting for human review" until the owner adds `review-override`.
+- The action restores `.claude/` from the base branch, so a PR cannot change the reviewer that judges it. The output schema is also read from the base commit.
+
+## Human Approval
+
+Defined in [.github/workflows/human-approval.yml](../../../.github/workflows/human-approval.yml). One job, `human-approval`, runs [scripts/human_approval.py](../../../scripts/human_approval.py) on every pull request to `main` (opened, synchronize, reopened, labeled, unlabeled). It fails when the PR touches a path listed in [.github/human-approval.json](../../../.github/human-approval.json), or makes a protected change found in the diff (new library, Docker base image, lowered coverage threshold, disabled lint rule, skipped test, destructive migration), unless the PR has the `owner-approved` label. On a new push to a gated PR the job removes the label. The full list is in [operations/code-review.md](../../operations/code-review.md#what-needs-your-approval-human-approval).
+
+- It runs on `pull_request_target`: the workflow, the script and the rules come from the base branch, so a PR cannot weaken them. It never checks out or runs PR code: it fetches the PR head as data and only reads blobs and diffs with git.
+- The rules file is read at the base commit; the PR that first adds it falls back to the working-tree copy.
+
 ## Triggers
 
 | Event | Jobs that run |
@@ -36,7 +55,7 @@ Pull requests opened by `dependabot[bot]` skip the commit and title checks, beca
 | Push to `main` | test, security, build, publish |
 | Push of a tag matching `v*.*.*` | test, security, build, publish |
 
-`spec-gates` runs on pull requests to `main` only (opened, synchronize, reopened, edited), in its own workflow.
+`spec-gates` runs on pull requests to `main` only (opened, synchronize, reopened, edited), in its own workflow. `code-review` (pull_request) and `human-approval` (pull_request_target) run on pull requests to `main` only, also when a label is added or removed, each in its own workflow.
 
 Concurrent runs are cancelled for pull requests only. Runs on `main` and on tags always finish.
 
@@ -51,6 +70,8 @@ Every job declares `timeout-minutes`, so a hung job ends on its own instead of r
 | build | ci-cd.yml | 20 |
 | publish | ci-cd.yml | 15 |
 | spec-gates | spec-gates.yml | 20 |
+| code-review | code-review.yml | 20 |
+| human-approval | human-approval.yml | 5 |
 | Analyze | codeql.yml | 30 |
 
 ## Image Registry and Tags
@@ -69,9 +90,10 @@ Images are published to GitHub Container Registry at `ghcr.io/tghcastro/capital-
 ## Security Policy
 
 - **Audit gate:** `critical` advisories in production dependencies block the pipeline. Lower severities are reported but do not block. `zod` has a `high` advisory whose fix is a major upgrade, so `high` is not a gate.
-- **Permissions:** the workflow defaults to `contents: read`. Each job grants only what it needs. Only the publish job can write packages and attestations.
+- **Permissions:** every workflow defaults to `contents: read`. Each job grants only what it needs. Only the publish job can write packages and attestations. `code-review` and `human-approval` can write pull requests (comments and removing their labels); `code-review` also gets `id-token: write` for the Claude GitHub App.
 - **Checkout credentials:** every `actions/checkout` step sets `persist-credentials: false`, so the `GITHUB_TOKEN` is not left in `.git/config` for later steps. The publish job's `git fetch origin` works because the repository is public.
-- **Secrets:** none. The pipeline uses the built-in `GITHUB_TOKEN`.
+- **Secrets:** one, `CLAUDE_CODE_OAUTH_TOKEN`, used only by the `code-review` job (the owner's Claude subscription token). Everything else uses the built-in `GITHUB_TOKEN`. Repository variable: `AUTO_REVIEW` (see [Code Review](#code-review)).
+- **Untrusted input:** event text (titles, labels, logins) reaches `run:` scripts only through `env:`, never interpolated into the script.
 - **Action pinning:** every third-party action is pinned to a full commit SHA, with the release version in a trailing comment. Dependabot proposes updates to the pins.
 - **CodeQL:** [.github/workflows/codeql.yml](../../../.github/workflows/codeql.yml) analyzes the TypeScript source on pull requests, pushes to `main`, and weekly. Code scanning default setup is disabled, because it conflicts with the workflow file.
 

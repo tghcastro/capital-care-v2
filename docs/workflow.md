@@ -29,7 +29,9 @@ flowchart LR
     D -->|owner reviews| D
     D --> E[Build on branch<br/>feat/CAP-n-...]
     E --> F[Pull request<br/>Closes CAP-n]
-    F --> G[CI: tests, audit,<br/>CodeQL, image build]
+    F --> G[CI: tests, audit,<br/>CodeQL, image build,<br/>code review]
+    F -.->|protected change<br/>or review off| O[Owner review<br/>labels]
+    O -.-> H
     G --> H[Squash merge<br/>issue moves to Done]
     H --> I[Release tag<br/>image on GHCR]
     E -.-> J[Independent<br/>verification]
@@ -71,7 +73,7 @@ Decided in [ADR-004](adr/004-plan-auto-approval-policy.md). The agent approves a
 
 **Record.** An auto-approval is written in `plan.md` as `**Approved**: <date> - policy: AP-1 - <which conditions were checked>`, never as the owner's words. The owner's own approval keeps `user: "<their words>"`.
 
-**What the PRD approval authorizes.** Local edits and commits, pushing the feature branch, opening the pull request, and merging it once every required check and the independent verifier pass. It never authorizes a release, a deploy or a production data change: those need an explicit go-ahead for that action.
+**What the PRD approval authorizes.** Local edits and commits, pushing the feature branch, opening the pull request, and merging it once every required check and the independent verifier pass. The required checks include `code-review` and `human-approval`, so a PR with a protected change, or opened while the automated review is off, merges only after the owner's label ([operations/code-review.md](operations/code-review.md)). It never authorizes a release, a deploy or a production data change: those need an explicit go-ahead for that action.
 
 The skill change is a documented fork, see [`FORK.md`](../.claude/skills/tlc-spec-lean/FORK.md).
 
@@ -91,8 +93,9 @@ Decided in [ADR-005](adr/005-agent-stop-and-notify-policy.md). An agent that wor
 | SC-6 | Cost limit | Cost of the run reaches `cost_usd`. |
 | SC-7 | Blocked by access | A permission, credential, tool or network host is missing or denied, and the agent cannot continue without it. |
 | SC-8 | Action beyond authority | The next step is a release, a deploy, a production data change, or changing a check only to make it pass. |
+| SC-9 | Waiting for a human gate | `human-approval` fails because the PR makes a protected change, or `code-review` fails because the automated review is off or did not finish. See [operations/code-review.md](operations/code-review.md). |
 
-SC-1 to SC-3 are the AP-1 failures, named so the notification can cite them. A stop caused by SC-4 never ends with the agent weakening, skipping or deleting the red test.
+SC-1 to SC-3 are the AP-1 failures, named so the notification can cite them. A stop caused by SC-4 never ends with the agent weakening, skipping or deleting the red test. A stop caused by SC-9 never ends with the agent adding `owner-approved` or `review-override`: only the owner adds them ([ADR-006](adr/006-human-approval-and-review-gates.md)). A blocking finding from `code-review` is not SC-9: the agent fixes it like a red check (SC-4 limits apply), and stops with SC-2 if it believes the finding is wrong.
 
 **Limits.** A limit is a number the run checks; reaching it is a stop, not a warning.
 
@@ -110,7 +113,7 @@ SC-1 to SC-3 are the AP-1 failures, named so the notification can cite them. A s
 
 1. **Linear comment** on the issue, using the template below.
 2. **Slack message** in `#capital-care`, using the template below. This is a documented exception to "do not post there unless the user asks", see the root [`AGENTS.md`](../AGENTS.md). It is the only Slack post an agent makes on its own; it applies to stops only.
-3. **Leave the work as it is.** Do not discard changes. Commit finished work and push the feature branch (already authorized by the PRD approval). Do not open or merge a pull request, and do not change the issue status.
+3. **Leave the work as it is.** Do not discard changes. Commit finished work and push the feature branch (already authorized by the PRD approval). Do not open or merge a pull request, and do not change the issue status. For SC-9 the pull request already exists: leave it open and put its link in both messages.
 4. **End the run.** Do not wait, poll or retry. The owner's reply in Linear or in the session is what resumes it.
 
 If one of the two posts fails, still post the other, then end the run with the same text as the final message. Post once per stop: no repeats for the same stop. Never put secrets, tokens or personal data in either message.
@@ -136,7 +139,7 @@ Both messages carry the issue code, the reason and the decision or action needed
 
 ### 4. Build, review, ship
 
-The agent works on a branch named after the issue, follows [Conventional Commits](https://www.conventionalcommits.org/) and opens a PR from the [template](../.github/PULL_REQUEST_TEMPLATE.md) with `Closes CAP-n`. The Linear GitHub integration moves the issue as the PR opens and merges. CI runs tests, a dependency audit and CodeQL, builds the Docker image, and publishes it to GHCR. Conventions are in [`git.md`](tech/definitions/git.md) and [`ci-cd.md`](tech/definitions/ci-cd.md).
+The agent works on a branch named after the issue, follows [Conventional Commits](https://www.conventionalcommits.org/) and opens a PR from the [template](../.github/PULL_REQUEST_TEMPLATE.md) with `Closes CAP-n`. The Linear GitHub integration moves the issue as the PR opens and merges. CI runs tests, a dependency audit and CodeQL, builds the Docker image, and publishes it to GHCR. An AI reviewer (`code-review`) checks the code against the definitions and ADRs, and a fixed-rule gate (`human-approval`) holds protected changes (definitions, guardrails, new libraries, base images) for the owner. How to read, clear, enable and disable them: [operations/code-review.md](operations/code-review.md). Conventions are in [`git.md`](tech/definitions/git.md) and [`ci-cd.md`](tech/definitions/ci-cd.md).
 
 ### 5. Learn
 
