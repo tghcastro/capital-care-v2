@@ -259,7 +259,7 @@ describe('restore', () => {
   });
 
   it('a pruning failure after a restore reports the restore with a warning', async () => {
-    fs.failRemove = new RegExp(`${CHOSEN.replace(/\./g, '\\.')}$`);
+    fs.failRemove = /capital-care-20261126T120000000Z\.db$/; // CHOSEN
     const result = await service(1).restore(CHOSEN);
     expect(result).toEqual({
       restored: CHOSEN,
