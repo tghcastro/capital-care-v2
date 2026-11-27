@@ -117,6 +117,6 @@ Proof: `f=docs/operations/backup-and-restore.md; for w in 'dist/backup.js' 'db-r
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** none
+- **Dispatched:** Verifier at `e7fa539`
 - **Boundary:** none yet
 - **Abandoned:** none
