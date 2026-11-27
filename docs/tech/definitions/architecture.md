@@ -84,3 +84,15 @@ capital-care/
 ## Tooling
 
 - **Linting & Formatting:** ESLint (flat config in `eslint.config.js`, `typescript-eslint` recommended + strict, TypeScript files only, no type-aware rules) + Prettier. `eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y` apply to `apps/web` only (see [web.md](./web.md#lint)). `pnpm lint` runs in CI.
+
+### Architecture lint rules
+
+`pnpm lint` also enforces the architecture decisions below with `no-restricted-imports` blocks in `eslint.config.js`. Each decision has a rule ID that appears in the error message. The `MODULES` list in that file names every module; add a module there when you create it.
+
+| Rule   | Decision                                                                       | What fails                                                                                                                                                        |
+| ------ | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ARCH-1 | AD-008, AD-011 (see [ADR 002](../../adr/002-identity-as-a-separate-module.md)) | A file in `modules/<a>` imports `modules/<b>` (package name or relative path). Modules cooperate through a callback wired in `apps/api`.                          |
+| ARCH-2 | AD-006 (see [ADR 001](../../adr/001-keep-business-rules-in-the-api.md))        | A file in `apps/web` imports any module. Business rules stay in the API; the web app only calls it over HTTP.                                                     |
+| ARCH-3 | AD-008, AD-011                                                                 | Code in `apps/` or `packages/` imports a module's internals (`@capital-care/<module>/...` or a relative path into `modules/<module>/`) instead of its `index.ts`. |
+
+Not covered by lint: AD-014 (modules log through their own logger interface), which no import pattern can express.
