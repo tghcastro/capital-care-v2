@@ -146,6 +146,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: docs/tech/definitions/git.md:39 (verification.md finding 4) (docs)
 - last seen: 2026-11-26T17:19:55Z
 
+### L-023 - After an irreversible step succeeds (file replaced, backup written), later cleanup must not be reported as failure of that step: return it as a warning and test the failure after the commit point.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `operations` · harmful: 0
+- features: database-backup-and-restore
+- evidence: verification.md finding 1-2, C21 (operations)
+- last seen: 2026-11-27T22:00:05Z
+
+### L-024 - A script that stops a service must restart it on SIGHUP/INT/TERM too; prove it with a test that signals the script mid-run.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `scripts` · harmful: 0
+- features: database-backup-and-restore
+- evidence: plan door 3, C23 (scripts)
+- last seen: 2026-11-27T22:00:05Z
+
+### L-025 - A permission-denied example cannot be proven by integration tests that may run as root; name it as a unit-level fake failure in the plan instead.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `operations` · harmful: 0
+- features: database-backup-and-restore
+- evidence: plan AC 7, C20 (operations)
+- last seen: 2026-11-27T22:00:05Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 23,
+  "next_id": 26,
   "lessons": [
     {
       "id": "L-001",
@@ -400,6 +400,60 @@
       ],
       "created": "2026-11-26T17:19:55Z",
       "last_seen": "2026-11-26T17:19:55Z"
+    },
+    {
+      "id": "L-023",
+      "key": "ac_gap::after an irreversible step succeeds file replaced backup written later cleanup must not be reported as failure of that step return it as a warning and test the failure after the commit point",
+      "text": "After an irreversible step succeeds (file replaced, backup written), later cleanup must not be reported as failure of that step: return it as a warning and test the failure after the commit point.",
+      "signal": "ac_gap",
+      "scope": "operations",
+      "status": "candidate",
+      "features": [
+        "database-backup-and-restore"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 1-2, C21 (operations)"
+      ],
+      "created": "2026-11-27T22:00:05Z",
+      "last_seen": "2026-11-27T22:00:05Z"
+    },
+    {
+      "id": "L-024",
+      "key": "spec_deviation::a script that stops a service must restart it on sighup int term too prove it with a test that signals the script mid run",
+      "text": "A script that stops a service must restart it on SIGHUP/INT/TERM too; prove it with a test that signals the script mid-run.",
+      "signal": "spec_deviation",
+      "scope": "scripts",
+      "status": "candidate",
+      "features": [
+        "database-backup-and-restore"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "plan door 3, C23 (scripts)"
+      ],
+      "created": "2026-11-27T22:00:05Z",
+      "last_seen": "2026-11-27T22:00:05Z"
+    },
+    {
+      "id": "L-025",
+      "key": "weak_test::a permission denied example cannot be proven by integration tests that may run as root name it as a unit level fake failure in the plan instead",
+      "text": "A permission-denied example cannot be proven by integration tests that may run as root; name it as a unit-level fake failure in the plan instead.",
+      "signal": "weak_test",
+      "scope": "operations",
+      "status": "candidate",
+      "features": [
+        "database-backup-and-restore"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "plan AC 7, C20 (operations)"
+      ],
+      "created": "2026-11-27T22:00:05Z",
+      "last_seen": "2026-11-27T22:00:05Z"
     }
   ]
 }
