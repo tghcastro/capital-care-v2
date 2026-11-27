@@ -17,7 +17,7 @@ Capital Care is a personal finance tracker, but the real product is the **proces
 | **Linear** | Source of truth for work. One issue per feature, labelled by `Type` and `Area`, with blocking links that show the build order. |
 | **Claude Code** | Plans and builds features, opens pull requests, runs on the web, so several features can move forward in parallel. |
 | **GitHub** | Code, pull requests (squash merge), CI/CD with GitHub Actions, CodeQL, Dependabot, container images on GHCR. |
-| **Slack** | `#capital-care` receives updates and a weekly summary that a scheduled Claude task writes from Linear and GitHub. |
+| **Slack** | `#capital-care` receives updates, a weekly summary that a scheduled Claude task writes from Linear and GitHub, and an immediate message when an agent [stops and needs the owner](#stop-conditions-and-owner-notification). |
 
 ## The Flow
 
@@ -67,13 +67,72 @@ Decided in [ADR-004](adr/004-plan-auto-approval-policy.md). The agent approves a
 3. The plan has no open question.
 4. The plan does not differ from the PRD: no scope added or removed, no new decision for `.specs/STATE.md`, no entry in `## Differences from the source`.
 
-**Stop and notify the owner** if any condition fails, or if the agent is unsure. Doubt counts as failure.
+**Stop and notify the owner** if any condition fails, or if the agent is unsure. Doubt counts as failure. What "stop and notify" means, step by step, is defined in [Stop conditions and owner notification](#stop-conditions-and-owner-notification).
 
 **Record.** An auto-approval is written in `plan.md` as `**Approved**: <date> - policy: AP-1 - <which conditions were checked>`, never as the owner's words. The owner's own approval keeps `user: "<their words>"`.
 
 **What the PRD approval authorizes.** Local edits and commits, pushing the feature branch, opening the pull request, and merging it once every required check and the independent verifier pass. It never authorizes a release, a deploy or a production data change: those need an explicit go-ahead for that action.
 
 The skill change is a documented fork, see [`FORK.md`](../.claude/skills/tlc-spec-lean/FORK.md).
+
+### Stop conditions and owner notification
+
+Decided in [ADR-005](adr/005-agent-stop-and-notify-policy.md). An agent that works alone must never stay silently blocked. These rules are written so that an orchestrator agent (the "ship CAP-n" skill) can apply them without judgment calls. `n` below is the issue number.
+
+**Stop conditions.** The agent stops as soon as **any one** holds. Doubt counts as holding.
+
+| Code | Condition | Detected when |
+|---|---|---|
+| SC-1 | One-way door | A plan has a one-way door (a decision expensive to undo), or the build is about to create one that the plan does not list. |
+| SC-2 | Open question | The plan, the PRD or the issue leaves a question that needs the owner's answer. |
+| SC-3 | Deviation | The plan differs from the PRD (any AP-1 condition 1 or 4 fails). |
+| SC-4 | Fix attempts exhausted | The same check or test is still red after `fix_attempts` fix attempts. A fix attempt is one code change followed by one re-run of that check. |
+| SC-5 | Time limit | Wall time since the run started reaches `wall_time`. |
+| SC-6 | Cost limit | Cost of the run reaches `cost_usd`. |
+| SC-7 | Blocked by access | A permission, credential, tool or network host is missing or denied, and the agent cannot continue without it. |
+| SC-8 | Action beyond authority | The next step is a release, a deploy, a production data change, or changing a check only to make it pass. |
+
+SC-1 to SC-3 are the AP-1 failures, named so the notification can cite them. A stop caused by SC-4 never ends with the agent weakening, skipping or deleting the red test.
+
+**Limits.** A limit is a number the run checks; reaching it is a stop, not a warning.
+
+| Limit | Key | Default |
+|---|---|---|
+| Failed fix attempts per check | `fix_attempts` | 2 |
+| Wall time per feature | `wall_time` | 1h |
+| Cost per feature | `cost_usd` | 5 |
+
+- **Defaults live here**, in this table, and nowhere else.
+- **Override per feature** with one line, in this order of precedence: the `**Limits**:` line in the feature's `plan.md`, then a `Limits:` line in the issue's "Agent notes". Anything not named keeps its default. Format: `**Limits**: fix_attempts=3 wall_time=2h cost_usd=10`. Only the owner sets or raises a limit; an agent never raises its own.
+- **When they are checked.** Before each phase starts (plan, checks, build, verify, pull request) and after every failed test run. The clock starts at the first action on the issue. If the cost cannot be measured in the current environment, the agent says so in its first Linear comment or final report and enforces the other limits; it does not guess a number.
+
+**When the agent stops**, in this order, and before any other work:
+
+1. **Linear comment** on the issue, using the template below.
+2. **Slack message** in `#capital-care`, using the template below. This is a documented exception to "do not post there unless the user asks", see the root [`AGENTS.md`](../AGENTS.md). It is the only Slack post an agent makes on its own; it applies to stops only.
+3. **Leave the work as it is.** Do not discard changes. Commit finished work and push the feature branch (already authorized by the PRD approval). Do not open or merge a pull request, and do not change the issue status.
+4. **End the run.** Do not wait, poll or retry. The owner's reply in Linear or in the session is what resumes it.
+
+If one of the two posts fails, still post the other, then end the run with the same text as the final message. Post once per stop: no repeats for the same stop. Never put secrets, tokens or personal data in either message.
+
+**Linear comment template**
+
+```
+Agent stopped on CAP-<n>
+
+Why: <SC-code> <condition name> - <one sentence, with the check or number that triggered it>
+Needed from you: <one decision or action, phrased so a short reply settles it>
+State: branch <name>, <last commit or "no commits">, <what is done and what is not>
+Limits: fix attempts <used>/<max>, wall time <used>/<max>, cost <used>/<max or "not measured">
+```
+
+**Slack message template** (one line, so it reads in a channel):
+
+```
+:octagonal_sign: CAP-<n> stopped (<SC-code> <condition name>): <why in one sentence>. Needed: <decision or action>. <link to the Linear issue>
+```
+
+Both messages carry the issue code, the reason and the decision or action needed. That is what makes a stop answerable within minutes.
 
 ### 4. Build, review, ship
 

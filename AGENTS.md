@@ -36,7 +36,7 @@ Work is tracked in Linear, team `capital-care` (issue key `CAP`). Linear is the 
 - When the user asks you to work on an issue or task (e.g. "work on CAP-31"), open a pull request when the work is finished. The user does not need to ask for it each time. Follow [docs/tech/definitions/git.md](docs/tech/definitions/git.md#pull-requests) and the PR template.
 - Do not change an issue's status by hand. The Linear GitHub integration moves it when the linked PR opens and merges.
 - Labels: each issue gets one `Type` label (`Feature`, `Bug`, `Improvement`, `Docs`, `Chore`, matching the commit type) and one `Area` label (`Ledger`, `Identity`, `Platform`).
-- Updates (issues, PRs, the weekly summary) go to the Slack channel `#capital-care`. Do not post there unless the user asks.
+- Updates (issues, PRs, the weekly summary) go to the Slack channel `#capital-care`. Do not post there unless the user asks. One documented exception: when you stop because you are blocked (a stop condition), post the stop message and add the Linear comment, as defined in [docs/workflow.md](docs/workflow.md#stop-conditions-and-owner-notification) (see [ADR-005](docs/adr/005-agent-stop-and-notify-policy.md)). Nothing else is posted without the user asking.
 
 ## Project Conventions and Definitions
 
