@@ -31,7 +31,7 @@ Chosen option: **B**, operated as described in [`docs/operations/code-review.md`
 - **`human-approval`** runs `scripts/human_approval.py` on `pull_request_target`, so the script and its rules (`.github/human-approval.json`) come from the base branch. A gated PR waits for the `owner-approved` label; a new push removes it.
 - **Label policy:** an agent **never** adds or removes `owner-approved` or `review-override`. When either gate waits for the owner, the agent stops (SC-9 in [`docs/workflow.md`](../workflow.md#stop-conditions-and-owner-notification)) and notifies.
 
-Option C needs a GitHub identity for the agent that differs from the owner's. It is the target: a follow-up issue gives the agent its own identity, and then CODEOWNERS replaces the label.
+Option C needs a GitHub identity for the agent that differs from the owner's. It is the target: [CAP-42](https://linear.app/tghcastro/issue/CAP-42/give-the-agent-its-own-github-identity) gives the agent its own identity, and then CODEOWNERS replaces the label.
 
 ### Positive Consequences
 
@@ -50,4 +50,4 @@ Option C needs a GitHub identity for the agent that differs from the owner's. It
 
 - [ADR-004](004-plan-auto-approval-policy.md) (what the PRD approval authorizes), [ADR-005](005-agent-stop-and-notify-policy.md) (stop and notify)
 - [`docs/tech/definitions/ci-cd.md`](../tech/definitions/ci-cd.md#code-review), [`git.md`](../tech/definitions/git.md#branch-protection)
-- Linear: CAP-35, CAP-40
+- Linear: CAP-35, CAP-40, CAP-42
