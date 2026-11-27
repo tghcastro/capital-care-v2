@@ -1,6 +1,6 @@
 # Database Backup and Restore
 
-**Approved**: <written when the user approves - YYYY-MM-DD - user: "their words">
+**Approved**: 2026-11-27 - user: "spec approved"
 
 ## Problem
 

@@ -6,7 +6,8 @@
 #   every `up` starts from an empty database. Host port 3000.
 # capital-care-prd (profile `prod`): pulls the `latest` published image from GHCR instead
 #   of building locally. The database persists in the named volume `capital-care-data`,
-#   so it survives restarts. Host port 8000.
+#   so it survives restarts. Backups go to the host folder BACKUP_HOST_DIR (default
+#   ./backups). Host port 8000.
 #
 # The container always listens on 3000 internally; only the published host port differs
 # between the two services.
@@ -58,6 +59,9 @@ services:
     restart: unless-stopped
     volumes:
       - capital-care-data:/app/data
+      # Backups (CAP-24): a host folder, outside the data volume, writable by UID 1000.
+      # See docs/operations/backup-and-restore.md.
+      - ${BACKUP_HOST_DIR:-./backups}:/app/backups
 
 volumes:
   # PRD only. Removing it (`docker compose --profile prod down -v`) deletes all data.

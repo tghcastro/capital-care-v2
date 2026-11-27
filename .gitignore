@@ -24,6 +24,7 @@ tsconfig.tsbuildinfo
 *.db-shm
 *.db-wal
 data/
+backups/
 
 # IDE
 .vscode/

@@ -13,14 +13,14 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 
 // Compiled file lives in dist/shared/persistence/; migrations are copied next to it.
-const DEFAULT_MIGRATIONS_FOLDER = path.join(
+export const MIGRATIONS_FOLDER = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   'migrations',
 );
 
 export function migrateLedgerDatabase(
   dbPath: string,
-  migrationsFolder: string = DEFAULT_MIGRATIONS_FOLDER,
+  migrationsFolder: string = MIGRATIONS_FOLDER,
 ): void {
   const sqlite = new Database(dbPath);
   try {
