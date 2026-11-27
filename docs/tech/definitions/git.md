@@ -14,9 +14,18 @@ Applies to humans and AI agents alike.
 
 - **No direct push:** a push straight to `main` is rejected. Force pushes and branch deletion are blocked.
 - **Pull request required:** every change reaches `main` through a PR. Squash merge is the only allowed merge method.
-- **Required status checks:** all of these must be green before a merge: `test`, `security`, `build` (workflow [CI/CD](./ci-cd.md)), `Analyze` (workflow CodeQL, shown as `CodeQL / Analyze`) and `spec-gates` (workflow Spec gates). Add each new gate to this list in the ruleset and here when it arrives.
+- **Required status checks:** all of these must be green before a merge: `test`, `security`, `build` (workflow [CI/CD](./ci-cd.md)), `Analyze` (workflow CodeQL, shown as `CodeQL / Analyze`), `spec-gates` (workflow Spec gates), `code-review` (workflow Code review) and `human-approval` (workflow Human approval). Add each new gate to this list in the ruleset and here when it arrives.
 - **Up to date:** the PR branch must be up to date with `main` before merging (strict status checks).
 - A check that is skipped or missing does not count as passing.
+
+### Approval Labels
+
+Two labels clear the review gates. **Only the owner adds them; an agent never adds or removes either one** ([ADR-006](../../adr/006-human-approval-and-review-gates.md)). A new push removes both, so each one covers a single commit.
+
+- `owner-approved`: the owner reviewed the protected changes that `human-approval` lists.
+- `review-override`: the owner reviewed the PR and overrides the open blocking findings of `code-review`, or reviewed it by hand while the automated review is off.
+
+How to use them: [operations/code-review.md](../../operations/code-review.md).
 
 ## Branch Names
 
@@ -76,7 +85,7 @@ Do not bypass them with `--no-verify`. Claude Code's settings deny it, and deny 
 [.claude/settings.json](../../../.claude/settings.json) is the project's shared Claude Code configuration:
 
 - **Allow:** routine commands (install, lint, test, build, read-only git, `git add`/`commit`/`fetch`, the spec-gate scripts) run without a permission prompt.
-- **Deny:** any access to `.prompts/` (see the root [AGENTS.md](../../../AGENTS.md#the-prompts-folder)); any command on the production database (the `prod` compose profile, the `capital-care-prd` container, the `capital-care-data` volume); `git commit --no-verify`; changing `core.hooksPath`. Bash deny rules match the command text, so they are a guard rail, not a sandbox.
+- **Deny:** any access to `.prompts/` (see the root [AGENTS.md](../../../AGENTS.md#the-prompts-folder)); any command on the production database (the `prod` compose profile, the `capital-care-prd` container, the `capital-care-data` volume); `git commit --no-verify`; changing `core.hooksPath`; `gh` or `curl` commands that name the approval labels `owner-approved` or `review-override` (see [Approval Labels](#approval-labels)). Bash deny rules match the command text, so they are a guard rail, not a sandbox.
 - **Hooks:** `SessionStart` enables the [local git hooks](#local-git-hooks).
 
 There is no `CLAUDE.md`: Claude Code reads the root `AGENTS.md` by itself, so a `CLAUDE.md` that imports it would load the rules twice. Add one only if a Claude Code version in use stops reading `AGENTS.md`.

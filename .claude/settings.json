@@ -39,7 +39,11 @@
       "Bash(*capital-care-prd*)",
       "Bash(*capital-care-data*)",
       "Bash(git commit *--no-verify*)",
-      "Bash(git config core.hooksPath *)"
+      "Bash(git config core.hooksPath *)",
+      "Bash(gh *owner-approved*)",
+      "Bash(gh *review-override*)",
+      "Bash(curl *owner-approved*)",
+      "Bash(curl *review-override*)"
     ]
   },
   "hooks": {

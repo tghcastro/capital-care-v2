@@ -15,6 +15,7 @@ Each folder may have its own `AGENTS.md` describing what it contains and how to 
 
 - [docs/tech/AGENTS.md](docs/tech/AGENTS.md) — technical definitions (architecture, database, API, security, logging, testing).
 - [docs/adr/](docs/adr/README.md) — Architecture Decision Records: why major decisions were made. Read one only when your task revisits that decision.
+- [docs/operations/code-review.md](docs/operations/code-review.md) — the `code-review` and `human-approval` checks on pull requests. Read it when a PR check waits for the owner. Never add or remove the `owner-approved` or `review-override` labels. To review a diff, use the [`pr-review`](.claude/skills/pr-review/) skill.
 
 ## Conventions for Agents
 
