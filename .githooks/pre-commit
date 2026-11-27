@@ -1,0 +1,23 @@
+#!/bin/sh
+# Runs before every commit. Blocks the commit when lint fails, the same `pnpm lint` CI runs.
+# Enabled by `git config core.hooksPath .githooks` (the Claude Code SessionStart hook does it).
+# See docs/tech/definitions/git.md#local-git-hooks.
+
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# Lint only matters when a lintable file is staged; docs-only commits skip it.
+if ! git diff --cached --name-only --diff-filter=ACMR \
+  | grep -Eq '\.(ts|tsx|js|jsx|mjs|cjs)$|(^|/)eslint\.config\.js$|(^|/)package\.json$'; then
+  exit 0
+fi
+
+if [ ! -x node_modules/.bin/eslint ]; then
+  echo "pre-commit: dependencies are not installed. Run 'pnpm install --frozen-lockfile', then commit again." >&2
+  exit 1
+fi
+
+if ! pnpm lint; then
+  echo "" >&2
+  echo "pre-commit: lint failed, commit stopped. Fix the errors above ('pnpm lint' to rerun)." >&2
+  exit 1
+fi

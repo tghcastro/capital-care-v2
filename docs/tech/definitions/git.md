@@ -57,6 +57,30 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
   Co-authored-by: <AI tool or agent name> <verified co-author email>
   ```
 
+## Local Git Hooks
+
+The [.githooks/](../../../.githooks/) folder holds git hooks that stop a commit locally when CI would reject it:
+
+- `pre-commit` runs `pnpm lint` when a lintable file is staged (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `eslint.config.js`, `package.json`). It stops the commit if lint fails or dependencies are not installed.
+- `commit-msg` checks the message the same way the `spec-gates` job does (`check_message` in [scripts/spec_gates.py](../../../scripts/spec_gates.py)): Conventional Commits through `check_commit.py`, plus the `Refs: CAP-<n>` footer. Merge commits and `fixup!`/`squash!`/`amend!` commits are skipped.
+
+Git uses them once `core.hooksPath` points to the folder:
+
+- **Claude Code:** the `SessionStart` hook in [.claude/settings.json](../../../.claude/settings.json) sets it at the start of every session, local or on the web. No manual step.
+- **Humans:** run `git config core.hooksPath .githooks` once per clone.
+
+Do not bypass them with `--no-verify`. Claude Code's settings deny it, and deny changing `core.hooksPath`.
+
+## Claude Code Settings
+
+[.claude/settings.json](../../../.claude/settings.json) is the project's shared Claude Code configuration:
+
+- **Allow:** routine commands (install, lint, test, build, read-only git, `git add`/`commit`/`fetch`, the spec-gate scripts) run without a permission prompt.
+- **Deny:** any access to `.prompts/` (see the root [AGENTS.md](../../../AGENTS.md#the-prompts-folder)); any command on the production database (the `prod` compose profile, the `capital-care-prd` container, the `capital-care-data` volume); `git commit --no-verify`; changing `core.hooksPath`. Bash deny rules match the command text, so they are a guard rail, not a sandbox.
+- **Hooks:** `SessionStart` enables the [local git hooks](#local-git-hooks).
+
+There is no `CLAUDE.md`: Claude Code reads the root `AGENTS.md` by itself, so a `CLAUDE.md` that imports it would load the rules twice. Add one only if a Claude Code version in use stops reading `AGENTS.md`.
+
 ## Pull Requests
 
 The template is [.github/PULL_REQUEST_TEMPLATE.md](../../../.github/PULL_REQUEST_TEMPLATE.md). Fill in every section.
