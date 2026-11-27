@@ -41,8 +41,9 @@ function reason(error: unknown): string {
 /** `backup` command: prints the new backup's name; returns the exit code. */
 export async function runBackupCommand(io: CommandIo = processIo): Promise<number> {
   try {
-    const name = await createService(io).backup();
+    const { name, warnings } = await createService(io).backup();
     io.out(`Backup created: ${name}`);
+    for (const warning of warnings) io.err(`Warning: ${warning}`);
     return 0;
   } catch (error) {
     io.err(`Backup failed: ${reason(error)}`);
@@ -59,6 +60,7 @@ export async function runRestoreCommand(name: string | undefined, io: CommandIo 
         ? `Restored ${result.restored}. Current data saved as ${result.preRestore}.`
         : `Restored ${result.restored}. There was no current data to save.`
     );
+    for (const warning of result.warnings) io.err(`Warning: ${warning}`);
     return 0;
   } catch (error) {
     io.err(`Restore failed: ${reason(error)}. Current data was not changed.`);

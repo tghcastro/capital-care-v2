@@ -274,7 +274,7 @@ describe('restore command', () => {
     const files = nodeBackupFiles();
     const engine = sqliteBackupEngine();
     const settings = { backupDir, keep: 5, appNewestMigration: readNewestJournalMigration(MIGRATIONS) };
-    const name = await new BackupService(files, engine, { ...settings, dbPath: olderDb }, clockOf('2026-11-20T00:00:00.000Z')).backup();
+    const { name } = await new BackupService(files, engine, { ...settings, dbPath: olderDb }, clockOf('2026-11-20T00:00:00.000Z')).backup();
 
     await new BackupService(files, engine, { ...settings, dbPath }, clockOf('2026-11-27T09:00:00.000Z')).restore(name);
     const restored = open(dbPath);

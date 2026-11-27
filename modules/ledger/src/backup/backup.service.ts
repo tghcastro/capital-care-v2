@@ -5,6 +5,7 @@ import {
   type BackupEngine,
   type BackupFiles,
   type BackupSettings,
+  type BackupResult,
   type Clock,
   type RestoreResult,
 } from './backup.types.js';
@@ -24,15 +25,14 @@ export class BackupService {
     private readonly clock: Clock
   ) {}
 
-  /** Takes a backup of the running database and returns its name. */
-  async backup(): Promise<string> {
+  /** Takes a backup of the running database. */
+  async backup(): Promise<BackupResult> {
     const { dbPath, backupDir } = this.settings;
     if (!this.files.exists(backupDir)) throw new BackupError(`the backup folder ${backupDir} does not exist`);
     if (!this.files.exists(dbPath)) throw new BackupError(`there is no database at ${dbPath}`);
 
     const name = await this.copyDatabase('backup');
-    this.prune();
-    return name;
+    return { name, warnings: this.prune() };
   }
 
   /** Replaces the database with the backup `name`, saving the current data first. */
@@ -60,16 +60,17 @@ export class BackupService {
     const staging = `${dbPath}.restoring`;
     try {
       this.files.copy(chosen, staging);
+      // The app is stopped and the current data is saved, so a journal beside the database
+      // belongs to the file being replaced; left in place, SQLite would apply it to the restored one.
+      for (const suffix of SIDECARS) this.files.remove(`${dbPath}${suffix}`);
       this.files.rename(staging, dbPath);
     } catch (error) {
       this.files.remove(staging);
       throw new BackupError(`could not put the backup in place: ${reason(error)}`);
     }
-    // The app is stopped, so any journal beside the database belonged to the replaced file.
-    for (const suffix of SIDECARS) this.files.remove(`${dbPath}${suffix}`);
 
-    this.prune();
-    return { restored: name, preRestore };
+    // From here the restore has happened: a pruning problem is a warning, never a failure.
+    return { restored: name, preRestore, warnings: this.prune() };
   }
 
   /** Online copy of the database into a new backup; never leaves a partial file behind. */
@@ -89,12 +90,20 @@ export class BackupService {
     return name;
   }
 
-  /** Deletes the oldest backups beyond `keep`; other files in the folder are left alone. */
-  private prune(): void {
-    const backups = this.files.list(this.settings.backupDir).filter(isBackupName).sort(byTime);
-    const excess = backups.length - this.settings.keep;
-    for (const name of backups.slice(0, Math.max(0, excess))) {
-      this.files.remove(path.join(this.settings.backupDir, name));
+  /**
+   * Deletes the oldest backups beyond `keep`; other files in the folder are left alone. Runs after
+   * the backup or restore succeeded, so it never throws: it returns what it could not delete.
+   */
+  private prune(): string[] {
+    try {
+      const backups = this.files.list(this.settings.backupDir).filter(isBackupName).sort(byTime);
+      const excess = backups.length - this.settings.keep;
+      for (const name of backups.slice(0, Math.max(0, excess))) {
+        this.files.remove(path.join(this.settings.backupDir, name));
+      }
+      return [];
+    } catch (error) {
+      return [`could not delete old backups: ${reason(error)}`];
     }
   }
 }

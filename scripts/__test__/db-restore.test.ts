@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,7 +26,7 @@ beforeEach(() => {
   const fake = path.join(dir, 'docker');
   fs.writeFileSync(
     fake,
-    '#!/usr/bin/env bash\necho "$*" >> "$FAKE_DOCKER_LOG"\ncase " $* " in *" run "*) exit "$FAKE_RUN_EXIT";; esac\nexit 0\n'
+    '#!/usr/bin/env bash\necho "$*" >> "$FAKE_DOCKER_LOG"\ncase " $* " in *" run "*) sleep "${FAKE_RUN_SLEEP:-0}"; exit "$FAKE_RUN_EXIT";; esac\nexit 0\n'
   );
   fs.chmodSync(fake, 0o755);
 });
@@ -59,4 +59,23 @@ describe('db-restore.sh', () => {
     expect(calls).toEqual([]);
     expect(stderr).toContain('Usage: scripts/db-restore.sh <backup-file-name>');
   });
+
+  for (const [signal, code] of [['SIGHUP', 129], ['SIGTERM', 143], ['SIGINT', 130]] as const) {
+    it(`AC17 db-restore.sh starts the app again after ${signal} during the restore`, async () => {
+      const child = spawn('bash', [SCRIPT, 'capital-care-20261126T120000000Z.db'], {
+        env: { ...process.env, PATH: `${dir}:${process.env.PATH ?? ''}`, FAKE_DOCKER_LOG: logFile, FAKE_RUN_EXIT: '0', FAKE_RUN_SLEEP: '1' },
+        stdio: 'ignore',
+      });
+      // wait until the restore is running, then signal the script only
+      for (let i = 0; i < 100 && !(fs.existsSync(logFile) && fs.readFileSync(logFile, 'utf8').includes(' run ')); i++) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      child.kill(signal);
+      const exitCode = await new Promise<number | null>((resolve) => child.on('exit', (c) => resolve(c)));
+      const calls = fs.readFileSync(logFile, 'utf8').trim().split('\n');
+      expect(exitCode).toBe(code);
+      expect(calls).toHaveLength(3);
+      expect(calls.at(-1)).toBe('compose --profile prod start capital-care-prd');
+    });
+  }
 });

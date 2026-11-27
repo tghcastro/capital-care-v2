@@ -37,10 +37,18 @@ export interface BackupSettings {
 
 export type Clock = () => Date;
 
+export interface BackupResult {
+  name: string;
+  /** problems after the backup succeeded, such as old backups that could not be deleted */
+  warnings: string[];
+}
+
 export interface RestoreResult {
   restored: string;
   /** name of the backup of the data that was replaced, or null when there was none */
   preRestore: string | null;
+  /** problems after the restore succeeded, such as old backups that could not be deleted */
+  warnings: string[];
 }
 
 /** A failure the owner can act on; its message is the reason printed after "failed:". */

@@ -4,7 +4,7 @@ Build: `pnpm type-check`; `pnpm lint`; `pnpm build`
 Run backup: `pnpm vitest run --project node modules/ledger/src/backup scripts/__test__ --reporter=verbose`
 Plan: `.specs/features/database-backup-and-restore/plan.md`
 
-19 checks in 3 slices · 3 one-way doors · 0 open
+23 checks in 4 slices · 3 one-way doors · 0 open
 
 ## Checks
 
@@ -84,6 +84,23 @@ Proof: `grep -q '\${BACKUP_HOST_DIR:-./backups}:/app/backups' docker-compose.yml
 **C19** - `docs/operations/backup-and-restore.md` covers taking, restoring and undoing, `BACKUP_KEEP`, `BACKUP_HOST_DIR`, UID 1000, copying elsewhere and the lack of encryption, and is linked from `README.md` and `database.md` (AC 19)
 Proof: `f=docs/operations/backup-and-restore.md; for w in 'dist/backup.js' 'db-restore.sh' 'pre-restore' 'BACKUP_KEEP' 'BACKUP_HOST_DIR' '1000' 'Copy' 'not encrypted'; do grep -q -- "$w" "$f" || exit 1; done; grep -q 'operations/backup-and-restore.md' README.md && grep -q 'operations/backup-and-restore.md' docs/tech/definitions/database.md`
 
+### S4 - Verifier findings
+
+**C20** - A backup whose copy fails with `EACCES: permission denied` (backup folder not writable) fails with that reason and deletes no earlier backup (AC 7)
+Proof: run backup | ✓ AC7 a backup folder that is not writable fails and deletes no backup
+
+**C21** - When old backups cannot be deleted after a backup or a restore succeeded, the result is still a success and carries the warning `could not delete old backups: <reason>`, which the command prints as `Warning: <warning>` with exit `0`; the restored database keeps the chosen backup's data (AC 1, AC 8)
+Proof: run backup | ✓ a pruning failure after a backup reports the backup with a warning
+Proof: run backup | ✓ a pruning failure after a restore reports the restore with a warning
+
+**C22** - A journal file beside the database that cannot be removed fails the restore before the database is replaced, with `could not put the backup in place: <reason>` (AC 15)
+Proof: run backup | ✓ a journal file that cannot be removed fails the restore before the database is replaced
+
+**C23** - `scripts/db-restore.sh` interrupted by SIGHUP, SIGTERM or SIGINT during the restore starts `capital-care-prd` again after the restore finishes and exits `129`, `143` or `130` (AC 17, door 3)
+Proof: run backup | ✓ AC17 db-restore.sh starts the app again after SIGHUP during the restore
+Proof: run backup | ✓ AC17 db-restore.sh starts the app again after SIGTERM during the restore
+Proof: run backup | ✓ AC17 db-restore.sh starts the app again after SIGINT during the restore
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |
@@ -95,17 +112,18 @@ Proof: `f=docs/operations/backup-and-restore.md; for w in 'dist/backup.js' 'db-r
 | name rule, AC 1 (1 example) | 2026-11-27 21:05:00.123 → `capital-care-20261127T210500123Z.db` C1 | - |
 | pruning, AC 5 (4 examples) | 5 existing → 5 C5 · 3 existing → 4 C5 · `notes.txt` kept C5 · pre-restore counts C5 | - |
 | `BACKUP_KEEP` values, AC 6 (6) | unset C6 · `05` C6 · `0` C6 · `-1` C6 · `2.5` C6 · `abc` C6 | - |
-| backup failures, AC 7 (3) | copy fails C7 · folder missing C7 · database missing C7 | - |
+| backup failures, AC 7 (4) | copy fails C7 · folder missing C7 · folder not writable C20 · database missing C7 | - |
 | invalid restore names, AC 11 (4) | none C11 · `../capital-care.db` C11 · `notes.txt` C11 · no such file C11 | - |
 | damaged backups, AC 12 (2) | integrity not ok C12 · text file C12 | - |
 | version, AC 13 (2 examples) | newer → refused C13 · equal → restored C13 | - |
-| failing restore steps, AC 15 (3) | pre-restore C15 · copy C15 · rename C15 | - |
+| failing restore steps, AC 15 (4) | pre-restore C15 · copy C15 · journal removal C22 · rename C15 | - |
+| signals during `db-restore.sh` (3) | SIGHUP C23 · SIGTERM C23 · SIGINT C23 | - |
 | startup config: backup settings (2 entry points) | `backup.js` C1 C6 · `restore.js` C11 | - |
 
 ## Swept
 
 - validation: C6, C11
-- failure modes: C7, C15
+- failure modes: C7, C15, C20, C21, C22, C23
 - idempotency: C4
 - authorization: n/a - no route; only someone with a shell on the Docker host can run the commands (plan Surface)
 - concurrency: C3
@@ -117,6 +135,6 @@ Proof: `f=docs/operations/backup-and-restore.md; for w in 'dist/backup.js' 'db-r
 ## Handoff
 
 - **Settled mid-build:** none
-- **Dispatched:** Verifier at `e7fa539`
+- **Dispatched:** Verifier at `e7fa539` - returned, FAIL with 4 findings; all fixed in one pass, closed in verification.md
 - **Boundary:** none yet
 - **Abandoned:** none

@@ -39,7 +39,8 @@ describe('backup names', () => {
       'capital-care-20260102T030405006Z-pre-restore.db'
     );
 
-    const name = await service(5).backup();
+    const { name, warnings } = await service(5).backup();
+    expect(warnings).toEqual([]);
 
     expect(name).toBe('capital-care-20261127T210500123Z.db');
     expect(fs.files.get(path.join(DIR, name))).toBe('current data');
@@ -128,6 +129,25 @@ describe('backup', () => {
     expect(fs.files.get(DB)).toBe('current data');
   });
 
+  it('AC7 a backup folder that is not writable fails and deletes no backup', async () => {
+    seedBackups('capital-care-20261120T000000000Z.db');
+    engine.failBackupWith = 'EACCES: permission denied, open \'/backups/capital-care-20261127T210500123Z.db.partial\'';
+    await expect(service(1).backup()).rejects.toThrow(/EACCES: permission denied/);
+    expect(backupsIn()).toEqual(['capital-care-20261120T000000000Z.db']);
+    expect(fs.files.get(DB)).toBe('current data');
+  });
+
+  it('a pruning failure after a backup reports the backup with a warning', async () => {
+    seedBackups('capital-care-20261120T000000000Z.db');
+    fs.failRemove = /capital-care-20261120T000000000Z\.db$/;
+    const result = await service(1).backup();
+    expect(result).toEqual({
+      name: 'capital-care-20261127T210500123Z.db',
+      warnings: ['could not delete old backups: EACCES: permission denied'],
+    });
+    expect(backupsIn()).toContain('capital-care-20261127T210500123Z.db');
+  });
+
   it('AC7 fails before copying when the folder or the database is missing', async () => {
     fs.dirs.delete(DIR);
     await expect(service(5).backup()).rejects.toThrow(new BackupError('the backup folder /backups does not exist'));
@@ -149,7 +169,7 @@ describe('restore', () => {
 
   it('saves the current data first, then puts the chosen backup in place', async () => {
     const result = await service(5).restore(CHOSEN);
-    expect(result).toEqual({ restored: CHOSEN, preRestore: PRE });
+    expect(result).toEqual({ restored: CHOSEN, preRestore: PRE, warnings: [] });
     expect(fs.files.get(DB)).toBe(`data of ${CHOSEN}`);
     expect(fs.files.get(path.join(DIR, PRE))).toBe('current data');
     expect(backupsIn()).toEqual([CHOSEN, PRE].sort());
@@ -200,7 +220,7 @@ describe('restore', () => {
     expect(backupsIn()).toEqual([CHOSEN]);
 
     engine.migrations.set(path.join(DIR, CHOSEN), APP_NEWEST);
-    await expect(service(5).restore(CHOSEN)).resolves.toEqual({ restored: CHOSEN, preRestore: PRE });
+    await expect(service(5).restore(CHOSEN)).resolves.toEqual({ restored: CHOSEN, preRestore: PRE, warnings: [] });
 
     // an older backup, and one with no migrations recorded, are accepted too
     engine.migrations.set(path.join(DIR, CHOSEN), APP_NEWEST - 1);
@@ -233,9 +253,29 @@ describe('restore', () => {
   it('AC16 restore with no current data skips the pre-restore backup', async () => {
     fs.files.delete(DB);
     const result = await service(5).restore(CHOSEN);
-    expect(result).toEqual({ restored: CHOSEN, preRestore: null });
+    expect(result).toEqual({ restored: CHOSEN, preRestore: null, warnings: [] });
     expect(fs.files.get(DB)).toBe(`data of ${CHOSEN}`);
     expect(backupsIn()).toEqual([CHOSEN]);
+  });
+
+  it('a pruning failure after a restore reports the restore with a warning', async () => {
+    fs.failRemove = new RegExp(`${CHOSEN.replace(/\./g, '\\.')}$`);
+    const result = await service(1).restore(CHOSEN);
+    expect(result).toEqual({
+      restored: CHOSEN,
+      preRestore: PRE,
+      warnings: ['could not delete old backups: EACCES: permission denied'],
+    });
+    expect(fs.files.get(DB)).toBe(`data of ${CHOSEN}`);
+  });
+
+  it('a journal file that cannot be removed fails the restore before the database is replaced', async () => {
+    fs.files.set(`${DB}-journal`, 'old journal');
+    fs.failRemove = /capital-care\.db-journal$/;
+    const error = await service(5).restore(CHOSEN).catch((e: unknown) => e);
+    expect((error as Error).message).toBe('could not put the backup in place: EACCES: permission denied');
+    expect(fs.files.get(DB)).toBe('current data');
+    expect(fs.list('/data').sort()).toEqual(['capital-care.db', 'capital-care.db-journal']);
   });
 
   it('removes stale journal files of the replaced database', async () => {

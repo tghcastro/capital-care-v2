@@ -27,12 +27,24 @@ if ! compose stop capital-care-prd; then
   exit 1
 fi
 
+# Once the app is stopped it must be started again, even when the session ends (SIGHUP, e.g. a
+# dropped SSH connection) or the owner presses Ctrl-C. Bash runs the trap after the foreground
+# restore has finished, so the app never starts while a restore is still writing.
+signal=""
+trap 'signal=129' HUP
+trap 'signal=130' INT
+trap 'signal=143' TERM
+
 compose run --rm --no-deps --pull never capital-care-prd node dist/restore.js "$name"
 status=$?
+trap - HUP INT TERM
 
 echo "Starting capital-care-prd"
 if ! compose start capital-care-prd; then
   echo "Could not start capital-care-prd. Start it with: docker compose --profile prod up -d" >&2
 fi
 
+if [ -n "$signal" ]; then
+  exit "$signal"
+fi
 exit "$status"

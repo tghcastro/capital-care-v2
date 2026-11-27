@@ -52,7 +52,9 @@ The app keeps running; nobody using it is interrupted.
 docker compose --profile prod exec capital-care-prd node dist/backup.js
 ```
 
-It prints `Backup created: capital-care-<timestamp>.db` and exits `0`. If it fails it prints
+It prints `Backup created: capital-care-<timestamp>.db` and exits `0`. If old backups could not be
+deleted afterwards, it also prints `Warning: could not delete old backups: <reason>`: the backup
+itself is fine. If it fails it prints
 `Backup failed: <reason>`, exits `1`, and leaves the data and the earlier backups as they were.
 
 ## Restore a backup
@@ -73,7 +75,8 @@ but the current data is first saved as a pre-restore backup.
    ```
 
 The script stops `capital-care-prd` (the app is unavailable for a few seconds), restores in a
-one-off container of the same image, and starts the app again, whether the restore worked or not.
+one-off container of the same image, and starts the app again, whether the restore worked or not,
+and also when the terminal session drops or you press Ctrl-C during the restore.
 When the app starts, it applies any database migration the backup is missing, so a backup from an
 older version of the app comes back up to date.
 

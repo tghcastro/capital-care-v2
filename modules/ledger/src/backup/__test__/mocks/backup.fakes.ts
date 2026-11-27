@@ -11,6 +11,7 @@ export class FakeFiles implements BackupFiles {
   readonly log: string[] = [];
   failCopy = false;
   failRenameTo: string | null = null;
+  failRemove: RegExp | null = null;
 
   exists(p: string): boolean {
     return this.files.has(p) || this.dirs.has(p);
@@ -30,6 +31,7 @@ export class FakeFiles implements BackupFiles {
   }
 
   remove(p: string): void {
+    if (this.failRemove?.test(p) && this.files.has(p)) throw new Error('EACCES: permission denied');
     if (this.files.delete(p)) this.log.push(`remove ${path.basename(p)}`);
   }
 
@@ -46,6 +48,7 @@ export class FakeFiles implements BackupFiles {
 export class FakeEngine implements BackupEngine {
   readonly migrations = new Map<string, number | null>();
   failBackup = false;
+  failBackupWith: string | null = null;
 
   constructor(private readonly fs: FakeFiles) {}
 
@@ -54,6 +57,7 @@ export class FakeEngine implements BackupEngine {
     if (content === undefined) throw new Error(`no database at ${source}`);
     // A failing copy leaves a half-written destination behind, as a real one would.
     this.fs.files.set(dest, content.slice(0, 1));
+    if (this.failBackupWith) throw new Error(this.failBackupWith);
     if (this.failBackup) throw new Error('SQLITE_FULL: database or disk is full');
     this.fs.files.set(dest, content);
     this.fs.log.push(`backup ${path.basename(source)} -> ${path.basename(dest)}`);
