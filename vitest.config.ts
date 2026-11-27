@@ -37,11 +37,31 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'json-summary', 'html'],
+      include: ['{apps,modules,packages}/*/src/**/*.{ts,tsx}'],
       exclude: [
         'node_modules/',
         'dist/',
+        // Test code is not product code: it must not count toward (or inflate) coverage.
+        '**/__test__/**',
+        '**/test-setup.ts',
+        '**/mocks/**',
+        '**/*.d.ts',
       ],
+      // Per-glob thresholds are measured over the files each glob matches; the top-level
+      // numbers apply to every other file. See docs/tech/definitions/testing.md#coverage.
+      thresholds: {
+        statements: 85,
+        branches: 80,
+        functions: 85,
+        lines: 85,
+        'modules/*/src/**/*.service.ts': {
+          statements: 95,
+          branches: 90,
+          functions: 95,
+          lines: 95,
+        },
+      },
     },
   },
 });

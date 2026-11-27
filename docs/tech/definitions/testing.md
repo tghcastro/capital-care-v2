@@ -37,6 +37,21 @@ Four levels, adapted from [Fowler's microservice testing taxonomy](https://marti
   - **E2E** — lives in a separate repository, not in this one. Until it exists, full user journeys against the real API are checked manually.
 - **Location:** co-located `__test__/` folders inside `apps/web/src`, mirroring the backend convention (see [Test Location](#test-location) above).
 
+## Coverage
+
+- **Tool:** Vitest with the `v8` provider (`@vitest/coverage-v8`), configured in the root `vitest.config.ts`. Run it locally with `pnpm test:coverage`; the report is written to `coverage/` (git-ignored).
+- **Scope:** TypeScript sources under `{apps,modules,packages}/*/src`. Test code (`__test__/`, mocks, `test-setup.ts`) and `.d.ts` files are excluded, because they are not product code. Entry points such as `main.ts` count.
+- **Thresholds** (CI fails when any is not met):
+
+  | Files | Statements | Branches | Functions | Lines |
+  |---|---|---|---|---|
+  | `modules/*/src/**/*.service.ts` (service layer) | 95 | 90 | 95 | 95 |
+  | All other files (floor) | 85 | 80 | 85 | 85 |
+
+  Each threshold is measured over the files its glob matches, not per file.
+- **Baseline when set** (CAP-33): service layer 97.6 / 93.5 / 100 / 99.0; other files 91.6 / 86.9 / 92.7 / 92.4. The thresholds sit a few points below the baseline, so they pass today and still catch a real drop. Raise them as coverage grows; never lower them or exclude real code to make a PR pass.
+- **CI:** the `test` job runs `pnpm test:coverage` and uploads the report as the `coverage-report` artifact ([ci-cd.md](./ci-cd.md#pipeline)).
+
 ## Test Database Strategy
 
 - Tests run against a fresh, isolated SQLite database instance per run (not the dev DB file), using the driver specified in [database.md](./database.md#engine--driver). Apply the same committed migrations used by the application; never reuse or reset the developer's database file.
