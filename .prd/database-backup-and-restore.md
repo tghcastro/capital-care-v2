@@ -1,7 +1,7 @@
 # Database Backup and Restore
 
 > Read this PRD and take the bet as settled. Do not re-derive it.
-> Status: draft
+> Status: confirmed by tghcastro, 2026-11-27
 
 ## Situation
 
