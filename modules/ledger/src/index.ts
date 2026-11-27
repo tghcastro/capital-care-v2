@@ -4,6 +4,7 @@
  * Exports:
  * - Routers: mounted by apps/api
  * - Lifecycle helpers: schema migration and database shutdown, called by apps/api
+ * - Backup commands: database backup and restore, run by apps/api `backup.ts` and `restore.ts`
  * - Public types: consumed by API clients and tests
  */
 
@@ -22,6 +23,7 @@ import { createTransactionRouter } from './transaction/transaction.controller.js
 import { silentLogger, type LedgerLogger } from './shared/logger.js';
 
 export { getLedgerConfig } from './config.js';
+export { runBackupCommand, runRestoreCommand } from './backup/backup.command.js';
 export type { Category, CategoryNode } from './category/category.types.js';
 export type { LedgerLogger } from './shared/logger.js';
 export type { Account } from './account/account.types.js';

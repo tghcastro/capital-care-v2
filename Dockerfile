@@ -38,12 +38,13 @@ FROM node:${NODE_VERSION}-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     PORT=3000 \
     DB_PATH=/app/data/capital-care.db \
+    BACKUP_DIR=/app/backups \
     WEB_DIST_PATH=/app/public
 WORKDIR /app
 COPY --from=deploy /out ./
 # Only the built static files of the web app; no web node_modules in the runtime image.
 COPY --from=build /app/apps/web/dist ./public
-RUN mkdir -p /app/data && chown node:node /app/data
+RUN mkdir -p /app/data /app/backups && chown node:node /app/data /app/backups
 # The runtime only needs the node binary. Remove the npm and corepack bundled
 # with the base image: they are unused here and carry their own vulnerable
 # dependencies (e.g. undici), which image scanners report.

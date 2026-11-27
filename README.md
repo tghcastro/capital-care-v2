@@ -91,7 +91,8 @@ migrations before the server starts, and both serve the web UI at the root URL.
 - Stop DEV with `docker compose --profile dev down`. No data is kept.
 - Stop PRD with `docker compose --profile prod down` (data is kept). Delete PRD data with
   `docker compose --profile prod down -v`. This is irreversible.
-- PRD backups are not configured yet (see [database.md](docs/tech/definitions/database.md)).
+- Back up and restore PRD data with `dist/backup.js` and `scripts/db-restore.sh`: see
+  [Backup and restore](docs/operations/backup-and-restore.md).
 
 ### Published images
 

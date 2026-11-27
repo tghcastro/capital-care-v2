@@ -24,8 +24,13 @@ function parseAccountLimit(raw: string | undefined): number {
   return limit;
 }
 
+/** DB_PATH, or the local default. Shared with the backup commands. */
+export function getDbPath(env: Record<string, string | undefined> = process.env): string {
+  return env.DB_PATH || './data/capital-care.db';
+}
+
 export function getLedgerConfig(): LedgerConfig {
-  const dbPath = process.env.DB_PATH || './data/capital-care.db';
+  const dbPath = getDbPath();
   const accountLimit = parseAccountLimit(process.env.ACCOUNT_LIMIT);
 
   return {
