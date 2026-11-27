@@ -1,0 +1,36 @@
+#!/bin/sh
+# Runs on every commit message. Blocks a message that the `spec-gates` CI job would reject:
+# Conventional Commits (check_commit.py) and the `Refs: CAP-<n>` footer.
+# Enabled by `git config core.hooksPath .githooks` (the Claude Code SessionStart hook does it).
+# See docs/tech/definitions/git.md#local-git-hooks.
+
+root="$(git rev-parse --show-toplevel)" || exit 1
+git_dir="$(git rev-parse --git-dir)" || exit 1
+
+# CI skips merge commits; git's autosquash markers are rewritten before the PR merges.
+if [ -f "$git_dir/MERGE_HEAD" ]; then
+  exit 0
+fi
+case "$(head -n 1 "$1")" in
+  "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
+esac
+
+exec python3 -B - "$root" "$1" <<'PY'
+import sys
+
+root, msgfile = sys.argv[1], sys.argv[2]
+sys.path.insert(0, f"{root}/scripts")
+import spec_gates
+
+with open(msgfile, encoding="utf-8") as f:
+    message = f.read()
+# git keeps '#' comment lines in the file until after this hook; check_commit.py ignores them too.
+message = "\n".join(ln for ln in message.splitlines() if not ln.lstrip().startswith("#"))
+
+errors = spec_gates.check_message(root, message)
+if errors:
+    for e in errors:
+        print(f"  {e}", file=sys.stderr)
+    print("\ncommit-msg: commit stopped. Pattern: docs/tech/definitions/git.md#commit-messages", file=sys.stderr)
+    sys.exit(1)
+PY

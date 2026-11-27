@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install --frozen-lockfile)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm format)",
+      "Bash(pnpm type-check)",
+      "Bash(pnpm build)",
+      "Bash(pnpm test)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm test:coverage)",
+      "Bash(pnpm vitest *)",
+      "Bash(pnpm exec vitest *)",
+      "Bash(git status *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git diff)",
+      "Bash(git log *)",
+      "Bash(git log)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git branch)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git fetch *)",
+      "Bash(python3 scripts/spec_gates.py *)",
+      "Bash(python3 -m unittest discover -s scripts *)",
+      "Bash(python3 .claude/skills/tlc-spec-lean/scripts/*)"
+    ],
+    "deny": [
+      "Read(./.prompts/**)",
+      "Edit(./.prompts/**)",
+      "Write(./.prompts/**)",
+      "Bash(*.prompts/*)",
+      "Bash(docker compose --profile prod *)",
+      "Bash(docker-compose --profile prod *)",
+      "Bash(*capital-care-prd*)",
+      "Bash(*capital-care-data*)",
+      "Bash(git commit *--no-verify*)",
+      "Bash(git config core.hooksPath *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git -C \"$CLAUDE_PROJECT_DIR\" config core.hooksPath .githooks"
+          }
+        ]
+      }
+    ]
+  }
+}

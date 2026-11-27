@@ -17,7 +17,7 @@ Decisions live in [docs/tech/definitions/](./definitions/), one file per topic:
 - [definitions/web.md](./definitions/web.md) — web client (`apps/web`): stack, API client, module resolution, same-origin serving, lint additions, folder layout.
 - [definitions/logging.md](./definitions/logging.md) — logging library and request-context convention.
 - [definitions/testing.md](./definitions/testing.md) — test runner, test levels, test database strategy, web test tooling.
-- [definitions/git.md](./definitions/git.md) — branching and merge strategy, branch names, commit message pattern, pull request template, Linear issue linking.
+- [definitions/git.md](./definitions/git.md) — branching and merge strategy, branch names, commit message pattern, local git hooks, Claude Code settings, pull request template, Linear issue linking.
 - [definitions/ci-cd.md](./definitions/ci-cd.md) — CI/CD pipeline stages and triggers, GHCR image tags and releases, audit gate, action pinning, permissions, Dependabot and CodeQL.
 - [definitions/design.md](./definitions/design.md) — Web pages design based on "[NerdWallet](https://www.nerdwallet.com/)". This design should be used for the Capital Care front-end.
 
@@ -28,7 +28,7 @@ Don't read every file for every task — pick only the ones relevant to what you
 - **Implementing an API endpoint:** `architecture.md`, `database.md`, `api.md`. Add `security.md` only if the task touches auth/current-user resolution; add `logging.md` only if adding/changing log statements.
 - **Implementing a web feature:** `web.md`, plus `architecture.md` for the app boundary rule. Add `api.md` if you need the endpoint contract, `security.md` only if the task touches the acting-user header, and `testing.md` for tests.
 - **Writing/running tests:** `testing.md`, plus whichever of the above covers the thing under test.
-- **Creating a branch, commit, or PR:** `git.md` only.
+- **Creating a branch, commit, or PR, or changing git hooks or `.claude/settings.json`:** `git.md` only.
 - **Changing CI/CD, GitHub Actions workflows, releases, or dependency update automation:** `ci-cd.md` only.
 - **When in doubt about scope:** read the one file whose name matches the topic you're changing; cross-references between files (e.g. `database.md` linking to `architecture.md#db-types-vs-domain-types`) tell you when a second file is actually relevant, so you don't need to read all of them defensively.
 
